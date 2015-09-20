@@ -12,7 +12,7 @@ shinyUI(fluidPage(
                               selected = "50"),
                   sliderInput("slope",
                               "slope:",
-                              min = 1,
+                              min = 0,
                               max = 50,
                               value = 30),
                   sliderInput("intercept",
