@@ -1,0 +1,92 @@
+---
+title: "Notes on practical statistics"
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+    number_sections: true
+---
+#Statistical Motivations & Definitions
+##Plotting Data (in a million ways) & Summary Statistics
+
+A section on how to plot data (histograms, box plots, beeswarms), outlier detection etc... 
+
+###First way to plot (univariate) data: histogram
+
+See this plot for example (paradigm) of plotting in R Markdown:
+```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
+#code chunk here:
+library( ggplot2 )
+x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
+#distribution with mean = 1, sd = 1
+qplot( x ) #plot a histogram of the data
+```
+
+###Second way to plot (univariate) data: beeswarm plot
+
+```{r,  message = FALSE}
+#code chunk here:
+library(beeswarm)
+data(breast)
+beeswarm(time_survival ~ ER, data = breast,
+         pch = 16, pwcol = 1 + as.numeric(event_survival),
+         xlab = "", ylab = "Follow-up time (months)",
+         labels = c("ER neg", "ER pos"))
+legend("topright", legend = c("Yes", "No"),
+       title = "Censored", pch = 16, col = 1:2)
+```
+
+###Summary Statistics
+
+How can we numerically describe data? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*) <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variance*.
+
+####Measures of Central Tendency
+
+<h4>Mean</h4>
+  
+The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of suck import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!)
+  
+$$p(x) = \sum\limits_i(x - x_i)^2.$$
+
+Note: the mean is not always a good statistic, particularly for skewed and bimodal distributions (more to come on this) or datasets with outliers! Give example(s) here.
+  - mean, mode, median and why -- e.g., the mean minimizes average square error. 
+- effect of outliers on measures.
+
+####Measures of Variability
+
+- range, interquartile range, variance, standard deviation.
+- standard error of the mean!
+  
+Now here's an classic example, the Michelson-Morley experiment, to demonstrate a bunch of these concepts:  
+```{r , fig.width = 12 , fig.height = 3 , message = FALSE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+source("multiplot.R")
+data <- read.csv("mm.csv")
+par(mfrow=c(1,3))
+p <- ggplot( data , aes( factor(Expt) , Speed ))
+p1 <- p + geom_boxplot() + xlab("Experiment")
+p2 <- p + geom_boxplot( notch=TRUE) + xlab("Experiment")
+p3 <- p + geom_boxplot( notch=TRUE) + geom_jitter() + xlab("Experiment")
+multiplot(p1, p2,p3, cols=3)
+```
+
+
+##Central Limit Theorem
+
+The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator* (to be defined), is itself distributed (it's also a random random variable), in the limit of large samples:
+
+Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribution $P$ (with mean $\mu$ and variance $\sigma^2$). The sample average is defined as
+
+$$S_n = \frac{X_1 + X_2 + \ldots + X_n}{n}$$
+
+and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will part of its power when dealing with Student's t test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician)had to say about the CLT:
+
+>I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.
+  
+##Rules of Thumb for Experimental Data
+
+More to come so watch this space. Very generic rules of thumb:  
+
+- To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
+- To say something about the variance, have at least $n =30$ data points;
+- To say anything about the actual distribution, have at least $n = 100$ data points.
