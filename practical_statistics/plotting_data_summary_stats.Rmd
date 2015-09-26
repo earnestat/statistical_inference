@@ -49,7 +49,50 @@ The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits
 $$p(x) = \sum\limits_i(x - x_i)^2.$$
 
 Note: the mean is not always a good statistic, particularly for skewed and bimodal distributions (more to come on this) or datasets with outliers! Give example(s) here.
-  - mean, mode, median and why -- e.g., the mean minimizes average square error. 
+
+Here are 3 cases in which the *mean* is not a great summary statistic to report:
+
+- a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data);
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- rnorm(50)
+y <- 10*runif(10)
+df <- as.data.frame( c( x , y) )
+colnames(df) <- 'value'
+m <- signif( mean(df$value) , 2)
+llb <- paste("mean = " , m)
+qplot(df$value) + xlab('value') +
+  annotate("text",  label = llb ,  x = 5, y= 6)
+```
+
+- data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities )
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE}
+##Galton height data: http://personality-project.org/r/html/heights.html
+##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
+source("multiplot.R")
+library(psych)
+data(heights)
+m1 <- signif( mean(heights$height) , 3 )
+llb1 <- paste("mean = " , m1)
+p1 <- ggplot(data = heights , aes( x = height)) + geom_histogram(binwidth = 0.5) +
+  annotate("text", x = 65, y = 60, label = llb1)
+x <- rnorm( 1000 , mean = 0)
+y <- rnorm( 1000 , mean = 5 )
+d <- as.data.frame( c( x , y) )
+colnames(d) <- 'value'
+m2 <- signif( mean(d$value) , 3 )
+llb2 <- paste("mean = " , m2)
+p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 5, y = 160, label = llb2)
+multiplot(p1, p2, cols=2)
+```
+
+- data from a skewed distribution (e.g. gamma distribtuion -- arises from multistep processes) -- in the example below, the mean is ~2 and the peak of the histogram occurs at ~1:
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- rgamma(10000 , 2 ,1)
+qplot(x)
+```
+
+- now motivate median (to deal with outliers) and mode (as a measure of where the peaks are). Briefly mention bi-modality (seen above) and multi-modality.
 - effect of outliers on measures.
 
 ####Measures of Variability
