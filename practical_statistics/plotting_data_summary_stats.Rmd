@@ -24,7 +24,7 @@ qplot( x ) #plot a histogram of the data
 
 ###Second way to plot (univariate) data: beeswarm plot
 
-```{r,  message = FALSE}
+```{r,  message = FALSE ,  echo = FALSE}
 #code chunk here:
 library(beeswarm)
 data(breast)
@@ -44,7 +44,7 @@ How can we numerically describe data? To liberally paraphrase Phil Gregory (in *
 
 <h4>Mean</h4>
   
-The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of suck import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!)
+The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!)
   
 $$p(x) = \sum\limits_i(x - x_i)^2.$$
 
@@ -52,7 +52,7 @@ Note: the mean is not always a good statistic, particularly for skewed and bimod
 
 Here are 3 cases in which the *mean* is not a great summary statistic to report:
 
-- a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data);
+- a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data; note: outliers will be defined below, when we have a few more tools under our statistical belt);
 
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 x <- rnorm(50)
@@ -92,31 +92,88 @@ x <- rgamma(10000 , 2 ,1)
 qplot(x)
 ```
 
-- now motivate median (to deal with outliers) and mode (as a measure of where the peaks are). Briefly mention bi-modality (seen above) and multi-modality.
-- effect of outliers on measures.
+To deal with the problem of outliers, statisticians like to look at the *median* rather than the mean; if you're actually interested in the most likely data point, that is, where the highest peak is in the histogram, you look at the *mode*.
 
-####Measures of Variability
+<h4>Median</h4>
 
-- range, interquartile range, variance, standard deviation.
-- standard error of the mean!
-  
-Now here's an classic example, the Michelson-Morley experiment, to demonstrate a bunch of these concepts:  
-```{r , fig.width = 12 , fig.height = 3 , message = FALSE}
-#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+To find the *median* of your dataset, list them from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points; see *fully trimmed mid-range if interested*). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outlier and this will not alter the median. For example the dataset $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. *Include a demonstrative plot here?*
+
+<h4>Mode</h4>
+
+The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). Give a visual example. When the histogram/probability distribution function has rwo or more modes, we call it *bi-modal* and *multi-modal* respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, miximum likelihood estimation and Bayesian parameter estimation). See examples of trimodality here:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo = FALSE}
 source("multiplot.R")
+x <- rnorm( 1000 , mean = 0)
+y <- rnorm( 1000 , mean = 5 )
+z <- rnorm( 750 , mean = 9)
+d <- as.data.frame( c( x , y, z) )
+colnames(d) <- 'value'
+m2 <- signif( mean(d$value) , 3 )
+llb2 <- paste("mean = " , m2)
+p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 10, y = 190, label = llb2)
+p2
+```
+
+Also see here for some interesting notes on relation between mode, median, mean & Pearson mode skewness: http://mathworld.wolfram.com/Mode.html
+
+####Measures of Variability/Dispersion
+
+<h4>Range</h4>
+The range of a dataset $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
+
+<h4>Variance & Standard Deviation</h4>
+
+The *variance* is a measure of how far a dataset is spread out. Recalling the mean $\mu = \frac{1}{n}\sum\limits_i x_i$, the variance is defined to be
+
+$$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
+
+and $\sigma$, the square root of the variance, is called the *standard deviation* of the data. *Brief mention of how population variance is related to sample variance here (i.e. Bessel's Correction)?* Probably NOT.
+
+Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance (more on these below).
+
+Key: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm)
+
+This could also be a great place to mention confidence intervals (for example, 95%) and to introduce the Gaussian distribution.
+
+<h4>Interquartile Range</h4>
+
+Recall that the *median* splits the data into a top 50% and a bottom 50%. We can similarly split these regions into their top and bottom halves: $Q_1$, the *1st quartile*, is defined to be the median of the bottom 50% (i.e. the median of the data consisting of all $x_i$ less than the median) & $Q_3$, the *3rd quartile*, is defined to be the median of the top 50% of the data. We then define the *interquatile range* to be $IQR = Q_3 - Q_1$, a measure of how spread out the data is (and it is a robust measure! particularly with respect to outliers).
+
+Having defined the *median* and *quartiles*, we can now define a *box-plot* (also known as a box-and-whisker diagram), which provides a very useful way of visualizing data. In a box plot,
+
+- The top and bottom of the box are $Q_3$ and $Q_1$, respectively;
+- The band in the middle is the median;
+- The ends of the top and bottom whiskers are $Q_3 + 1.5\times IQR$ & $Q_1 - 1.5\times IQR$, respectively (note: there are other possible conventions for the whiskers, however this is the rule that we shall use, unless specified otherwise);
+- The outliers can be plotted as points; in fact, all of this quantile business allows us to give a precise definition of outliers as all data points that are above $Q_3 + 1.5\times IQR$ or that are below $Q_1 - 1.5\times IQR$ (there are other definitions, still an active area of research; see here, for example: https://www.siam.org/meetings/sdm10/tutorial3.pdf)
+
+Here are boxplots from the famed Michelson-Morley experiment, in which the data is the speed of light in different experiments:
+```{r , fig.width = 12 , fig.height = 3 , message = FALSE , echo=FALSE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
 data <- read.csv("mm.csv")
-par(mfrow=c(1,3))
 p <- ggplot( data , aes( factor(Expt) , Speed ))
-p1 <- p + geom_boxplot() + xlab("Experiment")
-p2 <- p + geom_boxplot( notch=TRUE) + xlab("Experiment")
-p3 <- p + geom_boxplot( notch=TRUE) + geom_jitter() + xlab("Experiment")
+p1 <- p + geom_boxplot() + xlab("Experiment") + ylab("Speed of Light (km/s minus 299,000)")
+p2 <- p + geom_boxplot( notch=TRUE) + xlab("Experiment") + ylab("")
+p3 <- p + geom_boxplot( notch=TRUE) + geom_jitter() + xlab("Experiment") + ylab("")
 multiplot(p1, p2,p3, cols=3)
 ```
+see about bagplots (bivariate boxplots) here: https://en.wikipedia.org/wiki/Bagplot
+
+
+
+<h4>Standard Error of the Mean</h4>
+
+Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$ (define all of these things OR give an intuition via example; also note that you have only defined mean & variance for finite datasets as of yet, not for probability distributions). Noe the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the *standard error of the sample mean* is
+
+$$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
+
+where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central Limit Theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respest to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points.
+
 
 
 ##Central Limit Theorem
 
-The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator* (to be defined), is itself distributed (it's also a random random variable), in the limit of large samples:
+The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator* (to be defined), is itself distributed (it's also a random variable), in the limit of large samples:
 
 Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribution $P$ (with mean $\mu$ and variance $\sigma^2$). The sample average is defined as
 
@@ -133,3 +190,7 @@ More to come so watch this space. Very generic rules of thumb:
 - To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
 - To say something about the variance, have at least $n =30$ data points;
 - To say anything about the actual distribution, have at least $n = 100$ data points.
+
+##Exercises: Generating data using R, plotting it and getting a feel for it.
+
+rand, runif and rexp are your best friends! You can also play with Q-Q plots etc... (Much) more to come...
