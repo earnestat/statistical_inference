@@ -1,0 +1,148 @@
+---
+title: "Notes on practical statistics II"
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+    number_sections: true
+---
+#Statistical Hypothesis Testing (normality tests, t-tests, F-tests, ANOVA)
+
+Two key aspects of practical stastics:
+
+- statistical hypothesis testing;
+- model fitting (parameter estimation) & model selection.
+
+In this note, we will deal with the first aspect, statistical hypothesis testing.
+
+##Statistical Hypothesis Testing
+
+First: what is an hypothesis? Five examples are:
+
+- The speed of light in a vacuum is 299,792,458 m/s;
+- The mean height of adult men in Australia is 175cm;
+- The average speed of vesicles along microtubules (in *S. pombe*) is $0.5 \mu m/s$;
+- Drug A improves the sleep quality of people who suffer from insomia;
+- An advertisement at the top of my website generates more clicks than one at the bottom of my website.
+
+Definition (Oxford Dictionary, online): an hypothesis "[a] supposition or proposed explanation made on the basis of limited evidence as a starting point for further investigation."
+
+Now: what is statistial hypothesis testing? It is merely testing how likely a hypothesis is, given the data at hand.
+
+###Essential question: is my data normally distributed?
+
+Some statisticians and physicists would baulk at this question (I've seen it first-hand, in fact). They would tell you (and they would be correct, in all their pedantry) that no data is normally distributed, but some is so close to being normally distributed that it is not statistically different to a normal distribution.
+
+So the question becomes: is the data \~ normally distributed? A robust, quantitative way of thinking about this is to perform one or more of a number of hypothesis tests, which we'll get to, but first, let's consider it visually with the aid of Q-Q plots. To check out Q-Q plots, we need to define a *quantile*:
+
+Definition: a *quantile* of a dataset is the value below which a given percent (or fraction) of the data are: for example, the 10% quantile (also known as the *first decile*) is the value below which 10% of the data are; similarly, the 25% quantile (or the *first quartile* $Q_1$), the 50% quantile (the *second quartile* $Q_2$ or the *median*) and the 75% quantile (or the *third quartile* $Q_3$) are the values below which 1/4, 1/2 and 3/4 of the data are, respectively.
+
+Now all that a Q-Q (quantile-quantile) plot is is a plot of the quantiles of one set of data against the quantiles of another. Below are two examples. The first is the (quantiles of) data generated from a normal distribution plotted against (quantiles of) a theoretic normal distribution. In the second, the data is from a Caunchy distribution (symmetric and with heavier tails than a Gaussian), the theoretic a normal distribution.
+
+```{r, fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
+#code chunk here:
+set.seed( 42 )
+library( ggplot2 )
+source("multiplot.R")
+qqplot.data <- function (vec) # argument: vector of numbers
+{
+  # following four lines from base R's qqline()
+  y <- quantile(vec[!is.na(vec)], c(0.25, 0.75))
+  x <- qnorm(c(0.25, 0.75))
+  slope <- diff(y)/diff(x)
+  int <- y[1L] - slope * x[1L]
+
+  d <- data.frame(resids = vec)
+
+  ggplot(d, aes(sample = resids)) + stat_qq() + geom_abline(slope = slope, intercept = int,
+                                                            color = "red")
+}
+n <- 500
+x <- rnorm( n )
+y <- rcauchy( n )
+z <- rnorm(100)
+p1 <- qqplot.data( x ) + xlab("theoretical (Gaussian)") + ylab("sample from Gaussian")
+p2 <- qqplot.data( y ) + xlab("theoretical (Gaussian)") + ylab("sample from Cauchy")
+multiplot(p1, p2, cols=2)
+```
+
+- You can distinctly see the heavier tail of the Cauchy distribution here!
+- You can also plot histograms to test the normality hypothesis by eye.
+
+<h4>Lilliefors Test (for normality)</h4>
+
+The Lilliefors test for normality is a particular case of the Kolmogorov-Smirnov test (we won't cover this here but do check it out because it is one of the great statistical tests!). Given a dataset $D =\{ x_i \}$, we wish to test the *null hypothesis* $H_0,$ which states that $D$ is drawn from a normal distribution.
+
+1. We compare the cumulative distribution functions of $D$ and the normal distribution with mean $\mu_X$ & variance $\sigma_X^2$. To do so we calculate the largest distance $D_{max}$ between them;
+2. If the null hypothesis is true, then $D_{max}$ will be drawn from a **Lilliefors distribution** (the distribution itself will depend on the sample size $n$; there are tables, along with more recent analytic approximations, for those interested: http://www.jstor.org/stable/2684607);
+3. Using this Lilliefors distribution, we calculate $p$, the probability of seeing $D_{max}$, given the null hypothesis $H_0$, that is, the assumption of normality. Classically, $p$ has been called the $p$-value.
+4. If $p<\alpha,$ we can conclude with $(1-\alpha)$ confidence that $D$ was not drawn from a normal distribution. Classically, it is required that $\alpha = 0.05$, in which case we can conclude with 95% confidence that $D$ was not drawn from a normal distribution.
+
+Here we plot the empirical CDFs of a Cauchy and a Gaussian distribution: can you tell which is which? I should probably plot each separately against a theoretical Gaussian so that we can visually make sense of the distance $D_{max}$.
+```{r , message=FALSE , echo=FALSE}
+df <- data.frame(x = c(rnorm( 500 , mean = mean(y) , sd = sd(y)), y),
+                 g = gl(2, 500))
+
+ggplot(df, aes(x, colour = g)) + stat_ecdf() #+ xlim(c(-15,15))
+```
+
+
+```{r , message=FALSE , echo=TRUE}
+#http://www.inside-r.org/packages/cran/nortest/docs/lillie.test
+library(nortest)
+lillie.test(x); lillie.test(y)
+```
+
+Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99.9$% confidence that $y$ was NOT drawn from a normal distribution (and phew! as we generated $y$ from a Cauchy distribution). Moreover, as the $p$-value for $x$ was $>0.2$, we cannot conclude with any credible confidence that it was not drawn from a normal distribution (this is also a sanity check).
+
+for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
+
+###Two sample (Welch's) t-test
+
+given a control and an experiment (e.g. a mutant).
+
+###F-test
+ 
+<span style="color:red">Fitting statistical models -- so perhaps in the next class? E.g. (wiki) one-way ANOVA. Ah-hah, goo, see 1st example in wiki, will be good here, then use again next class?</span>
+
+The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
+
+$$Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.$$
+Assumption: $\varepsilon_{ij}$ are i.i.d Gaussian; we also normalize such that $\sum\alpha_i = 0$.
+Then
+$$SS_{TOT} = SS_{W} + SS_{B},$$
+
+where $SS_{TOT} = \sum\limits_{ij}(Y_{ij}-\bar{Y}_{..})^2$ is the total sum of squares of the data, $SS_{W}=\sum\limits_{ij}(Y_{ij}-\bar{Y}_{i.})^2$ is the sum of squares within groups (unexplained variance) & $SS_{B}=\sum\limits_{i}(\bar{Y}_{i.}-\bar{Y}_{..})^2$ is the sum of squares between groups (explained variance). We look at the F-statistic
+
+$$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
+
+and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom.
+
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE}
+#code chunk here:
+library(beeswarm)
+library( ggplot2 )
+#data from here:
+#http://www.stat.ufl.edu/~winner/datasets.html
+data <- read.table("agedeath.dat", header=FALSE)
+colnames(data) <- c('aris','age','number')
+data$x = as.numeric(data$aris)
+beeswarm <- beeswarm( age ~ aris , data = data  , pch =16, pwcol = aris,
+                      method = 'swarm' , do.plot = FALSE)[, c(1, 2, 4, 6)]
+beeswarm$x <- beeswarm$x + 1*(as.numeric(beeswarm$col)-1)
+beeswarm.plot <- ggplot(beeswarm, aes(x, y) , color = col ) +
+  xlab("") +
+  scale_y_continuous(expression("age") , expand = c(0, 3)) 
+beeswarm.plot + geom_point(size = 2 , aes(colour = col))
+```
+
+
+
+###Correction Methods (E.g. the Bonferroni Correction)
+
+what if we are comparing very, many mutants? then one may look statistically significant merely due to
+statistical fluctuations.
+
+##Analysis of Variance (ANOVA)
+
+aaaaaaand here we go!
