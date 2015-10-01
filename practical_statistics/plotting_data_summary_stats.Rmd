@@ -1,5 +1,5 @@
 ---
-title: "Notes on practical statistics"
+title: "Notes on practical statistics I"
 output:
   html_document:
     toc: true
@@ -22,7 +22,31 @@ x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
 qplot( x ) #plot a histogram of the data
 ```
 
-###Second way to plot (univariate) data: beeswarm plot
+- Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed;
+- There are many other potential rules of thumb, such Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley & https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)
+- One can also define bin width instead of the number of bins.
+- Plot Probability Function instead of histograms: all this means that the y-axis is normalized so that the $\sum\limits_\text{bins}f(\text{bins}) = 1$ & the interpretation is that $f$ provides the probability of a data point being in that bin.
+
+###Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+#code chunk here:
+library( ggplot2 )
+x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
+#distribution with mean = 1, sd = 1
+df <- data.frame(x = x)
+ggplot(df, aes(x)) + stat_ecdf() #plot ECDF of the data
+```
+
+The CDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is the total number of data points.
+
+- The intuition is that this tells you the probability of being less than or to equal to the value of interest;
+- This is a great way to visualize and compare distributions as there is no binning and thus no artefacts introduced by binning!
+- A word of warning: there is correlation in the curve (as opposed to a histogram): All that I'm saying here is that if there is a large fluctuation for a low value, then this flucutation may be seen throughout the rest of the curve.
+
+
+
+###Third way to plot (univariate) data: beeswarm plot
 
 ```{r,  message = FALSE ,  echo = FALSE}
 #code chunk here:
@@ -182,6 +206,57 @@ $$S_n = \frac{X_1 + X_2 + \ldots + X_n}{n}$$
 and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will part of its power when dealing with Student's t test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician)had to say about the CLT:
 
 >I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.
+
+##An Incomplete Compendium of Distributions (perhaps this should occur earlier)
+
+This section is a prototype: I need to flesh out equations, descriptions, motivaations and whatever else (eg. means, variances etc...). Oh, and include Figures: make it at least a little bit pleasing on the eye, please, Hugo!
+
+###Normal (Gaussian) Distribution
+
+Motivation:
+
+- The Central Limit Theorem! WOWSER.
+- Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
+- Measurement error (e.g. using a ruler) is often normally distributed.
+
+Equation: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
+
+###Binomial Distribution
+
+Motivation:
+
+- Flipping coins!
+
+Equation: $P(k|n) = {n\choose k}p^k(1 - p)^{n-k}$, where $p$ is the binomial probability (the probability of flipping heads).
+
+###Poisson Distribution
+
+Motivation:
+
+- Counting things.
+
+Equation: $P(k) = \frac{\lambda^k}{k!}e^{-\lambda}$, for $k \in \{0,1,2,3,\ldots\}$.
+
+###Exponential Distribution
+
+Motivation:
+
+- Radioactive decay;
+- Any Poisson Process has exponentially distributed waiting times (will prove below OR in appendix; will included numerical example in the exercises);
+
+Equation: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
+
+###Gamma Distribution
+
+Motivation:
+
+- Results from multi-step processes (and thus generalizes the exponential distribution)
+
+Equation: $P(x) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
+
+###Other Distributions
+
+This list is already long enough for the current purposes of introduction to distributions. There are also Pareto (power-law) distributions, Cauchy distributions, Laplace distributions and a very many more... (perhaps list more with a reference or two).
   
 ##Rules of Thumb for Experimental Data
 
