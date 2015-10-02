@@ -103,17 +103,24 @@ I am measuring a quantity in an experiment (e.g., a mutant) for which there is a
 $$H_0: \mu = \mu_0.$$
 Then the alternative hypothesis is
 $$H_1: \mu \neq \mu_0.$$
-(Include a (beeswarm?) plot here of data and null hypothesis).
+Here we beeswarm plot some normally distributed data, along with a horizontal line to represent a possible null hyothesis (here $\mu_0 = -0.7$ is represented by a horizontal red line).
 
-```{r , message=FALSE , echo=TRUE}
+```{r , message=FALSE , echo=FALSE , include=FALSE}
 library(beeswarm)
 bs1 <- beeswarm(rnorm(250),
          pch = 16 , do.plot = TRUE)
 bs1$type <- "mutant"
-ggplot( bs1 , aes( x = x , y =y , color = type )) + geom_point(size = 2) +
-  xlab("data") + ylab("value") 
 ```
 
+```{r , message=FALSE , echo=FALSE }
+dfl <- as.data.frame(cbind(seq(min(bs1$x),max(bs1$x) , by = max(bs1$x) - min(bs1$x)), rep(-0.7,2)))
+ggplot( bs1 , aes( x = x , y =y  )) + geom_point(size = 3) +
+  xlab("") + ylab("value")  +
+  scale_x_continuous(breaks = c(1), 
+                    labels = c("data") ) + geom_line(data = dfl , aes(x = V1,y = V2 , color = "red",
+                                                                     size = 10)) + 
+      guides(color=FALSE , size = FALSE)
+```
 
 To test the null hypothesis, we consider the t-statistic
 $$T = \frac{|\bar{x}-\mu_0|}{\text{SEM}}.$$
