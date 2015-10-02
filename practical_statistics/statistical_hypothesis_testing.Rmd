@@ -97,6 +97,25 @@ Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99
 
 for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
 
+###One sample t-test
+
+I am measuring a quantity in an experiment (e.g., a mutant) for which there is a control. This quantity has a specific value $\mu$ and my measurement process has a normal error (e.g., amount of protein using a fluorospectrometer). Let $x_1,x_2,\ldots,x_n$ be $n$ independent samples: this means that they will be drawn from the distribution $N( \mu , \sigma^2)$. We want to answer the question: is the amount $\mu$ in the (mutant) experiment different from that in the control $\mu_0$? To answer this, the null hypothesis is
+$$H_0: \mu = \mu_0.$$
+Then the alternative hypothesis is
+$$H_1: \mu \neq \mu_0.$$
+(Include a (beeswarm?) plot here of data and null hypothesis) To test the null hypothesis, we consider the t-statistic
+$$T = \frac{|\bar{x}-\mu_0|}{\text{SEM}}.$$
+Intuition: this t-statistic measures how many "standard errors" the sample mean is away from the (null) hypothesized mean.
+
+Formalism: this statistic has the Student t-distribution $\text{Pr}(t)$ with $n-1$ degrees of freedom. The p-value is defined as the area under the curve where $|t|>|T|$ (include relevant plot here).
+
+Example: if the p-value $<0.05$, we conclude with $95\%$ confidence that $\mu \neq \mu_0$. In general, if the p-value $<\alpha$, then we can conclude with $100(1-\alpha)\%$ confidence that $\mu\neq\mu_0$.
+
+Question: Given $n=16$ data points, what is the minimum effect size $|\bar{x} - \mu_0|$ that you can detect at the $95\%$ confidence level? 
+
+Answer: at the $95\%$ confidence level, we require that $T>2$ (actually a bit more); but 
+$T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
+
 ###Two sample (Welch's) t-test
 
 given a control and an experiment (e.g. a mutant).

@@ -68,9 +68,10 @@ img {
 <li><a href="#statistical-hypothesis-testing-normality-tests-t-tests-f-tests-anova"><span class="toc-section-number">1</span> Statistical Hypothesis Testing (normality tests, t-tests, F-tests, ANOVA)</a><ul>
 <li><a href="#statistical-hypothesis-testing"><span class="toc-section-number">1.1</span> Statistical Hypothesis Testing</a><ul>
 <li><a href="#essential-question-is-my-data-normally-distributed"><span class="toc-section-number">1.1.1</span> Essential question: is my data normally distributed?</a></li>
-<li><a href="#two-sample-welchs-t-test"><span class="toc-section-number">1.1.2</span> Two sample (Welch’s) t-test</a></li>
-<li><a href="#f-test"><span class="toc-section-number">1.1.3</span> F-test</a></li>
-<li><a href="#correction-methods-e.g.-the-bonferroni-correction"><span class="toc-section-number">1.1.4</span> Correction Methods (E.g. the Bonferroni Correction)</a></li>
+<li><a href="#one-sample-t-test"><span class="toc-section-number">1.1.2</span> One sample t-test</a></li>
+<li><a href="#two-sample-welchs-t-test"><span class="toc-section-number">1.1.3</span> Two sample (Welch’s) t-test</a></li>
+<li><a href="#f-test"><span class="toc-section-number">1.1.4</span> F-test</a></li>
+<li><a href="#correction-methods-e.g.-the-bonferroni-correction"><span class="toc-section-number">1.1.5</span> Correction Methods (E.g. the Bonferroni Correction)</a></li>
 </ul></li>
 <li><a href="#analysis-of-variance-anova"><span class="toc-section-number">1.2</span> Analysis of Variance (ANOVA)</a></li>
 </ul></li>
@@ -137,12 +138,20 @@ lillie.test(x); lillie.test(y)</code></pre>
 <p>Thus, as the <span class="math">\(p\)</span>-value for <span class="math">\(y\)</span> is less than <span class="math">\(10^{-3}\)</span>, we can conclude with <span class="math">\(&gt;99.9\)</span>% confidence that <span class="math">\(y\)</span> was NOT drawn from a normal distribution (and phew! as we generated <span class="math">\(y\)</span> from a Cauchy distribution). Moreover, as the <span class="math">\(p\)</span>-value for <span class="math">\(x\)</span> was <span class="math">\(&gt;0.2\)</span>, we cannot conclude with any credible confidence that it was not drawn from a normal distribution (this is also a sanity check).</p>
 <p>for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: <a href="http://statsthewayilikeit.com/about/is-my-data-normally-distributed/" class="uri">http://statsthewayilikeit.com/about/is-my-data-normally-distributed/</a>)</p>
 </div>
+<div id="one-sample-t-test" class="section level3">
+<h3><span class="header-section-number">1.1.2</span> One sample t-test</h3>
+<p>I am measuring a quantity in an experiment (e.g., a mutant) for which there is a control. This quantity has a specific value <span class="math">\(\mu\)</span> and my measurement process has a normal error (e.g., amount of protein using a fluorospectrometer). Let <span class="math">\(x_1,x_2,\ldots,x_n\)</span> be <span class="math">\(n\)</span> independent samples: this means that they will be drawn from the distribution <span class="math">\(N( \mu , \sigma^2)\)</span>. We want to answer the question: is the amount <span class="math">\(\mu\)</span> in the (mutant) experiment different from that in the control <span class="math">\(\mu_0\)</span>? To answer this, the null hypothesis is <span class="math">\[H_0: \mu = \mu_0.\]</span> Then the alternative hypothesis is <span class="math">\[H_1: \mu \neq \mu_0.\]</span> (Include a (beeswarm?) plot here of data and null hypothesis) To test the null hypothesis, we consider the t-statistic <span class="math">\[T = \frac{|\bar{x}-\mu_0|}{\text{SEM}}.\]</span> Intuition: this t-statistic measures how many “standard errors” the sample mean is away from the (null) hypothesized mean.</p>
+<p>Formalism: this statistic has the Student t-distribution <span class="math">\(\text{Pr}(t)\)</span> with <span class="math">\(n-1\)</span> degrees of freedom. The p-value is defined as the area under the curve where <span class="math">\(|t|&gt;|T|\)</span> (include relevant plot here).</p>
+<p>Example: if the p-value <span class="math">\(&lt;0.05\)</span>, we conclude with <span class="math">\(95\%\)</span> confidence that <span class="math">\(\mu \neq \mu_0\)</span>. In general, if the p-value <span class="math">\(&lt;\alpha\)</span>, then we can conclude with <span class="math">\(100(1-\alpha)\%\)</span> confidence that <span class="math">\(\mu\neq\mu_0\)</span>.</p>
+<p>Question: Given <span class="math">\(n=16\)</span> data points, what is the minimum effect size <span class="math">\(|\bar{x} - \mu_0|\)</span> that you can detect at the <span class="math">\(95\%\)</span> confidence level?</p>
+<p>Answer: at the <span class="math">\(95\%\)</span> confidence level, we require that <span class="math">\(T&gt;2\)</span> (actually a bit more); but <span class="math">\(T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}\)</span>. Combining these and plugging in <span class="math">\(n = 16\)</span>, we see that <span class="math">\(|x - \mu_0| &gt; \sigma/2\)</span>. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the <span class="math">\(95\%\)</span> confidence level!</p>
+</div>
 <div id="two-sample-welchs-t-test" class="section level3">
-<h3><span class="header-section-number">1.1.2</span> Two sample (Welch’s) t-test</h3>
+<h3><span class="header-section-number">1.1.3</span> Two sample (Welch’s) t-test</h3>
 <p>given a control and an experiment (e.g. a mutant).</p>
 </div>
 <div id="f-test" class="section level3">
-<h3><span class="header-section-number">1.1.3</span> F-test</h3>
+<h3><span class="header-section-number">1.1.4</span> F-test</h3>
 <p><span style="color:red">Fitting statistical models – so perhaps in the next class? E.g. (wiki) one-way ANOVA. Ah-hah, goo, see 1st example in wiki, will be good here, then use again next class?</span></p>
 <p>The following is primarily from Rice, Ch. 12: let’s say that we have <span class="math">\(I\)</span> groups, each with <span class="math">\(J\)</span> samples, and let <span class="math">\(Y_{ij}=\)</span> the <span class="math">\(j\)</span> observation in the <span class="math">\(i\)</span>th group. The statistical model is</p>
 <p><span class="math">\[Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.\]</span> Assumption: <span class="math">\(\varepsilon_{ij}\)</span> are i.i.d Gaussian; we also normalize such that <span class="math">\(\sum\alpha_i = 0\)</span>. Then <span class="math">\[SS_{TOT} = SS_{W} + SS_{B},\]</span></p>
@@ -169,7 +178,7 @@ beeswarm.plot + geom_point(size = 2 , aes(colour = col))</code></pre>
 </div>
 </div>
 <div id="correction-methods-e.g.-the-bonferroni-correction" class="section level3">
-<h3><span class="header-section-number">1.1.4</span> Correction Methods (E.g. the Bonferroni Correction)</h3>
+<h3><span class="header-section-number">1.1.5</span> Correction Methods (E.g. the Bonferroni Correction)</h3>
 <p>what if we are comparing very, many mutants? then one may look statistically significant merely due to statistical fluctuations.</p>
 </div>
 </div>
