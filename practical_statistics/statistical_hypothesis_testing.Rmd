@@ -135,7 +135,41 @@ Question: Given $n=16$ data points, what is the minimum effect size $|\bar{x} - 
 Answer: at the $95\%$ confidence level, we require that $T>2$ (actually a bit more); but 
 $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
 
-###Two sample (Welch's) t-test
+
+###Welch's t-test
+
+We want to see whether or not there is a significant difference between the means of 2 sets of measurements $x_1 , x_2 , \ldots , x_n$ & $y_1 , y_2 , \ldots , y_m$.
+
+```{r , message=FALSE , echo=FALSE , include=FALSE }
+bs1 <- beeswarm(rnorm(250),
+         pch = 16 )
+bs2 <- beeswarm(rnorm(250,1),
+                pch = 16 ) 
+bs1$type <- "control"
+bs2$type <- "mutant"
+bs2$x <- bs2$x +0.4
+bs <- rbind(bs1 , bs2)
+```
+
+```{r , message=FALSE , echo=FALSE }
+ggplot( bs , aes( x = x , y =y , color = type )) + geom_point(size=3) +
+  xlab("data") + ylab("value") 
+  scale_x_continuous(breaks = c(1:2), 
+                    labels = c("control" , "mutant"), expand = c(0, 0.5)) +
+  theme(axis.title=element_text(size=22) ,
+        axis.text=element_text(size=22))
+```
+The t-statistic we use in this case is
+$$T = \frac{|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}$$
+and the degrees of freedom $\nu$ is approximated by the *Welch-Satterthwaite equation*:
+$$\nu \approx \frac{(\text{SEM}_x^2 + \text{SEM}_y^2)^2}{\text{SEM}_x^4/(n-1) + 
+\text{SEM}_y^4/(n-1)}$$
+
+See Welch, B. L. (1947), "The generalization of "student's" problem when several different population variances are involved.", Biometrika 34: 28–35.  & https://en.wikipedia.org/wiki/Welch%27s_t_test (any easy reference: text book? Hastie?)
+
+N.b. different variances. If variances are same & as well as sample size, use the ...
+
+###Two sample t-test
 
 given a control and an experiment (e.g. a mutant).
 
