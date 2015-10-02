@@ -103,7 +103,19 @@ I am measuring a quantity in an experiment (e.g., a mutant) for which there is a
 $$H_0: \mu = \mu_0.$$
 Then the alternative hypothesis is
 $$H_1: \mu \neq \mu_0.$$
-(Include a (beeswarm?) plot here of data and null hypothesis) To test the null hypothesis, we consider the t-statistic
+(Include a (beeswarm?) plot here of data and null hypothesis).
+
+```{r , message=FALSE , echo=TRUE}
+library(beeswarm)
+bs1 <- beeswarm(rnorm(250),
+         pch = 16 , do.plot = TRUE)
+bs1$type <- "mutant"
+ggplot( bs1 , aes( x = x , y =y , color = type )) + geom_point(size = 2) +
+  xlab("data") + ylab("value") 
+```
+
+
+To test the null hypothesis, we consider the t-statistic
 $$T = \frac{|\bar{x}-\mu_0|}{\text{SEM}}.$$
 Intuition: this t-statistic measures how many "standard errors" the sample mean is away from the (null) hypothesized mean.
 
