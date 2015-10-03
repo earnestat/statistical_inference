@@ -178,6 +178,21 @@ To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/
 
 <blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred. Also, there are many cases where the variances of the two experiments are different - e.g. if you are measuring something using two different techniques.</p></blockquote>
 
+###Paired t-tests and Blocking
+<span style="color:red">Perhaps motivate this at the end of the previous section?</span>
+
+<h4>Paired t-test</h4>
+
+In the wise words of Joe Howard, **"I recommend, whenever possible, designing experiments so you can use a paired t-test."** Why would he say this?
+
+Well, a two-sample paired t-test is a regular two-sample t-test in which each $x_i$ (control) has a corresponding $y_i$ (experiment). The easiest way to achieve this is by performing the control and experiment together a number of times so that all conditions are the same for each $x_i$ and $y_i$ (besides the one variable corresponding to the experiment, e.g., a genetic knockdown). The you just use the one-sample t-test on the differences $\{x_i - y_i\}$ with the null hypothesis that $\mu_{X-Y}=0$: BOOM!
+
+Example: Provide an example (with a Figure).
+
+<h4>Blocking & Randomized Block Design</h4>
+
+Intuition: Let's say that you do a bunch of controls and experiments under slightly different conditions (e.g. different days) -- then you want to 'block' together those done under similar conditions. More to come. Watch this space.
+
 ###F-test
  
 <span style="color:red">The headings may need to be organized slightly differently.</span>

@@ -71,8 +71,9 @@ img {
 <li><a href="#one-sample-t-test"><span class="toc-section-number">1.1.2</span> One sample t-test</a></li>
 <li><a href="#welchs-t-test"><span class="toc-section-number">1.1.3</span> Welch’s t-test</a></li>
 <li><a href="#two-sample-t-test"><span class="toc-section-number">1.1.4</span> Two sample t-test</a></li>
-<li><a href="#f-test"><span class="toc-section-number">1.1.5</span> F-test</a></li>
-<li><a href="#correction-methods-e.g.-the-bonferroni-correction"><span class="toc-section-number">1.1.6</span> Correction Methods (E.g. the Bonferroni Correction)</a></li>
+<li><a href="#paired-t-tests-and-blocking"><span class="toc-section-number">1.1.5</span> Paired t-tests and Blocking</a></li>
+<li><a href="#f-test"><span class="toc-section-number">1.1.6</span> F-test</a></li>
+<li><a href="#correction-methods-e.g.-the-bonferroni-correction"><span class="toc-section-number">1.1.7</span> Correction Methods (E.g. the Bonferroni Correction)</a></li>
 </ul></li>
 <li><a href="#analysis-of-variance-anova"><span class="toc-section-number">1.2</span> Analysis of Variance (ANOVA)</a></li>
 </ul></li>
@@ -173,8 +174,22 @@ Importantly, it could happen that the difference is significant by the unpaired 
 </p>
 </blockquote>
 </div>
+<div id="paired-t-tests-and-blocking" class="section level3">
+<h3><span class="header-section-number">1.1.5</span> Paired t-tests and Blocking</h3>
+<p><span style="color:red">Perhaps motivate this at the end of the previous section?</span></p>
+<h4>
+Paired t-test
+</h4>
+<p>In the wise words of Joe Howard, <strong>“I recommend, whenever possible, designing experiments so you can use a paired t-test.”</strong> Why would he say this?</p>
+<p>Well, a two-sample paired t-test is a regular two-sample t-test in which each <span class="math">\(x_i\)</span> (control) has a corresponding <span class="math">\(y_i\)</span> (experiment). The easiest way to achieve this is by performing the control and experiment together a number of times so that all conditions are the same for each <span class="math">\(x_i\)</span> and <span class="math">\(y_i\)</span> (besides the one variable corresponding to the experiment, e.g., a genetic knockdown). The you just use the one-sample t-test on the differences <span class="math">\(\{x_i - y_i\}\)</span> with the null hypothesis that <span class="math">\(\mu_{X-Y}=0\)</span>: BOOM!</p>
+<p>Example: Provide an example (with a Figure).</p>
+<h4>
+Blocking &amp; Randomized Block Design
+</h4>
+<p>Intuition: Let’s say that you do a bunch of controls and experiments under slightly different conditions (e.g. different days) – then you want to ‘block’ together those done under similar conditions. More to come. Watch this space.</p>
+</div>
 <div id="f-test" class="section level3">
-<h3><span class="header-section-number">1.1.5</span> F-test</h3>
+<h3><span class="header-section-number">1.1.6</span> F-test</h3>
 <p><span style="color:red">The headings may need to be organized slightly differently.</span></p>
 <p>The following is primarily from Rice, Ch. 12: let’s say that we have <span class="math">\(I\)</span> groups, each with <span class="math">\(J\)</span> samples, and let <span class="math">\(Y_{ij}=\)</span> the <span class="math">\(j\)</span> observation in the <span class="math">\(i\)</span>th group. The statistical model is</p>
 <p><span class="math">\[Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.\]</span> Assumption: <span class="math">\(\varepsilon_{ij}\)</span> are i.i.d Gaussian; we also normalize such that <span class="math">\(\sum\alpha_i = 0\)</span>. Then <span class="math">\[SS_{TOT} = SS_{W} + SS_{B},\]</span></p>
@@ -201,7 +216,7 @@ beeswarm.plot + geom_point(size = 2 , aes(colour = col))</code></pre>
 </div>
 </div>
 <div id="correction-methods-e.g.-the-bonferroni-correction" class="section level3">
-<h3><span class="header-section-number">1.1.6</span> Correction Methods (E.g. the Bonferroni Correction)</h3>
+<h3><span class="header-section-number">1.1.7</span> Correction Methods (E.g. the Bonferroni Correction)</h3>
 <p>what if we are comparing very, many mutants? then one may look statistically significant merely due to statistical fluctuations.</p>
 </div>
 </div>
