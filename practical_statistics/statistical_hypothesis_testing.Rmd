@@ -138,7 +138,7 @@ $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n 
 
 ###Welch's t-test
 
-We want to see whether or not there is a significant difference between the means of 2 sets of measurements $x_1 , x_2 , \ldots , x_n$ & $y_1 , y_2 , \ldots , y_m$.
+We want to see whether or not there is a significant difference between the means of 2 sets of measurements $x_1 , x_2 , \ldots , x_n$ (control) & $y_1 , y_2 , \ldots , y_m$ (experiment).
 
 ```{r , message=FALSE , echo=FALSE , include=FALSE }
 bs1 <- beeswarm(rnorm(250),
@@ -167,15 +167,20 @@ $$\nu \approx \frac{(\text{SEM}_x^2 + \text{SEM}_y^2)^2}{\text{SEM}_x^4/(n-1) +
 
 See Welch, B. L. (1947), "The generalization of "student's" problem when several different population variances are involved.", Biometrika 34: 28–35.  & https://en.wikipedia.org/wiki/Welch%27s_t_test (any easy reference: text book? Hastie?)
 
-N.b. different variances. If variances are same & as well as sample size, use the ...
+N.b. If the population variances are same & so are the sample sizes, then we can do better!
 
 ###Two sample t-test
 
-given a control and an experiment (e.g. a mutant).
+The two-sample t-test assumes that the number of measurements are the same (i.e., $n=m$) and that the two distributions have the same variance  (i.e., $\text{SD}_x = \text{SD}_y$). In this case, we can use all the measurements to estimate the underlying population variance such that $\text{SEM} = \sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}/2$ and thus
+$$T = \frac{2|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}.$$
+
+To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/ENAS518 - MATHEMATICAL METHODS IN BIOPHYSICS at Yale University, Fall 2013)
+
+<blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred. Also, there are many cases where the variances of the two experiments are different - e.g. if you are measuring something using two different techniques.</p></blockquote>
 
 ###F-test
  
-<span style="color:red">Fitting statistical models -- so perhaps in the next class? E.g. (wiki) one-way ANOVA. Ah-hah, goo, see 1st example in wiki, will be good here, then use again next class?</span>
+<span style="color:red">The headings may need to be organized slightly differently.</span>
 
 The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
 
