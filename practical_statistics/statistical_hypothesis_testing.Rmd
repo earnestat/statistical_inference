@@ -1,21 +1,20 @@
 ---
 title: "Notes on practical statistics II"
 output:
-  html_document:
+  pdf_document:
     toc: true
     fig_caption: true
     number_sections: true
 ---
-#Statistical Hypothesis Testing (normality tests, t-tests, F-tests, ANOVA)
 
-Two key aspects of practical stastics:
+#Statistical Hypothesis Testing: An Intuition Towards
+
+Two key aspects of practical stastics are:
 
 - statistical hypothesis testing;
 - model fitting (parameter estimation) & model selection.
 
 In this note, we will deal with the first aspect, statistical hypothesis testing.
-
-##Statistical Hypothesis Testing: An Intuition Towards
 
 First: what is an hypothesis? Five examples are:
 
@@ -29,7 +28,7 @@ Definition (Oxford Dictionary, online): an hypothesis "[a] supposition or propos
 
 Now: what is statistial hypothesis testing? It is merely testing how likely a hypothesis is, given the data at hand.
 
-##Essential question: is my data normally distributed?
+#Essential question: is my data normally distributed?
 
 Some statisticians and physicists would baulk at this question (I've seen it first-hand, in fact). They would tell you (and they would be correct, in all their pedantry) that no data is normally distributed, but some is so close to being normally distributed that it is not statistically different to a normal distribution.
 
@@ -97,9 +96,9 @@ Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99
 
 for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
 
-##t-tests
+#Student's t-tests
 
-###One sample t-test
+##One sample t-test
 
 I am measuring a quantity in an experiment (e.g., a mutant) for which there is a control. This quantity has a specific value $\mu$ and my measurement process has a normal error (e.g., amount of protein using a fluorospectrometer). Let $x_1,x_2,\ldots,x_n$ be $n$ independent samples: this means that they will be drawn from the distribution $N( \mu , \sigma^2)$. We want to answer the question: is the amount $\mu$ in the (mutant) experiment different from that in the control $\mu_0$? To answer this, the null hypothesis is
 $$H_0: \mu = \mu_0.$$
@@ -138,7 +137,7 @@ Answer: at the $95\%$ confidence level, we require that $T>2$ (actually a bit mo
 $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
 
 
-###Welch's t-test
+##Welch's t-test
 
 We want to see whether or not there is a significant difference between the means of 2 sets of measurements $x_1 , x_2 , \ldots , x_n$ (control) & $y_1 , y_2 , \ldots , y_m$ (experiment).
 
@@ -171,7 +170,7 @@ See Welch, B. L. (1947), "The generalization of "student's" problem when several
 
 N.b. If the population variances are same & so are the sample sizes, then we can do better!
 
-###Two sample t-test
+##Two sample t-test
 
 The two-sample t-test assumes that the number of measurements are the same (i.e., $n=m$) and that the two distributions have the same variance  (i.e., $\text{SD}_x = \text{SD}_y$). In this case, we can use all the measurements to estimate the underlying population variance such that $\text{SEM} = \sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}/2$ and thus
 $$T = \frac{2|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}.$$
@@ -180,7 +179,7 @@ To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/
 
 <blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred. Also, there are many cases where the variances of the two experiments are different - e.g. if you are measuring something using two different techniques.</p></blockquote>
 
-###Paired t-tests and Blocking
+##Paired t-tests and Blocking
 <span style="color:red">Perhaps motivate this at the end of the previous section?</span>
 
 <h4>Paired t-test</h4>
@@ -195,10 +194,27 @@ Example: Provide an example (with a Figure).
 
 Intuition: Let's say that you do a bunch of controls and experiments under slightly different conditions (e.g. different days) -- then you want to 'block' together those done under similar conditions. More to come. Watch this space.
 
-##F-test
+
+
+#Correction Methods (E.g. the Bonferroni Correction)
+
+Problem: When you are performing and comparingmany experiments, there is a problem. For example, let's take the absurd case in which you perform an experiment that has no effect 20 times. We know that 5% of the time you will get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments! We then need a stricter criterion for statistical significance: enter the Bonferroni Correction.
+
+The Bonferroni Correction: let's say that you perform $n$ experiments and you want a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). We reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of tht t-test).
+
+Example: Give an example here. Make a figure. See https://stat.ethz.ch/R-manual/R-patched/library/stats/html/p.adjust.html for implementation.
+
+Note: this is a conservative test, in the sense that it is prone to producing false negatives (*type II errors*).
+
+
+#F-test
 <span style="color:red">The headings may need to be organized slightly differently.</span>
 
-###The general setting: distinguishing multiple groups of numerical data with distinct means.
+Give the general idea here.
+
+##Example 1: ANOVA (analysis of variance).
+
+<h4>Distinguishing multiple groups of numerical data with distinct means.</h4>
 
 The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
 
@@ -234,7 +250,7 @@ beeswarm.plot <- ggplot(beeswarm, aes(x, y) , color = col ) +
 beeswarm.plot + geom_point(size = 2 , aes(colour = col))
 ```
 
-###Example: is my data unimodal OR bimodal?
+##Example 2: testing for multimodality.
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
 ##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
@@ -261,19 +277,3 @@ Examples: Give a few examples.
 
 
 For more, see Larkin R. P. (1979). An algorithm for assessing bimodality vs. unimodality in a univariate distribution. Behav. Res. Methods Instrum. 11, 467–468.
-
-
-
-##Correction Methods (E.g. the Bonferroni Correction)
-
-Problem: When you are performing and comparingmany experiments, there is a problem. For example, let's take the absurd case in which you perform an experiment that has no effect 20 times. We know that 5% of the time you will get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments! We then need a stricter criterion for statistical significance: enter the Bonferroni Correction.
-
-The Bonferroni Correction: let's say that you perform $n$ experiments and you want a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). We reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of tht t-test).
-
-Example: Give an example here. Make a figure. See https://stat.ethz.ch/R-manual/R-patched/library/stats/html/p.adjust.html for implementation.
-
-Note: this is a conservative test, in the sense that it is prone to producing false negatives (*type II errors*).
-
-##Analysis of Variance (ANOVA)
-
-aaaaaaand here we go!
