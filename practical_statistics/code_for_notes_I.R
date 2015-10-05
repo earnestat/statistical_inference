@@ -104,3 +104,18 @@ p + geom_boxplot() #boxplot
 
 #Note -- see here for common, useful R commands:
 #http://personality-project.org/r/r.commands.html
+
+###########################################
+###THE CENTRAL LIMIT THEOREM
+###########################################
+
+
+##Here we perform a simple demonstration of the Central Limit Theorem
+##Random Variable defined by p(0)=p(1)=0.5. Draw n samples (e.g. n = 1000)
+##& retrieve the mean. Do this m times (e.g. m = 10,000) and plot 
+##the distribution of means:
+n <- 1000 #number of samples for each trail
+m <- 10000 #number of trails
+x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
+qplot(x , binwidth = 0.005) #plot histogram of means
+#also plot the Gaussian with mean, SD given by the data stored in x
