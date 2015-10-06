@@ -114,8 +114,38 @@ p + geom_boxplot() #boxplot
 ##Random Variable defined by p(0)=p(1)=0.5. Draw n samples (e.g. n = 1000)
 ##& retrieve the mean. Do this m times (e.g. m = 10,000) and plot 
 ##the distribution of means:
-n <- 1000 #number of samples for each trail
-m <- 10000 #number of trails
+n <- 1000 #number of samples for each trial
+m <- 10000 #number of trials
 x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
 qplot(x , binwidth = 0.005) #plot histogram of means
 #also plot the Gaussian with mean, SD given by the data stored in x
+
+
+##Here we perform a simple demonstration of the Central Limit Theorem
+##We estimate pi (ratio of circle circumference to diameter) using a Monte Carlo method:
+##the method is to drop n points inside a square of side length 2, then see how many points
+##fall inside the circle of radius 1 inside the square. As area(square) = 4 & area(circle) = pi
+##an estimate for pi is = 4*(number of points in circle)/(number of points in square).
+##We then use this procedure to estimate pi m times and look at the statistics & distribution
+##Of these estimates.
+n <- 2000 #number of points to drop in the square
+m <- 1000 #number of trials
+#we write a small function here to approximate pi by the method described above
+approx_pi <- function(n){
+  points <- replicate(2, runif(n))  #generate points in the square
+  distances <- apply( points , 1 , function(x) sqrt(x[1]^2 + x[2]^2)) #compute distance of each point from centre
+  #see here for more on 'apply': 
+  #https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
+  points_in_circle <- sum(distances < 1) #count points in circle
+  pi_approx <- 4*points_in_circle/n #approximate pi
+  return(pi_approx) #function output designated here
+}
+
+x <- replicate(m,approx_pi(n)) #approximate pi m times
+m <- mean(x) #compute mean of your estimates
+qplot( x , binwidth = 0.01) #plot distribution of estimates
+qqnorm(x) #plot q-q plot
+library(nortest) #library for normality test
+lillie.test(x)#perform lilliefors test for normality
+
+
