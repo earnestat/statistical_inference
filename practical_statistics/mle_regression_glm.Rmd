@@ -92,13 +92,22 @@ pl + geom_point(size = 3 , alpha = 1) +
         axis.text=element_text(size=22))
 ```
 
+- You can even simulate it yourself! Wait, you did at the end of the 1st class!
 
-##A digression on *estimators* & *estimation theory*;
+##A slight digression on *estimators* & *estimation theory*;
 
-#Practical application of the CLT
-to get the error on this estimate;
+Suppose there is a fixed parameter $\theta$ that we cannot know directly, for example, the population mean. Then an *estimator* is a function that maps a sample drawn from the population to an estimate of $\theta$. An estimator of $\theta$ is commonly denoted by $\hat{\theta}$. You already know examples of estimators, such as
 
-- You can even simulate it yourself!
+- Sample mean, which is an *estimator* of the population mean;
+- Sample variance, which is an *estimator* of the population variance;
+
+These two estimators are quite different however, in that the sample mean is an *unbiased estimator*, while the sample variance is a *biased estimator*. Let me explain: assume that we're sampling a distribution $P_\theta(x)=P(x|\theta)$ (where $\theta$ is some real number) and we have an estimator $\hat{\theta}$ of $\theta$. Then, recalling that $\text{E}_\theta[\hat{\theta}]$ is the *expected value* (or *mean*) of $\hat{\theta}$ over all possible samples drawn from $P_\theta(x)$, we define the *bias* of the estimator $\hat{\theta}$ to be
+$$\text{Bias}_\theta[\hat{\theta}] = \text{E}_\theta[\hat{\theta}] - \theta.$$
+If the bias of an estimator is zero, we call it *unbiased*. Otherwise, we call it *biased*.
+Examples:
+
+- The sample mean $\bar{x} =\sum x_i/n$ is an unbiased estimator;
+- The (uncorrected) sample variance $=\sum(x_i - \bar{x})^2/n$ is a biased estimator: the usual definition of sample variance $=\sum(x_i - \bar{x})^2/(n-1)$ is, however, an unbiased estimator of sample variance.
 
 #(simple) Linear Regression basics
 
