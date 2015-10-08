@@ -64,11 +64,11 @@ First notice that $\hat{p}=k/n$ is also $S_n$, an estimate of the mean of the di
 
 Note: the standard deviation of this estimate is a maximum when $p=0.5$, that is, the largest uncertainty occurs when the coin is fair!
 
-Moreover, as $\hat{p}$ is normally distributed, $95%$ confidence intervals on the estimate $\hat{p}$ are given by
+Moreover, as $\hat{p}$ is normally distributed, $95\%$ confidence intervals on the estimate $\hat{p}$ are given by
 $$\hat{p}\pm 1.96\times\text{SD}(\hat{p}).$$
 When $p = 0.5$, this is
 $\approx  \frac{k}{n} \pm \frac{1}{\sqrt{n}}$ and when $n=400$, for example, this is $\approx 0.5 \pm 0.05$.
-If, on the other hand, $P(H)=0.75$, $1.96\times\text{SD}\approx 1/\sqrt{4n/3}$ and to get the same size $95%$ confidence intervals, we only require 300 tosses of the coin.
+If, on the other hand, $P(H)=0.75$, $1.96\times\text{SD}\approx 1/\sqrt{4n/3}$ and to get the same size $95\%$ confidence intervals, we only require 300 tosses of the coin.
 
 ```{r , fig.width = 9 , fig.height = 5 , message = FALSE , echo=FALSE}
 p1 <- 0.5
@@ -165,10 +165,85 @@ These points require slightly more explication: if the mean of the residuals in 
 ![Figure demsontrating residual bias and heteroscedasticity](residuals.png)
 </div>
 
+If assumptions are violated, not all is lost!! You just need to be a bit more cleverer in how you choose and or fit your model: it could be a problem with the signal (choose different model) OR it could be a problem with the noise (choose different noise, i.e., not OLS).
 
-- method 
-- residuals etc...
-- including error bars on parameter estimates, boostrapping --yes!!).
+
+Coming up:
+
+- Anscombe's Quartet;
+- Application of of fitting a power-law to log-log data;
+- Using bootstrapping to get error estimates on your parameters.
+
+###Anscombe's Quartet demonstrates violations of OLS assumptions
+
+Anscombe's Quarter consists of four datasets, each consisting of 11 data points. Each data set has the same $\bar{x}, \bar{y}, \text{SD}_x , \text{SD}_y$, correlation coefficient and linear regression line (OLS):
+
+```{r , fig.width = 8 , fig.height = 6 , message = FALSE , echo = FALSE}
+require(gridExtra)
+attach( anscombe )
+data <-  anscombe
+###########
+#in which we check it all out:
+###########
+#layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page 
+###########
+#do it 1
+###########
+m1 <- glm( y1~x1 , data = data , family = gaussian )
+
+plot1 <- qplot( x1 , y1 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 2
+###########
+m2 <- glm( y2~x2 , data = data , family = gaussian )
+plot2 <- qplot( x2 , y2 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 3
+###########
+m3 <- glm( y3~x3 , data = data , family = gaussian )
+
+plot3 <- qplot( x3 , y3 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 4
+###########
+m4 <- glm( y4~x4 , data = data , family = gaussian )
+plot4 <- qplot( x4 , y4 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+grid.arrange(plot1, plot2, plot3, plot4 , ncol=2)
+```
+
+What would the residuals look like here?? Check 'em out:
+
+```{r , fig.width = 8 , warning = FALSE, fig.height = 6 , message = FALSE , echo = FALSE}
+res1 <-ggplot( m1 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res1
+res1 <-ggplot( m1 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res2
+res2 <-ggplot( m2 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res3
+res3 <-ggplot( m3 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res4
+res4 <-ggplot( m4 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+grid.arrange(res1, res2, res3, res4 , ncol=2)
+```
 
 
 
