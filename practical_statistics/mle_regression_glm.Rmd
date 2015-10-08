@@ -153,6 +153,19 @@ $$P(\varepsilon_i) = \frac{1}{\sigma\sqrt{(2\pi)}}\text{exp}(-\frac{\varepsilon_
 
 Then the OLS estimates $\hat{a},\hat{b}$ are none other than the maximum likelihood estimates for the parameters $a,b$ (see Appendix for a proof of this).
 
+**ESSENTIAL:** In performing OLS, you have assumed:
+
+- Your residuals are Gaussian with a mean of $0$;
+- They are independent of one another (i.e., uncorrelated);
+- Neither the mean nor the standard deviation is a function of $x$.
+
+These points require slightly more explication: if the mean of the residuals in any thin vertical strip is non-zero, we call the residuals *biased* (otherwise, *unbiased*); if the variance of the residuals differs as a function of $x$, we call the residuals *heteroscedastic* (otherwise, *homoscedastic*):
+
+<div style="horizontal-align:middle; text-align:center; width:400px; height=300px">
+![Figure demsontrating residual bias and heteroscedasticity](residuals.png)
+</div>
+
+
 - method 
 - residuals etc...
 - including error bars on parameter estimates, boostrapping --yes!!).
