@@ -115,6 +115,7 @@ The challenge: we have some data $D=\{x_i,y_i\}$ that looks like it could be lin
 
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+set.seed(42)
 m <- 5
 b <- 2
 x <- seq( 0 , 1 , by = 0.01)
@@ -136,22 +137,27 @@ $$SS_{red} = \sum\limits_i\varepsilon_i^2 = \sum\limits_i(y_i-ax_i+b)^2$$
 
 and the OLS method for estimating $a,b$ is to find the parameters $\hat{a},\hat{b}$ that minimize $SS_{red}$. Notes: (i) in this case of simple (one independent variable) linear regression, there is an analytic solution for the estimates: $\hat{b} = r_{xy}\times\frac{\text{SD}_y}{\text{SD}_x}$ and $\hat{a} = \bar{y} - \hat{b}\bar{x}$, where $r_{xy}$ is the sample correlation coefficient between the $x_i$ and $y_i$; (ii) In more complex situations of *least-squares curve-fitting*, minimization is performed via an algorithm called *gradient descent*: if you're interested, check it out.
 
+Key question: can we get error bars on these estimates? The answer is yes and wait to see how. R will readily plot the OLS estimate for you, along with $95\%$ confidence intervals:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+p + geom_point() + stat_smooth( method = "lm" )
+```
+
+The more urgent questions we need to answer are 'Why and when does this OLS method work?' and 'What assumptions underly this method?' People (and software!) tend to apply this method blindly and to not realise that their approach may violate any number of its underlying assumptions, rendering it invalid. So when is it appropriate to use the ordinary least squares method and why?
+
+###The assumptions underlying OLS
+
+Make the assumption that each $y_i = ax_i + b + \varepsilon_i$ where $a$ and $b$ are real numbers and the $\varepsilon_i$ are  drawn independently from $N(0,\sigma^2)$, the Gaussian distribution with mean $0$ and variance $\sigma^2$:
+
+$$P(\varepsilon_i) = \frac{1}{\sigma\sqrt{(2\pi)}}\text{exp}(-\frac{\varepsilon_i}{2\sigma^2}).$$
+
+Then the OLS estimates $\hat{a},\hat{b}$ are none other than the maximum likelihood estimates for the parameters $a,b$ (see Appendix for a proof of this).
 
 - method 
 - residuals etc...
 - including error bars on parameter estimates, boostrapping --yes!!).
 
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
-m <- 5
-b <- 2
-x <- seq( 0 , 1 , by = 0.01)
-err <- rnorm( length(x) ) #normally distributed error
-y <- m*x + b + err
-df <- as.data.frame( cbind( x , y ))
-p <- ggplot( df , aes( x , y ))
-#p + geom_point()
-p + geom_point() + stat_smooth( method = "lm" )
-```
+
 
 
 #Generalize to Least Squares Curve Fitting ($\chi^2$-test);
