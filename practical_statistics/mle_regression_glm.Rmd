@@ -111,9 +111,48 @@ Examples:
 
 #(simple) Linear Regression basics
 
+The challenge: we have some data $D=\{x_i,y_i\}$ that looks like it could be linear, with some noise:
+
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+m <- 5
+b <- 2
+x <- seq( 0 , 1 , by = 0.01)
+err <- rnorm( length(x) ) #normally distributed error
+y <- m*x + b + err
+df <- as.data.frame( cbind( x , y ))
+p <- ggplot( df , aes( x , y ))
+p + geom_point()
+#p + geom_point() + stat_smooth( method = "lm" )
+```
+
+We form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*:
+
+##Ordinary least squares (OLS)
+
+For any $a,b$ we can compute $\varepsilon_i^2$, the square of distance between the y-coordinate of the data $y_i$ and the prediction of the model $ax_i+b$: this distance $\varepsilon_i$ is called the $i$th *residual* and $\varepsilon_i^2=(y_i-ax_i+b)^2$. The sum of the squares of the residuals is given by
+
+$$SS_{red} = \sum\limits_i\varepsilon_i^2 = \sum\limits_i(y_i-ax_i+b)^2$$
+
+and the OLS method for estimating $a,b$ is to find the parameters $\hat{a},\hat{b}$ that minimize $SS_{red}$. Notes: (i) in this case of simple (one independent variable) linear regression, there is an analytic solution for the estimates: $\hat{b} = r_{xy}\times\frac{\text{SD}_y}{\text{SD}_x}$ and $\hat{a} = \bar{y} - \hat{b}\bar{x}$, where $r_{xy}$ is the sample correlation coefficient between the $x_i$ and $y_i$; (ii) In more complex situations of *least-squares curve-fitting*, minimization is performed via an algorithm called *gradient descent*: if you're interested, check it out.
+
+
 - method 
 - residuals etc...
 - including error bars on parameter estimates, boostrapping --yes!!).
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+m <- 5
+b <- 2
+x <- seq( 0 , 1 , by = 0.01)
+err <- rnorm( length(x) ) #normally distributed error
+y <- m*x + b + err
+df <- as.data.frame( cbind( x , y ))
+p <- ggplot( df , aes( x , y ))
+#p + geom_point()
+p + geom_point() + stat_smooth( method = "lm" )
+```
+
 
 #Generalize to Least Squares Curve Fitting ($\chi^2$-test);
 
