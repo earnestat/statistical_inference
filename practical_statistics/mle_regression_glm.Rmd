@@ -277,8 +277,8 @@ Power laws occur all throughout biology (see Kleiber's Law & Geoff West papers);
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
 set.seed(100)
 n <- 0.55
-x <- seq( 0 , 200 , by = 2)
-err <- rnorm( length(x) ) #normally distributed error
+x <- seq( 0 , 1000 , by = 2)
+err <- rnorm( length(x) , mean = 0 , sd = 1) #normally distributed error
 y <- x**n + err
 df1 <- as.data.frame( cbind( x , y ))
 p <- ggplot( df1 , aes( x , y ))
@@ -286,13 +286,42 @@ p + geom_point()
 #p + geom_point() + stat_smooth( method = "lm" )
 ```
 
-Discuss log-log + OLS.
+If you have two variables related by a power law and plot the data on log-log axes, the result is linear:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , warning=FALSE}
+p + geom_point() + scale_x_log10() + scale_y_log10()
+```
 
-Then move to nonlinear curve-fitting and follow this example: http://www.walkingrandomly.com/?p=5254
+This is due to our basic log laws: (i) $\text{log}(ab) = \text{log}(a) + \text{log}(b)$ & (ii) $\text{log}(a^b) = b\text{log}(a)$. it follows from these that if two variable are related by a power law $y=ax^n$, then their log's are related linearly:
+$$\text{log}(y) = \text{log}(a) + n\text{log}(x).$$
+
+Now, in the literature, a lot of people fit power laws by transforming to log axes and then performing a linear fit.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE ,warning=FALSE}
+df2 <- df1
+df2$logx <- log(df2$x)
+df2$logy <- log(df2$y)
+df3 <- subset(df2 , !is.infinite(df2$logx) & !is.na(df2$logy))
+p <- ggplot( df3 , aes( logx , logy ))
+p + geom_point() + stat_smooth( method = "lm" )
+logfit <- lm( logy ~ logx , data = df3 )
+reslogfit <-ggplot( logfit , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+reslogfit
+```
+
+Looking at the residuals we that, in this case, the model wasn't great! Instead of fitting a line to the log-transformed data, we should then try to fit a nonlinear curve (power law) to the non-transformed data:
+
+To do so, we use a nonlinear least-squares curve-fitting method (we follow this example: http://www.walkingrandomly.com/?p=5254):
 
 ```{r , fig.width = 4 , fig.height = 3 }
-# some starting values
+# a starting value
 n1 <- 10
+#plot the fit
+ggplot(data=df1, aes( x , y)) + geom_point() + 
+    geom_smooth(method="nls", formula = y ~ x**n, start=list(n = n1) , se=F ,control = list(maxiter = 500),
+                size = 1) 
 # do the fit
 fit = nls(y ~ x**n, start=list(n = n1) , control = list(maxiter = 500))
 # summarise
