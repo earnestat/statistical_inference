@@ -1,0 +1,109 @@
+---
+title: "Notes on practical statistics IV"
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+    number_sections: true
+---
+<h1>An Introduction to Bayesian Inference</h1>
+
+One Mode of Motivation: we have seen, when estimating parameters, that we can retrieve mean estimates and confidence intervals. But can we get the distribution? One method to do so is Bayesian paramater estimation model fitting.
+
+#Bayes' Theorem
+
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
+
+Easy to prove: so do it.
+
+##Bayes' Theorem and Parameter Estimation
+
+**Example**: biased coin flip with binomial probability $P(H)=\lambda$ and data $D$ consisting of $k$ heads and $n-k$ tails.
+
+**Challenge**: Given the data $D$, we want to estimate the parameter $\lambda$.
+
+**Method**: Using Bayes' Theorem, we see that
+
+$$P(\lambda | D) = \frac{P(D | \lambda)P(\lambda)}{P(D)} \propto P( D | \lambda)P(\lambda).$$
+
+In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)$ the *likelihood* (we've seem this before in MLE) and $P(\lambda | D)$ the *posterior* (distribution). The intuition behind the nomenclature is as follows: the *prior* is the distribution containing our knowledge about $\lambda$ prior to the introduction $D$ & the *posterior* is the distribution containing our knowledge about $\lambda$ after considering the data $D$.
+
+**Note**: What is the prior? Really, what do we know about $\lambda$ before we see any data? Well, as it is a probability, we know that $0 \leq \lambda \leq 1$. If we haven't flipped any coins yet, we don't know much else: so it seems logical that all values of $\lambda$ are equally like, i.e., $P(\lambda) = 1,$ for $0 \leq \lambda \leq 1$. This is known as an *uninformative prior* because it contains little information (there are other uninformative priors we may use in this situation, such as the *Jeffreys prior*, to be discussed later). People who like to hate on Bayesian inference tend to claim that the need to choose a prior makes Bayesian methods somewhat arbitrary, but as we'll now see, if you have enough data, the likelihood dominates over the prior and the latter doesn't matter so much.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+#see here: http://www.r-bloggers.com/r-and-bayesian-statistics/
+library( ggplot2 )
+n <- 100
+k <- 40
+lambda <- seq( 0 , 1 , by = 0.01)
+prior <- rep( 1 , length(lambda))
+likelihood <- lambda**k*(1-lambda)**(n-k)
+posterior <- likelihood*prior
+qplot( lambda , posterior, geom = "line" ) 
+```
+
+What to report:
+
+- The *posterior mode* (note that this is precisely the MLE in the case of a uniform prior);
+- The standard deviation of the posterior if it is approximately Gaussian around the mode;
+- $95\%$ confidence intervals otherwise;
+- Report the distribution!
+
+##Computing the posterior mode & the standard deviation
+
+How dowe find the posterior mode, generally? Some sort of gradient descent (log-space). And standard deviation? Look at the Hessian & the covariance matrices! More details coming.
+
+More complex cases, for example, those with two parameters, need more complex methods. Introduce an example and then discuss MCMC methods.
+
+##Markov Chain Monte Carlo algorithm
+
+**Description**:
+
+
+**Example**:
+
+```{r , fig.width = 6 , fig.height = 6 , message = FALSE , echo=FALSE}
+#see here: http://www.r-bloggers.com/r-and-bayesian-statistics/
+dat <- data.frame(year = c(2016,2012,2008,2004,2000,1996,1992,1988,1984,1980,1976,1972,1968,1964,1960,1956,1952,1948),
+                  gdp.growth = c(NA,1.3,1.3,2.6,8,7.1,4.3,5.2,7.1,-7.9,3,9.8,7,4.7,-1.9,3.2,0.4,7.5),
+                  net.approval = c(NA,-0.8,-37,-0.5,19.5,15.5,-18,10,20,-21.7,5,26,-5,60.3,37,53.5,-27,-6),
+                  two.terms = c(1,0,1,0,1,0,1,1,0,0,1,0,1,0,1,0,1,1),
+                  incumbent.vote = c(NA,52.0,46.3,51.2,50.3,54.7,46.5,53.9,59.2,44.7,48.9,61.8,49.6,61.3,49.9,57.8,44.5,52.4))
+library(MCMCpack)
+breg <- MCMCregress(incumbent.vote ~ gdp.growth + net.approval + two.terms, dat)
+summary(breg); plot(breg)
+```
+
+
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+#see here: http://www.r-tutor.com/bayesian-statistics/openbugs
+library(R2OpenBUGS)
+library(MASS)
+y ~ dbin(p, N)
+p ~ dbeta(1, 1)
+model <- function() {
+    p ~ dbeta(1, 1) # Prior
+    y ~ dbin(p, N) # Likelihood 
+}
+tbl <- table(survey$Smoke) #smoker data
+N <- as.numeric(sum(tbl)) #total number of students
+y <- N - as.numeric(tbl["Never"]) # number that never smoked
+data <- list("N", "y") #data variables
+params <- c("p") #the variable(s) in our model
+inits <- function() { list(p=0.5) } #we initialize p to be 0.5
+#we wrap the initial values inside a list that is to be returned by a #function
+#out <- bugs(data, inits, params, 
+#+    model.file, n.iter=10000)
+```
+
+#Lifetimes
+Note for later
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+library(ggplot2)
+df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
+d <- as.matrix(df)
+data <- matrix( d , ncol = 1)
+qplot(data[data !=0] , binwidth = 25 , xlab = "lifetime")
+```
