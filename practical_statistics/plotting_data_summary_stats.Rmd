@@ -6,47 +6,129 @@ output:
     fig_caption: true
     number_sections: true
 ---
-#Statistical Motivations & Definitions
-##Plotting Data (in a million ways) & Summary Statistics
+<h1>Statistical Motivations & Definitions</h1>
+#There are many in which to plot data
 
 A section on how to plot data (histograms, box plots, beeswarms), outlier detection etc... 
 
-###First way to plot (univariate) data: histogram
+##First way to plot (univariate) data: histogram
 
-See this plot for example (paradigm) of plotting in R Markdown:
+When we say *univariate data*, all we mean is that there is one variable. The 1st way to plot such data is in a histogram. But first we need some data. There are 3 ways to get data into R:
+
+1. Import data from a file external to R;
+2. Load pre-existing data from within R;
+3. Generate (synthesize) your own data using R's inbuilt random number generator.
+
+We will go through each of these modes:
+
+<h4>Importing data into R</h4>
+
+
+
+The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop. We have it as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
+
 ```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
 #code chunk here:
-library( ggplot2 )
-x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
-#distribution with mean = 1, sd = 1
-qplot( x ) #plot a histogram of the data
+library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+##this is a dataframe -- a very important structure in R
+colnames(data) #print the column names in the datframe 'data'
+qplot( data$`12 uM` , xlab = "MT lifetime at 12uM") #plot a histogram of the data at 12uM
+```
+
+**Important Note**: The help() function in R will be one of your best friends; if, for example, you don't know what 'qplot' does, execute the following in your console:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+help(qplot)
+```
+
+
+**Exercise**
+
+1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
+2. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
+3. How do these histrograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
+
+**Code for answer**
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+#code chunk here:
+library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+dataM <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from .csv
+colnames(data)
+qplot( dataM$`9 nM MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
 ```
 
 - Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed;
 - There are many other potential rules of thumb, such Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley & https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)
 - One can also define bin width instead of the number of bins.
-- Plot Probability Function instead of histograms: all this means that the y-axis is normalized so that the $\sum\limits_\text{bins}f(\text{bins}) = 1$ & the interpretation is that $f$ provides the probability of a data point being in that bin.
 
-###Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
+<h4>Loading data from within R</h4>
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-#code chunk here:
-library( ggplot2 )
+cars <- mtcars #pre-existing dataset in R
+p1 <- ggplot(data = cars , aes(x=mpg)) #initialize plot to look at miles per gallon
+p1 + geom_histogram( binwidth = 1 ) #plot histogram & play around with binwidth if desired
+```
+
+I know that this section is supposed to focus on plotting histograms of univariate data BUT ggplot2 makes plotting bivariate data so easy that coldn't help including a little bit here:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+p2 <- ggplot( data = cars , aes( x = mpg , y = wt)) #initialize plot to look at the relationship
+#between variables (bivariate) miles /gallon & weight (lb/1000)
+p2 + geom_point() #plot a scatterplot
+#plot scatter of mpg vs weight; plot linear fit + 95% confidence bands:
+p2 + geom_point() + stat_smooth( method = "lm") + xlab("miles per gallon") + ylab("weight (lb/1000)") 
+```
+
+
+<h4>Generating your own data</h4>
+
+R contains inbuilt random number generators that we can use to draw random numbers from, for example, uniform and Gaussian distributions. There are two points to note:
+
+1. The default random number generator in R is the Mersenne Twister, which is actually a *pseudorandom number generator* (PRNG), not a *true random number generator*;
+2. It is *very important* to set the seed of your PRNG before using it! This tells your computer where to start generating the random numbers; it follows that, if you run your code, you get the same random numbers and this is **essential for reproducible results**.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+set.seed(42) #
+x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
+#distribution with mean = 1, sd = 1
+qplot( x ) #plot a histogram of the data
+```
+
+**Exercise**
+
+1. Generate & plot data drawn from a (i) uniform distribution (for sample sizes of $n=100,500$) & (ii) an exponential distribution with rates $=1,3$.
+2. For a dataset of your choice, plot the empirical probability density function instead of the histogram: all this means that the y-axis is normalized so that the $\sum\limits_\text{bins}f(\text{bins}) = 1$ & the interpretation is that $f$ provides the probability of a data point being in that bin.
+
+*Note*: I haven't told you the functions used to generate these datasets. You'll need to find them somewhow! A huge part of coding is finding the right function. *Hint*: search engines are your friends.
+
+
+##Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
+
+The ECDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is the total number of data points.
+
+- The intuition is that this tells you the probability of being less than or to equal to the value of interest;
+- This is a great way to visualize and compare distributions as there is no binning and thus no artefacts introduced by binning!
+- A word of warning: there is correlation in the curve (as opposed to a histogram): All that I'm saying here is that if there is a large fluctuation for a low value, then this flucutation may be seen throughout the rest of the curve.
+
+Let's first have a look at the ECDF for some of the microtubule lifetime dataset:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+ggplot(data, aes(x = `12 uM`)) + stat_ecdf() + xlab("Microtubule lifetime")#plot ECDF of the data
+```
+
+And now we'll plot the ecdf for data that we generate:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
 x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
 #distribution with mean = 1, sd = 1
 df <- data.frame(x = x)
 ggplot(df, aes(x)) + stat_ecdf() #plot ECDF of the data
 ```
 
-The CDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is the total number of data points.
-
-- The intuition is that this tells you the probability of being less than or to equal to the value of interest;
-- This is a great way to visualize and compare distributions as there is no binning and thus no artefacts introduced by binning!
-- A word of warning: there is correlation in the curve (as opposed to a histogram): All that I'm saying here is that if there is a large fluctuation for a low value, then this flucutation may be seen throughout the rest of the curve.
 
 
 
-###Third way to plot (univariate) data: beeswarm plot
+##Third way to plot (univariate) data: beeswarm plot
 
 ```{r,  message = FALSE ,  echo = FALSE}
 #code chunk here:
@@ -60,11 +142,11 @@ legend("topright", legend = c("Yes", "No"),
        title = "Censored", pch = 16, col = 1:2)
 ```
 
-###Summary Statistics
+#Summary Statistics
 
 How can we numerically describe data? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*) <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variance*.
 
-####Measures of Central Tendency
+##Measures of Central Tendency
 
 <h4>Mean</h4>
   
@@ -141,7 +223,7 @@ p2
 
 Also see here for some interesting notes on relation between mode, median, mean & Pearson mode skewness: http://mathworld.wolfram.com/Mode.html
 
-####Measures of Variability/Dispersion
+##Measures of Variability/Dispersion
 
 <h4>Range</h4>
 The range of a dataset $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
@@ -195,7 +277,7 @@ where $n$ is the sample size and $s$ is the sample standard deviation. This foll
 
 
 
-##Central Limit Theorem
+#Central Limit Theorem
 
 The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator* (to be defined), is itself distributed (it's also a random variable), in the limit of large samples:
 
@@ -207,11 +289,11 @@ and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\si
 
 <blockquote><p style="font-size: 75%">I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.</p></blockquote>
 
-##An Incomplete Compendium of Distributions (perhaps this should occur earlier)
+#An Incomplete Compendium of Distributions (perhaps this should occur earlier)
 
 This section is a prototype: I need to flesh out equations, descriptions, motivaations and whatever else (eg. means, variances etc...). Oh, and include Figures: make it at least a little bit pleasing on the eye, please, Hugo!
 
-###Normal (Gaussian) Distribution
+##Normal (Gaussian) Distribution
 
 Motivation:
 
@@ -221,7 +303,7 @@ Motivation:
 
 Equation: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
 
-###Binomial Distribution
+##Binomial Distribution
 
 Motivation:
 
@@ -229,7 +311,7 @@ Motivation:
 
 Equation: $P(k|n) = {n\choose k}p^k(1 - p)^{n-k}$, where $p$ is the binomial probability (the probability of flipping heads).
 
-###Poisson Distribution
+##Poisson Distribution
 
 Motivation:
 
@@ -237,7 +319,7 @@ Motivation:
 
 Equation: $P(k) = \frac{\lambda^k}{k!}e^{-\lambda}$, for $k \in \{0,1,2,3,\ldots\}$.
 
-###Exponential Distribution
+##Exponential Distribution
 
 Motivation:
 
@@ -246,7 +328,7 @@ Motivation:
 
 Equation: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
 
-###Gamma Distribution
+##Gamma Distribution
 
 Motivation:
 
@@ -254,11 +336,11 @@ Motivation:
 
 Equation: $P(x) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
 
-###Other Distributions
+##Other Distributions
 
 This list is already long enough for the current purposes of introduction to distributions. There are also Pareto (power-law) distributions, Cauchy distributions, Laplace distributions and a very many more... (perhaps list more with a reference or two).
   
-##Rules of Thumb for Experimental Data
+#Rules of Thumb for Experimental Data
 
 More to come so watch this space. Very generic rules of thumb:  
 
