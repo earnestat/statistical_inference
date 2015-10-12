@@ -30,16 +30,26 @@ In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)
 
 **Note**: What is the prior? Really, what do we know about $\lambda$ before we see any data? Well, as it is a probability, we know that $0 \leq \lambda \leq 1$. If we haven't flipped any coins yet, we don't know much else: so it seems logical that all values of $\lambda$ are equally like, i.e., $P(\lambda) = 1,$ for $0 \leq \lambda \leq 1$. This is known as an *uninformative prior* because it contains little information (there are other uninformative priors we may use in this situation, such as the *Jeffreys prior*, to be discussed later). People who like to hate on Bayesian inference tend to claim that the need to choose a prior makes Bayesian methods somewhat arbitrary, but as we'll now see, if you have enough data, the likelihood dominates over the prior and the latter doesn't matter so much.
 
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+**Example**: Binomial -- provide derivation and figures below are for $n=100,k=40$ & $n=1000,k=450$, respectively.
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
 #see here: http://www.r-bloggers.com/r-and-bayesian-statistics/
 library( ggplot2 )
-n <- 100
-k <- 40
+require(gridExtra)
+n1 <- 100
+k1 <- 40
 lambda <- seq( 0 , 1 , by = 0.01)
 prior <- rep( 1 , length(lambda))
-likelihood <- lambda**k*(1-lambda)**(n-k)
-posterior <- likelihood*prior
-qplot( lambda , posterior, geom = "line" ) 
+likelihood1 <- lambda**k1*(1-lambda)**(n1-k1)
+posterior1 <- likelihood1*prior
+plot1 <- qplot( lambda , posterior1, geom = "line" ) 
+##
+n2 <- 1000
+k2 <- 450
+likelihood2 <- lambda**k2*(1-lambda)**(n2-k2)
+posterior2 <- likelihood2*prior
+plot2 <- qplot( lambda , posterior2, geom = "line" ) 
+grid.arrange(plot1, plot2, ncol=2)
 ```
 
 What to report:
@@ -51,9 +61,65 @@ What to report:
 
 ##Computing the posterior mode & the standard deviation
 
-How dowe find the posterior mode, generally? Some sort of gradient descent (log-space). And standard deviation? Look at the Hessian & the covariance matrices! More details coming.
+###Finding the posterior mode
 
-More complex cases, for example, those with two parameters, need more complex methods. Introduce an example and then discuss MCMC methods.
+How do we find the posterior mode, generally? Some sort of gradient descent (log-space). 
+
+**Example**: Binomial distribution above.
+
+**Example** (this may be an exercise): Exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assume uniform prior on $\mu$ (we will do the same using Jeffreys' prior), the posterior
+
+$$P(\mu|D) \propto \prod_i \frac{\text{exp}(-x_i/\mu)}{\mu}$$
+
+and the log-posterior $\text{log}P(\mu|D)= C - n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*. We do so with the following code:
+
+```{r , fig.width = 8 , fig.height = 3}
+D <- rexp(100 , rate = 10) #generate exponentially distributed data
+N <- length(D)
+fr <- function(m) {   ## -LL for exponential
+  m1 <- m[1]
+  N*(log(1/m)) + m*sum(D)
+}
+res <- optim(c(10) , fr , method = "L-BFGS-B" , lower = 0 ) #minimize -LL with boundary = 0
+res$par
+```
+Note in this case that we can also do it analytically (Appendix). Now let's do the same with microtubule lifetime data:
+
+```{r , fig.width = 4 , fig.height = 3}
+df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
+d <- as.matrix(df)
+data <- matrix( d , ncol = 1)
+qplot(data[data !=0] , binwidth = 25 , xlab = "lifetime")
+N <- length(data)
+fr <- function(m) {   ## -LL for exponential
+  m1 <- m[1]
+  N*(log(1/m)) + m*sum(data)
+}
+res <- optim(c(10) , fr , method = "L-BFGS-B" , lower = 0.0001 ) #minimize -LL with boundary = 0
+print(res$par)# print rate
+```
+If it were exponential, the rate would be ~$0.0056/s$.
+
+Now do the same with a gamma distribution:
+
+###Finding the standard deviation of the posterior
+
+
+And standard deviation? Look at the Hessian & the covariance matrices! More details coming.
+
+
+
+
+Now we have 2 models: which is a better model? Segue into Bayesian model selection:
+
+##Bayesian Model Selection
+
+Introduce.
+
+Then look at specifics of exponential vs gamma microtubule catastrophe.
+
+
+More complex cases, for example, need more complex methods. Introduce an example and then discuss MCMC methods.
 
 ##Markov Chain Monte Carlo algorithm
 
@@ -97,13 +163,3 @@ inits <- function() { list(p=0.5) } #we initialize p to be 0.5
 #+    model.file, n.iter=10000)
 ```
 
-#Lifetimes
-Note for later
-
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
-library(ggplot2)
-df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
-d <- as.matrix(df)
-data <- matrix( d , ncol = 1)
-qplot(data[data !=0] , binwidth = 25 , xlab = "lifetime")
-```
