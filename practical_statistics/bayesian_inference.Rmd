@@ -61,24 +61,26 @@ What to report:
 
 ##Computing the posterior mode & the standard deviation
 
-###Finding the posterior mode
+###Finding the best estimate: the posterior mode
 
 How do we find the posterior mode, generally? Some sort of gradient descent (log-space). 
 
 **Example**: Binomial distribution above.
 
+<h4>Bayesian parameter estimation for an exponential distribution</h4>
+
 **Example** (this may be an exercise): Exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assume uniform prior on $\mu$ (we will do the same using Jeffreys' prior), the posterior
 
 $$P(\mu|D) \propto \prod_i \frac{\text{exp}(-x_i/\mu)}{\mu}$$
 
-and the log-posterior $\text{log}P(\mu|D)= C - n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*. We do so with the following code:
+and the log-posterior $\text{log}P(\mu|D)= C + n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*. We do so with the following code:
 
 ```{r , fig.width = 8 , fig.height = 3}
 D <- rexp(100 , rate = 10) #generate exponentially distributed data
 N <- length(D)
 fr <- function(m) {   ## -LL for exponential
   m1 <- m[1]
-  N*(log(1/m)) + m*sum(D)
+  - N*(log(m)) + m*sum(D)
 }
 res <- optim(c(10) , fr , method = "L-BFGS-B" , lower = 0 ) #minimize -LL with boundary = 0
 res$par
@@ -89,18 +91,65 @@ Note in this case that we can also do it analytically (Appendix). Now let's do t
 df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
 d <- as.matrix(df)
 data <- matrix( d , ncol = 1)
-qplot(data[data !=0] , binwidth = 25 , xlab = "lifetime")
+data <- data[data !=0]
+qplot(data , binwidth = 25 , xlab = "lifetime")
 N <- length(data)
 fr <- function(m) {   ## -LL for exponential
   m1 <- m[1]
-  N*(log(1/m)) + m*sum(data)
+  - N*(log(m)) + m*sum(data)
 }
-res <- optim(c(10) , fr , method = "L-BFGS-B" , lower = 0.0001 ) #minimize -LL with boundary = 0
-print(res$par)# print rate
+res <- optim(c(100) , fr , method = "L-BFGS-B" , lower = 0.0001 ) #minimize -LL with boundary = 0
+print(1/res$par)# print rate
 ```
 If it were exponential, the rate would be ~$0.0056/s$.
 
-Now do the same with a gamma distribution:
+<h4>Bayesian parameter estimation for a Gamma distribution</h4>
+
+Now do the same with a gamma distribution, for which the probability distribution is $P(x|\alpha,\beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
+
+Then the log likelihood function is $$LL = \sum_i[(\alpha -1)\text{log}(x_i) - \beta x_i] + n\alpha\text{log}(\beta) - n\text{log}(\Gamma(\alpha)).$$
+
+For a uniform prior, the log posterior is the log likelihood plus a constant. We will fit a gamma (remember: multistep) distribution to the microtubule lifetime data in a minute. First, we will do it to a synthesized dataset to make sure that our algorithm is working correctly:
+
+```{r , fig.width = 4 , fig.height = 3}
+data <- rgamma(10000 , shape = 3 , rate = 1)
+N <- length(data )
+qplot(data , binwidth =0.5)
+fr <- function(m) {   ## -LL for exponential
+  m1 <- m[1]
+  m2 <- m[2]
+   - N*m[1]*log(m[2]) + N*log(gamma(m[1])) - (m[1] - 1)*sum(log(data)) + m[2]*sum(data)
+}
+res <- optim(c(10,10) , fr , method = "L-BFGS-B" , lower = c(0.001,0.001) ) #minimize -LL with boundary = 0
+res$par
+```
+It works :-).
+
+Now for the microtubule lifetime data:
+
+```{r , fig.width = 4 , fig.height = 3}
+df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
+d <- as.matrix(df)
+data <- matrix( d , ncol = 1)
+data <- data[data !=0]
+qplot(data , binwidth = 25 , xlab = "lifetime")
+N <- length(data )
+fr <- function(m) {   ## -LL for exponential
+  m1 <- m[1]
+  m2 <- m[2]
+   - N*m[1]*log(m[2]) + N*log(gamma(m[1])) - (m[1] - 1)*sum(log(data)) + m[2]*sum(data)
+}
+res <- optim(c(10,10) , fr , method = "L-BFGS-B" , lower = c(0.001,0.001) ) #minimize -LL with boundary = 0
+res$par
+```
+
+Now plot the data with both models -- do so in two ways:
+
+1. Histogram;
+2. eCDF + model CDF!
+
+Now we have two models: one looks like a better fit (gamma; n.b. way better fit); the other has less parameters. Which is a better model? We'll get to that soon. First, as always, we need to talk about confidence intervals (or SDs) on our parameter estimates.
+
 
 ###Finding the standard deviation of the posterior
 
