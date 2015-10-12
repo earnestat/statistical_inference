@@ -33,7 +33,7 @@ library( ggplot2 ) #load ggplot2 library for handsome plotting structures
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
 ##this is a dataframe -- a very important structure in R
 colnames(data) #print the column names in the datframe 'data'
-qplot( data$`12 uM` , xlab = "MT lifetime at 12uM") #plot a histogram of the data at 12uM
+qplot( data$`12_uM` , xlab = "MT lifetime at 12uM") #plot a histogram of the data at 12uM
 ```
 
 **Important Note**: The help() function in R will be one of your best friends; if, for example, you don't know what 'qplot' does, execute the following in your console:
@@ -48,14 +48,14 @@ help(qplot)
 2. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
 3. How do these histrograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
 
-**Code for answer**
+**Code for solution**
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
 #code chunk here:
 library( ggplot2 ) #load ggplot2 library for handsome plotting structures
 dataM <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from .csv
-colnames(data)
-qplot( dataM$`9 nM MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
+colnames(dataM)
+qplot( dataM$`9_nM_MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
 ```
 
 - Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed;
@@ -113,25 +113,64 @@ The ECDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is th
 Let's first have a look at the ECDF for some of the microtubule lifetime dataset:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-ggplot(data, aes(x = `12 uM`)) + stat_ecdf() + xlab("Microtubule lifetime")#plot ECDF of the data
+ggplot(data, aes(x = `12_uM`)) + stat_ecdf() + xlab("Microtubule lifetime") +
+  ylab("ECDF")#plot ECDF of the data
 ```
 
-And now we'll plot the ecdf for data that we generate:
+**Exercise**
+
+1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
+
+**Code for solution**
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
+x <- rnorm(1000 , mean = 1 , sd = 2) ##generate 1000 data points from a normal
 #distribution with mean = 1, sd = 1
 df <- data.frame(x = x)
-ggplot(df, aes(x)) + stat_ecdf() #plot ECDF of the data
+ggplot(df, aes(x)) + stat_ecdf() + ylab("ECDF") #plot ECDF of the data
 ```
 
+##Third way to plot (univariate) data: box-plot
 
+We now plot the microtubule lifetime data as a box-plot (to be defined below).
 
+However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. 
+
+```{r,  message = FALSE ,  echo = TRUE}
+library( reshape )
+mt_data <- melt( data ) #melt data as described above
+colnames(mt_data) <- c("tubulin_concentration" , "lifetime") #rename the columns
+mt_bp <- ggplot( mt_data , aes( x = factor(tubulin_concentration) , y = lifetime)) #initiate plot
+mt_bp + geom_boxplot() + xlab("[Tb]") #plot the box-plot
+```
+
+**Questions**: 
+
+1. Execution of the above code spat out a warning: what was this about?
+2. When I initiated the plotting structure 'mt_bp', I turned 'tubulin_concentration' into a 'factor': what is a 'factor'?
+
+##Third way to plot (univariate) data: column scatter plot (with jitter!)
+
+For small amounts of data, you should plot all the data, not just the box-plot, which summarizes aspeects of the data. A column scatter plot (with jitter) is one way to achieve this and you can layer it on top of a box-plot:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+datamm <- read.csv("mm.csv")
+p <- ggplot( datamm , aes( factor(Expt) , Speed ))
+p + geom_boxplot() + geom_jitter(aes(colour = factor(Expt))) + guides(colour=guide_legend(title="Expt")) +
+  xlab("Experiment") +ylab("Speed of Light (km/s minus 299,000)")
+```
+
+*Note*: the data here is from the famed Michelson-Morley experiment -- in which the data is the speed of light from different experiments.
+
+**Question**: What is a problem with the way in which I have plotted both the box-plot and the jitter plot above?
 
 ##Third way to plot (univariate) data: beeswarm plot
 
-```{r,  message = FALSE ,  echo = FALSE}
-#code chunk here:
+If you have more data, it may overlap in a jitter plot: one way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out:
+
+
+```{r,  message = FALSE ,  echo = TRUE}
 library(beeswarm)
 data(breast)
 beeswarm(time_survival ~ ER, data = breast,
@@ -142,36 +181,80 @@ legend("topright", legend = c("Yes", "No"),
        title = "Censored", pch = 16, col = 1:2)
 ```
 
+In order to see more about the dataset used above, execute the following command:
+```{r,  message = FALSE ,  echo = TRUE}
+help(breast)
+```
+
+**Exercise**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
+
+**Question**: Is there the correct amount of data for a beeswarm plot here?
+
+**Code for solution**
+```{r,  message = FALSE ,  echo = TRUE}
+beeswarm(lifetime ~ tubulin_concentration, data = mt_data,
+         pch = 16, pwcol = 1 + 2*as.numeric(tubulin_concentration),
+         xlab = "Tubulin concentration", ylab = "Lifetime")
+```
+
 #Summary Statistics
 
-How can we numerically describe data? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*) <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variance*.
+How can we numerically describe & summarise data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *varibility*, also called *dispersion*.
 
 ##Measures of Central Tendency
 
 <h4>Mean</h4>
   
-The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!)
-  
+The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!):
+
 $$p(x) = \sum\limits_i(x - x_i)^2.$$
 
-Note: the mean is not always a good statistic, particularly for skewed and bimodal distributions (more to come on this) or datasets with outliers! Give example(s) here.
+
+To calculate the mean of dataset, we use the function 'mean' in R:
+```{r,  message = FALSE ,  echo = TRUE}
+datamm_ep1 <- subset(datamm , Expt == 1) ##what have I done here?
+mean_exp1 <- mean( datamm_ep1$Speed )
+print( mean_exp1)
+```
+
+You can also calculate the mean of each column of a dataframe by using the 'apply' function:
+
+```{r,  message = FALSE ,  echo = TRUE}
+apply( data , 2 , mean)
+```
+
+*Question*: Whoa!! This reported NA's. Why did this happen? How can we avoid it?
+
+*Code for solution*:
+```{r,  message = FALSE ,  echo = TRUE}
+#for more on 'apply' and its variants, see here: #https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
+apply( data , 2 , function(x) mean(x,na.rm = TRUE))
+```
+
+<h4>Warning! The mean can be a crappy statistic</h4>
+
+Note: the mean is not always a good statistic, particularly for skewed and bimodal distributions (more to come on this) or datasets with outliers!
 
 Here are 3 cases in which the *mean* is not a great summary statistic to report:
 
-- a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data; note: outliers will be defined below, when we have a few more tools under our statistical belt);
-
+1. a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data; note: outliers will be defined below, when we have a few more tools under our statistical belt);
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
-x <- rnorm(50)
-y <- 10*runif(10)
+x <- runif(10)
+y <- 12
 df <- as.data.frame( c( x , y) )
 colnames(df) <- 'value'
+df$type = "data"
 m <- signif( mean(df$value) , 2)
 llb <- paste("mean = " , m)
-qplot(df$value) + xlab('value') +
-  annotate("text",  label = llb ,  x = 5, y= 6)
+op <- ggplot( df , aes( x = type , y = value))
+op + geom_point(alpha = 0.3) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
+op + geom_jitter( size = 4 , alpha = 0.5) +
+  annotate("text",  label = llb ,  x = 1, y= 6) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
 ```
 
-- data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities )
+
+
+2. data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities )
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
 ##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
@@ -196,13 +279,33 @@ multiplot(p1, p2, cols=2)
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 x <- rgamma(10000 , 2 ,1)
 qplot(x)
+mean(x)
 ```
 
 To deal with the problem of outliers, statisticians like to look at the *median* rather than the mean; if you're actually interested in the most likely data point, that is, where the highest peak is in the histogram, you look at the *mode*.
 
 <h4>Median</h4>
 
-To find the *median* of your dataset, list them from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points; see *fully trimmed mid-range if interested*). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outlier and this will not alter the median. For example the dataset $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. *Include a demonstrative plot here?*
+To find the *median* of your dataset, list them from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points; see *fully trimmed mid-range if interested*). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. 
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+mean(x)
+median(x)
+```
+
+The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outlier and this will not alter the median. For example the dataset $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. 
+
+I include a demonstrative plot below. Although I have not introduced box-plots formally yet, the bar in the middle of the box is the median of the dataset: you can see that the medians are the same and yet the means are very different due to the presence of outliers:
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- c(1,2,2,3,4,5,5,6,7)
+y <- c(1,2,2,3,4,5,5,60,70)
+df <- data.frame(x,y)
+print( c( mean(x) , mean(y)) )
+dfm <- melt(df)
+mp <- ggplot(dfm , aes( x = variable , y = value))
+mp + geom_boxplot() + xlab("")
+```
 
 <h4>Mode</h4>
 
