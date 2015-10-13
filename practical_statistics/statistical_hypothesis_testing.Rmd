@@ -1,7 +1,7 @@
 ---
 title: "Notes on practical statistics II"
 output:
-  pdf_document:
+  html_document:
     toc: true
     fig_caption: true
     number_sections: true
@@ -178,6 +178,22 @@ $$T = \frac{2|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}.$$
 To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/ENAS518 - MATHEMATICAL METHODS IN BIOPHYSICS at Yale University, Fall 2013)
 
 <blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred. Also, there are many cases where the variances of the two experiments are different - e.g. if you are measuring something using two different techniques.</p></blockquote>
+
+```{r , message=FALSE , echo=TRUE }
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+mlt <- apply( data , 2 , function(x) mean(x,na.rm = TRUE))
+n <- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
+sem <- mlt/sqrt(n) #standard errors
+dfnew <- data.frame(cbind(colnames(data),as.numeric(mlt),as.numeric(sem)))
+p <- ggplot(dfnew, aes( x = X1 , y = mlt))
+p + geom_point() +
+  geom_errorbar(aes(ymin=mlt-sem, ymax=mlt+sem), width=.1)
+```
+
+```{r , message=FALSE , echo=TRUE }
+t.test( subset(data$`9_uM` , !is.na(data$`9_uM`) ) , subset(data$`7_uM` , !is.na(data$`7_uM`) ) )
+t.test( subset(data$`12_uM` , !is.na(data$`12_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
+```
 
 ##Paired t-tests and Blocking
 <span style="color:red">Perhaps motivate this at the end of the previous section?</span>
