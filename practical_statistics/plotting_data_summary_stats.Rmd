@@ -1,7 +1,7 @@
 ---
 title: "Notes on practical statistics I"
 output:
-  html_document:
+  pdf_document:
     toc: true
     fig_caption: true
     number_sections: true
@@ -309,7 +309,7 @@ mp + geom_boxplot() + xlab("")
 
 <h4>Mode</h4>
 
-The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). Give a visual example. When the histogram/probability distribution function has rwo or more modes, we call it *bi-modal* and *multi-modal* respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, miximum likelihood estimation and Bayesian parameter estimation). See examples of trimodality here:
+The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). Give a visual example. When the histogram/probability distribution function has rwo or more modes, we call it *bi-modal* and *multi-modal* respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, miximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo = FALSE}
 source("multiplot.R")
@@ -337,13 +337,29 @@ The *variance* is a measure of how far a dataset is spread out. Recalling the me
 
 $$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
 
-and $\sigma$, the square root of the variance, is called the *standard deviation* of the data. *Brief mention of how population variance is related to sample variance here (i.e. Bessel's Correction)?* Probably NOT.
+and $\sigma$, the square root of the variance, is called the *standard deviation* of the data.
 
 Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance (more on these below).
 
-Key: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm)
+Key: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm). Also, standard deviation can give us insight into the existence of outliers:
 
-This could also be a great place to mention confidence intervals (for example, 95%) and to introduce the Gaussian distribution.
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- c(1,2,2,3,4,5,5,6,7)
+y <- c(1,2,2,3,4,5,5,60,70)
+df <- data.frame(x,y)
+print( apply( df , 2 , mean) )
+print( apply( df , 2 , sd) )
+```
+**Question**: How can we see from mean & standard deviation of the above datasets that one of them may contain outliers?
+
+**Exercise**: Compute the standard deviation of one of the microtubule lifetime datasets (for all concentrations) OR the the Michelson-Morley data (all experiments).
+
+**Code for solution**:
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+by(datamm$Speed, datamm$Expt , sd)
+#OR
+tapply(datamm$Speed, datamm$Expt , sd)
+```
 
 <h4>Interquartile Range</h4>
 
@@ -376,9 +392,16 @@ Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
 
-where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central Limit Theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respest to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points.
+where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central Limit Theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respest to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points!
 
-
+**Example of computation**:
+```{r,  message = FALSE ,  echo = TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+mlt <- apply( data , 2 , function(x) mean(x , na.rm = TRUE)) #mean lifetime
+n <- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
+sem <- mlt/sqrt(n) #standard errors
+print(sem)
+```
 
 #Central Limit Theorem
 
@@ -388,9 +411,45 @@ Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribu
 
 $$S_n = \frac{X_1 + X_2 + \ldots + X_n}{n}$$
 
-and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will part of its power when dealing with Student's t test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician)had to say about the CLT:
+and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will demonstrate part of its power when dealing with Student's t-test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician)had to say about the CLT:
 
 <blockquote><p style="font-size: 75%">I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.</p></blockquote>
+
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+##Here we perform a simple demonstration of the Central Limit Theorem
+##Random Variable defined by p(0)=p(1)=0.5. Draw n samples (e.g. n = 1000)
+##& retrieve the mean. Do this m times (e.g. m = 10,000) and plot 
+##the distribution of means:
+n <- 1000 #number of samples for each trial
+m <- 10000 #number of trials
+x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
+qplot(x , binwidth = 0.005) #plot histogram of means
+```
+
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+##Here we perform a simple demonstration of the Central Limit Theorem
+##We estimate pi (ratio of circle circumference to diameter) using a Monte Carlo method:
+##the method is to drop n points inside a square of side length 2, then see how many points
+##fall inside the circle of radius 1 inside the square. As area(square) = 4 & area(circle) = pi
+##an estimate for pi is = 4*(number of points in circle)/(number of points in square).
+##We then use this procedure to estimate pi m times and look at the statistics & distribution
+##Of these estimates.
+n <- 2000 #number of points to drop in the square
+m <- 1000 #number of trials
+#we write a small function here to approximate pi by the method described above
+approx_pi <- function(n){
+  points <- replicate(2, runif(n))  #generate points in the square
+  distances <- apply( points , 1 , function(x) sqrt(x[1]^2 + x[2]^2)) #compute distance of each point from centre
+  #see here for more on 'apply': 
+  #https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
+  points_in_circle <- sum(distances < 1) #count points in circle
+  pi_approx <- 4*points_in_circle/n #approximate pi
+  return(pi_approx) #function output designated here
+}
+x <- replicate(m,approx_pi(n)) #approximate pi m times
+m <- mean(x) #compute mean of your estimates
+qplot( x , binwidth = 0.01) #plot distribution of estimates
+```
 
 #An Incomplete Compendium of Distributions (perhaps this should occur earlier)
 
@@ -450,7 +509,3 @@ More to come so watch this space. Very generic rules of thumb:
 - To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
 - To say something about the variance, have at least $n =30$ data points;
 - To say anything about the actual distribution, have at least $n = 100$ data points.
-
-##Exercises: Generating data using R, plotting it and getting a feel for it.
-
-rand, runif and rexp are your best friends! You can also play with Q-Q plots etc... (Much) more to come...
