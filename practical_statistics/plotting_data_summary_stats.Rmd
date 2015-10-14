@@ -1,7 +1,7 @@
 ---
 title: "Notes on practical statistics I"
 output:
-  pdf_document:
+  html_document:
     toc: true
     fig_caption: true
     number_sections: true
@@ -339,7 +339,26 @@ $$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
 
 and $\sigma$, the square root of the variance, is called the *standard deviation* of the data.
 
-Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance (more on these below).
+Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.
+
+<h4>Normal (Gaussian) Distribution</h4>
+
+Motivation:
+
+- The Central Limit Theorem! WOWSER.
+- Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
+- Measurement error (e.g. using a ruler) is often normally distributed.
+
+Equation: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
+
+<h4>Exponential Distribution</h4>
+
+Motivation:
+
+- Radioactive decay;
+- Any Poisson Process has exponentially distributed waiting times (will prove below OR in appendix; will included numerical example in the exercises);
+
+Equation: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
 
 Key: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm). Also, standard deviation can give us insight into the existence of outliers:
 

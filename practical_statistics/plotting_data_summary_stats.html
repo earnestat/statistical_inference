@@ -85,9 +85,7 @@ img {
 <li><a href="#gamma-distribution"><span class="toc-section-number">4.5</span> Gamma Distribution</a></li>
 <li><a href="#other-distributions"><span class="toc-section-number">4.6</span> Other Distributions</a></li>
 </ul></li>
-<li><a href="#rules-of-thumb-for-experimental-data"><span class="toc-section-number">5</span> Rules of Thumb for Experimental Data</a><ul>
-<li><a href="#exercises-generating-data-using-r-plotting-it-and-getting-a-feel-for-it."><span class="toc-section-number">5.1</span> Exercises: Generating data using R, plotting it and getting a feel for it.</a></li>
-</ul></li>
+<li><a href="#rules-of-thumb-for-experimental-data"><span class="toc-section-number">5</span> Rules of Thumb for Experimental Data</a></li>
 </ul>
 </div>
 
@@ -394,7 +392,26 @@ Variance &amp; Standard Deviation
 <p>The <em>variance</em> is a measure of how far a dataset is spread out. Recalling the mean <span class="math">\(\mu = \frac{1}{n}\sum\limits_i x_i\)</span>, the variance is defined to be</p>
 <p><span class="math">\[\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2\]</span></p>
 <p>and <span class="math">\(\sigma\)</span>, the square root of the variance, is called the <em>standard deviation</em> of the data.</p>
-<p>Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an <em>exponential distribution</em> is characterizable by its mean alone, a <em>normal/Gaussian distribution</em> by its mean and variance, and a Pareto (power-law) distribution by its mean and variance (more on these below).</p>
+<p>Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an <em>exponential distribution</em> is characterizable by its mean alone, a <em>normal/Gaussian distribution</em> by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.</p>
+<h4>
+Normal (Gaussian) Distribution
+</h4>
+<p>Motivation:</p>
+<ul>
+<li>The Central Limit Theorem! WOWSER.</li>
+<li>Things in the phenomenal world are often normally distributed (this is why the term ‘bell curve’ is part of our general society’s lexicon, rather than merely a technical term);</li>
+<li>Measurement error (e.g. using a ruler) is often normally distributed.</li>
+</ul>
+<p>Equation: <span class="math">\(P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})\)</span></p>
+<h4>
+Exponential Distribution
+</h4>
+<p>Motivation:</p>
+<ul>
+<li>Radioactive decay;</li>
+<li>Any Poisson Process has exponentially distributed waiting times (will prove below OR in appendix; will included numerical example in the exercises);</li>
+</ul>
+<p>Equation: <span class="math">\(P(x) = \frac{\text{exp}(-x/\mu)}{\mu}\)</span>.</p>
 <p>Key: variance and standard deviation are sensitive to outliers (see, e.g., <a href="http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm" class="uri">http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm</a>). Also, standard deviation can give us insight into the existence of outliers:</p>
 <pre class="r"><code>x &lt;- c(1,2,2,3,4,5,5,6,7)
 y &lt;- c(1,2,2,3,4,5,5,60,70)
@@ -562,10 +579,6 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates</code></pre>
 <li>To say something about the variance, have at least <span class="math">\(n =30\)</span> data points;</li>
 <li>To say anything about the actual distribution, have at least <span class="math">\(n = 100\)</span> data points.</li>
 </ul>
-<div id="exercises-generating-data-using-r-plotting-it-and-getting-a-feel-for-it." class="section level2">
-<h2><span class="header-section-number">5.1</span> Exercises: Generating data using R, plotting it and getting a feel for it.</h2>
-<p>rand, runif and rexp are your best friends! You can also play with Q-Q plots etc… (Much) more to come…</p>
-</div>
 </div>
 
 
