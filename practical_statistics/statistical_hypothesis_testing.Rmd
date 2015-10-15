@@ -38,7 +38,7 @@ Definition: a *quantile* of a dataset is the value below which a given percent (
 
 Now all that a Q-Q (quantile-quantile) plot is is a plot of the quantiles of one set of data against the quantiles of another. Below are two examples. The first is the (quantiles of) data generated from a normal distribution plotted against (quantiles of) a theoretic normal distribution. In the second, the data is from a Caunchy distribution (symmetric and with heavier tails than a Gaussian), the theoretic a normal distribution.
 
-```{r qplot, fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+```{r qplot, fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
 #code chunk here:
 set.seed( 42 )
 library( ggplot2 )
@@ -97,7 +97,10 @@ Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99
 for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
 
 **Exercise**
-Previously, we generated some data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem. The code is below. The exercise is to (i) plot the Q-Q-plot, (ii) plot the ECDF of the data, along with the CDF of the Gaussian distribution with mean and standard deviation those of the data and (iii) perform a Lilliefors test on the data and interpret the result.
+Previously, we generated some data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem. The code is below. The exercise is to
+1. Plot the Q-Q-plot and discuss what it tells you;
+2. Plot the ECDF of the data, along with the CDF of the Gaussian distribution (with mean and standard deviation those of the data);
+3. perform a Lilliefors test on the data and interpret the result.
 
 ```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
 ##Here we perform a simple demonstration of the Central Limit Theorem
@@ -156,9 +159,12 @@ Answer: at the $95\%$ confidence level, we require that $T>2$ (actually a bit mo
 $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
 
 **Exercise:**
-Generate data from a Gaussian distribution with mean=$1$, sd=$x$, for varying $x$, and see how many points you need to find a statistically significant difference between $\bar{x}$ and a (null) hypthesized mean $0$.
 
-```{r , message=FALSE , echo=TRUE }
+1. Generate data from a Gaussian distribution with mean=$1$, sd=$x$, for varying $x$, and see how many points you need to find a statistically significant difference between $\bar{x}$ and a (null) hypthesized mean $0$. *Note*: It is important to realise that may see a statistically significant difference randomly. Discuss this.
+
+2. Reseachers claim that there is [*wisdom in crowds*](http://www.diplomacy.edu/resources/books/reviews/wisdom-crowds-why-many-are-smarter-few). Let's test it! More specifically, the claim is that if you ask people to guess the number of jelly beans in a jar, the *average guess* shuold be pretty close to the *true mean*. So: each person in the room will guess the number of jelly beans. The exericise is to use a t-test to test the null hypothesis $H_0$ that the average guess is equal to $J$, the number of beans in the jar. Also discuss whether the assumptions underlying the t-test are satisfied. *Also*, in this exercise, we will type the data into R and save it as a .csv using 'writecsv'.
+
+```{r , message=FALSE , echo=FALSE , include=FALSE }
 x <- rnorm(10, mean = 1 , sd = 2)
 t.test(x)
 ```
@@ -196,6 +202,7 @@ $$\nu \approx \frac{(\text{SEM}_x^2 + \text{SEM}_y^2)^2}{\text{SEM}_x^4/(n-1) +
 See Welch, B. L. (1947), "The generalization of "student's" problem when several different population variances are involved.", Biometrika 34: 28–35.  & https://en.wikipedia.org/wiki/Welch%27s_t_test (any easy reference: text book? Hastie?)
 
 **Exercise:**
+
 1. Plot the microtubule lifetime data (mean $\pm$ standard error) as a function as tubulin concentration; 
 2. Perform t-tests for a variety of pairs of datasets at differing [Tb].
 
@@ -216,8 +223,11 @@ t.test( subset(data$`9_uM` , !is.na(data$`9_uM`) ) , subset(data$`7_uM` , !is.na
 t.test( subset(data$`12_uM` , !is.na(data$`12_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
 t.test( subset(data$`7_uM` , !is.na(data$`7_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
 ```
-**Note:** Check out pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
+**Note:** Also check out 
 
+```{r , message=FALSE , echo=TRUE }
+pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
+```
 
 N.b. If the population variances are same & so are the sample sizes, then we can do better!
 
@@ -256,8 +266,6 @@ Problem: When you are performing and comparing many experiments, there is a prob
 
 The Bonferroni Correction: let's say that you perform $n$ experiments and you want a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). We reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of tht t-test).
 
-Example: Give an example here. Make a figure. See https://stat.ethz.ch/R-manual/R-patched/library/stats/html/p.adjust.html for implementation.
-
 Note: this is a conservative test, in the sense that it is prone to producing false negatives (*type II errors*).
 
 **Exercise:**
@@ -279,7 +287,7 @@ pairwise.t.test(df$value, df$variable, p.adj = "bonf" , pool.sd = FALSE)
 #F-test
 <span style="color:red">The headings may need to be organized slightly differently.</span>
 
-Give the general idea here.
+An F-test is any statistical test in which the test statistic has an F-distribution under the null hypothesis. It is most often used when comparing statistical models that have been fitted to a data set, in order to identify the model that best fits the population from which the data were sampled. (according to wikipedia)
 
 ##Example 1: ANOVA (analysis of variance).
 
@@ -319,6 +327,40 @@ beeswarm.plot <- ggplot(beeswarm, aes(x, y) , color = col ) +
 beeswarm.plot + geom_point(size = 2 , aes(colour = col))
 ```
 
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=FALSE}
+data <- read.table("agedeath.dat", header=FALSE)
+colnames(data) <- c('type','age','number')
+aov.ex1 <- aov( age~type , data)
+summary(aov.ex1)
+print(model.tables(aov.ex1,"means"),digits=3)       #report the means and the number of subjects/cell
+boxplot(age~type,data=data)        #graphical summary
+```
+
+##Example 3: ANOVA for bioinoformatics
+
+We will consider an example from (Pavladis, 2003):
+*Using ANOVA for gene selection from microarray studies of the nervous system.*
+
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
+#The following code is from the Supplementary material to
+#Using ANOVA for gene selection from microarray studies of the nervous system (Pavladis, 2003)
+# Read in the data, set up variables
+sdata<-read.table("sandberg-sampledata.txt", header=T, row.names=1)
+strain <- gl(2,12,24, label=c("129","bl6"))
+region <- gl(6,2,24, label=c("ag", "cb", "cx", "ec", "hp", "mb"))
+# define ANOVA function
+aof <- function(x) { 
+  m<-data.frame(strain,region, x); 
+  anova(aov(x ~ strain + region + strain*region, m))
+}
+# apply analysis to the data and get the pvalues.
+anovaresults <- apply(sdata, 1, aof)
+# Note the the following line works on the test data set, but fails
+# with a stack overflow on large data sets, due to an apparent bug in
+# R.
+pvalues<-data.frame( lapply(anovaresults, function(x) { x["Pr(>F)"][1:3,] }) )
+write.table(t(pvalues), file = "anova-results.txt", quote = F, sep = '\t')
+```
 ##Example 2: testing for multimodality.
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
