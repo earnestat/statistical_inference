@@ -97,10 +97,16 @@ Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99
 for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
 
 **Exercise**
-Previously, we generated some data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem. The code is below. The exercise is to
+Using one of the following datasets generated in the code chunks below, do the following (dataset 1: house fly wing lengths; dataset 2: previously generated data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem),
+
 1. Plot the Q-Q-plot and discuss what it tells you;
 2. Plot the ECDF of the data, along with the CDF of the Gaussian distribution (with mean and standard deviation those of the data);
 3. perform a Lilliefors test on the data and interpret the result.
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+#following data from here: http://www.seattlecentral.edu/qelp/sets/057/057.html
+data <-read.table("house_fly_wing_lengths.txt")
+```
+
 
 ```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
 ##Here we perform a simple demonstration of the Central Limit Theorem
@@ -293,22 +299,49 @@ An F-test is any statistical test in which the test statistic has an F-distribut
 
 <h4>Distinguishing multiple groups of numerical data with distinct means.</h4>
 
-The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
 
-$$Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.$$
-Assumption: $\varepsilon_{ij}$ are i.i.d Gaussian; we also normalize such that $\sum\alpha_i = 0$.
-Then
-$$SS_{TOT} = SS_{W} + SS_{B},$$
+Let's say that we have  $n$ groups of data $D_i$, drawn from populations with respective *population means* $\alpha_1 , \alpha_2 , \ldots , \alpha_n$.
 
-where $SS_{TOT} = \sum\limits_{ij}(Y_{ij}-\bar{Y}_{..})^2$ is the total sum of squares of the data, $SS_{W}=\sum\limits_{ij}(Y_{ij}-\bar{Y}_{i.})^2$ is the sum of squares within groups (unexplained variance) & $SS_{B}=\sum\limits_{i}(\bar{Y}_{i.}-\bar{Y}_{..})^2$ is the sum of squares between groups (explained variance). We look at the F-statistic
+**Challenge**: Test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_n$.
 
-$$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
+**Solution**: Use the method of *analysis of variance* (ANOVA), which should really be called *analysis of the mean*.
 
-and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom.
+**Intution**: The sample means $\bar{D}_i$ will be different. Th real question is: could this *between-group* variance arise from the each *within-group* variance?
 
-Problem: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from 0.
+**Method**: To answer this, we look at the $F-$statistic which, intutively is 
 
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=FALSE}
+$$F = \frac{\text{between-group variability}}{\text{within-group variability}}.$$
+
+The precise definition of the F-statistic is formulated in the Appendix below. Intuitively, if the $F-$statistic is large, then we can be fairly certain that we can reject the null hypothesis. Formally, we perform an $F-$test (also see Appendix). To do so, assume the statistical model (necessarily linear)
+
+$$D_{ij} = \mu + \alpha_{i} + \varepsilon_{ij},$$
+
+where the $\varepsilon_{ij}$ are Gaussian noise terms (explain the equation further?).
+
+**Example**: Age at death from 3 different classes of society in Victorian England:
+
+```{r, fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+#data from here:
+#http://www.stat.ufl.edu/~winner/datasets.html
+data <- read.table("agedeath.dat", header=FALSE)
+colnames(data) <- c('type','age','number')
+p <- ggplot( data , aes( x = type , y = age))
+p + geom_boxplot() + geom_jitter( alpha = 0.1 )
+```
+
+This is one way to perform ANOVA in R:
+
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE}
+aov.ex1 <- aov( age~type , data)
+summary(aov.ex1)
+print(model.tables(aov.ex1,"means"),digits=3)       #report the means and the number of subjects/cell
+```
+
+**Exercise:** Interpret and discuss the above output.
+
+**Problem**: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from each other. There are *post hoc* methods to deal with this that we shall not delve into here. Suffice to say, this is an interesting & important field of statistics & experimental design known as [*post hoc analysis*](https://en.wikipedia.org/wiki/Post_hoc_analysis).
+
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=FALSE, eval = FALSE}
 #code chunk here:
 library(beeswarm)
 library( ggplot2 )
@@ -327,38 +360,49 @@ beeswarm.plot <- ggplot(beeswarm, aes(x, y) , color = col ) +
 beeswarm.plot + geom_point(size = 2 , aes(colour = col))
 ```
 
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=FALSE}
-data <- read.table("agedeath.dat", header=FALSE)
-colnames(data) <- c('type','age','number')
-aov.ex1 <- aov( age~type , data)
-summary(aov.ex1)
-print(model.tables(aov.ex1,"means"),digits=3)       #report the means and the number of subjects/cell
-boxplot(age~type,data=data)        #graphical summary
-```
 
-##Example 3: ANOVA for bioinoformatics
+##Example 3: basic two-way ANOVA for gene expression levels (bioinoformatics)
 
-We will consider an example from (Pavladis, 2003):
+In such a two-way ANOVA, the expression level of a gene is expressed by
+
+$$E_{ijk} = T_i + S_j + (T\cdot S)_{ij} + \varepsilon_{ijk},$$
+
+Here $S$ & $T$ are factors (categorical variables), and in (Pavladis, 2003), $S$ consists of 2 levels that are different mouse strains and $T$ 6 regions of the brain. This is a generalization of the one-way ANOVA set-up above (one factor with three levels). Note that it is still a linear model and has three *effect* terms: *main effects* $T$ & $S$ and an *interaction effect* $TS$. When performing ANOVA in such a study, we get three $F$-statistics and thus three $p-$values for each gene: one for each of the possible effects. This same model is fitted to all genes and then, for each effect, we can rank the genes by strength of the effect in question.
+
+We will consider the example from (Pavladis, 2003):
 *Using ANOVA for gene selection from microarray studies of the nervous system.*
 
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
-#The following code is from the Supplementary material to
-#Using ANOVA for gene selection from microarray studies of the nervous system (Pavladis, 2003)
-# Read in the data, set up variables
-sdata<-read.table("sandberg-sampledata.txt", header=T, row.names=1)
+<blockquote><p style="font-size: 75%">In this example, we replicate part of the analysis of the data of Sandberg et al. [9] described in Pavlidis and Noble [2], here using the ‘‘R’’ statistical language, which is freely available on the Internet and runs under many platforms [10]. The file sandberg-sampledata.txt contains data for 1000 genes measured using one- channel oligonucleotide arrays (out of the >11,000 in the original data set), and is available on the author's web site along with all the commands used and additional information...This data set contains 24 samples (microarrays), with two mouse strains tested (129 and B6), and six brain regions: amygdala (ag), cerebellum (cb), cortex (cx), entorhinal cortex (ec), hippocampus (hp), and midbrain (mb). Two replicates were performed for each region in each strain [9]. This is a balanced two-way design with high-quality data, though with fewer replicates per group than one would like in order to sensitively detect interaction effects. The factors are strain and region, with levels 129/B6 and ag/cb/cx/ec/hp/mb, respectively. We are interested in identifying genes which are differentially expressed between strains, regions, and those which show interactions between strain and region. An example of the latter would be a gene that is expressed at high levels in the cerebellum of 129 mice, but at low levels in B6 cerebellum, compared to other regions.</p></blockquote>
+
+**Exercise**
+
+1. Import "sandberg-sampledata.txt" as a dataframe called 'data'-- but first look at the file in a text editor and see whether there are column names (header) and/or row names: this will effect how you import it;
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+data<-read.table("sandberg-sampledata.txt", header=T, row.names=1)
+```
+2. Select any row (gene) and figure out what the data means;
+3. Run the following code and figure out what it does:
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
 strain <- gl(2,12,24, label=c("129","bl6"))
 region <- gl(6,2,24, label=c("ag", "cb", "cx", "ec", "hp", "mb"))
-# define ANOVA function
-aof <- function(x) { 
-  m<-data.frame(strain,region, x); 
-  anova(aov(x ~ strain + region + strain*region, m))
+add_factors <- function(x) { 
+  m<-data.frame(strain,region, x);
 }
-# apply analysis to the data and get the pvalues.
-anovaresults <- apply(sdata, 1, aof)
-# Note the the following line works on the test data set, but fails
-# with a stack overflow on large data sets, due to an apparent bug in
-# R.
-pvalues<-data.frame( lapply(anovaresults, function(x) { x["Pr(>F)"][1:3,] }) )
+df <- apply(data , 1 , add_factors)
+```
+4. Perform ANOVA on a single gene;
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+single_gene_anova <- aov(x ~ strain + region + strain*region, df[[1]])
+summary( single_gene_anova )
+```
+4. Use 'apply' OR a 'for loop' to perform ANOVA on all genes!
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+anovaresults <- lapply(df, function(gene) aov(x ~ strain + region + strain*region, gene))
+```
+5. Write all the p-values to a .txt and save it for later use.
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
+anova_res <- lapply( anovaresults , anova)
+pvalues<-data.frame( lapply(anova_res, function(x) { x["Pr(>F)"][1:3,] }) )
 write.table(t(pvalues), file = "anova-results.txt", quote = F, sep = '\t')
 ```
 ##Example 2: testing for multimodality.
@@ -388,3 +432,22 @@ Examples: Give a few examples.
 
 
 For more, see Larkin R. P. (1979). An algorithm for assessing bimodality vs. unimodality in a univariate distribution. Behav. Res. Methods Instrum. 11, 467–468.
+
+#Appendix
+
+##Definition of the F-statistic
+
+The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
+
+$$Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.$$
+Assumption: $\varepsilon_{ij}$ are i.i.d Gaussian; we also normalize such that $\sum\alpha_i = 0$.
+Then
+$$SS_{TOT} = SS_{W} + SS_{B},$$
+
+where $SS_{TOT} = \sum\limits_{ij}(Y_{ij}-\bar{Y}_{..})^2$ is the total sum of squares of the data, $SS_{W}=\sum\limits_{ij}(Y_{ij}-\bar{Y}_{i.})^2$ is the sum of squares within groups (unexplained variance) & $SS_{B}=\sum\limits_{i}(\bar{Y}_{i.}-\bar{Y}_{..})^2$ is the sum of squares between groups (explained variance). We look at the F-statistic
+
+$$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
+
+and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom.
+
+Problem: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from 0.
