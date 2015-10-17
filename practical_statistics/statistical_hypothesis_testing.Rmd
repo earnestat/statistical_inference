@@ -1,13 +1,13 @@
 ---
 title: "Notes on practical statistics II"
 output:
-  html_document:
+  pdf_document:
     toc: true
     fig_caption: true
     number_sections: true
 ---
 
-#Statistical Hypothesis Testing: An Intuition Towards
+#Statistical Hypothesis Testing: An Intuition
 
 Two key aspects of practical stastics are:
 
@@ -34,28 +34,16 @@ Some statisticians and physicists would baulk at this question (I've seen it fir
 
 So the question becomes: is the data \~ normally distributed? A robust, quantitative way of thinking about this is to perform one or more of a number of hypothesis tests, which we'll get to, but first, let's consider it visually with the aid of Q-Q plots. To check out Q-Q plots, we need to define a *quantile*:
 
-Definition: a *quantile* of a dataset is the value below which a given percent (or fraction) of the data are: for example, the 10% quantile (also known as the *first decile*) is the value below which 10% of the data are; similarly, the 25% quantile (or the *first quartile* $Q_1$), the 50% quantile (the *second quartile* $Q_2$ or the *median*) and the 75% quantile (or the *third quartile* $Q_3$) are the values below which 1/4, 1/2 and 3/4 of the data are, respectively.
+**Definition**: a *quantile* of a dataset is the value below which a given percent (or fraction) of the data are: for example, the 10% quantile (also known as the *first decile*) is the value below which 10% of the data are; similarly, the 25% quantile (or the *first quartile* $Q_1$), the 50% quantile (the *second quartile* $Q_2$ or the *median*) and the 75% quantile (or the *third quartile* $Q_3$) are the values below which 1/4, 1/2 and 3/4 of the data are, respectively.
 
 Now all that a Q-Q (quantile-quantile) plot is is a plot of the quantiles of one set of data against the quantiles of another. Below are two examples. The first is the (quantiles of) data generated from a normal distribution plotted against (quantiles of) a theoretic normal distribution. In the second, the data is from a Caunchy distribution (symmetric and with heavier tails than a Gaussian), the theoretic a normal distribution.
 
-```{r qplot, fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
+```{r qplot, fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
 #code chunk here:
 set.seed( 42 )
 library( ggplot2 )
 source("multiplot.R")
-qqplot.data <- function (vec) # argument: vector of numbers
-{
-  # following four lines from base R's qqline()
-  y <- quantile(vec[!is.na(vec)], c(0.25, 0.75))
-  x <- qnorm(c(0.25, 0.75))
-  slope <- diff(y)/diff(x)
-  int <- y[1L] - slope * x[1L]
-
-  d <- data.frame(resids = vec)
-
-  ggplot(d, aes(sample = resids)) + stat_qq() + geom_abline(slope = slope, intercept = int,
-                                                            color = "red")
-}
+source("qqplot.R")
 n <- 500
 x <- rnorm( n )
 y <- rcauchy( n )
@@ -77,27 +65,30 @@ The Lilliefors test for normality is a particular case of the Kolmogorov-Smirnov
 3. Using this Lilliefors distribution, we calculate $p$, the probability of seeing $D_{max}$, given the null hypothesis $H_0$, that is, the assumption of normality. Classically, $p$ has been called the $p$-value.
 4. If $p<\alpha,$ we can conclude with $(1-\alpha)$ confidence that $D$ was not drawn from a normal distribution. Classically, it is required that $\alpha = 0.05$, in which case we can conclude with 95% confidence that $D$ was not drawn from a normal distribution.
 
-Here we plot the empirical CDFs of a Cauchy and a Gaussian distribution: can you tell which is which? I should probably plot each separately against a theoretical Gaussian so that we can visually make sense of the distance $D_{max}$.
-```{r , message=FALSE , echo=FALSE}
+Here we plot the empirical CDFs of a Cauchy and a Gaussian distribution: can you tell which is which? Once could also plot each separately against a theoretical Gaussian in order to visually make sense of the distance $D_{max}$.
+```{r , message=FALSE , fig.width = 6 , fig.height = 3, echo=TRUE}
 df <- data.frame(x = c(rnorm( 500 , mean = mean(y) , sd = sd(y)), y),
                  g = gl(2, 500))
 
-ggplot(df, aes(x, colour = g)) + stat_ecdf() #+ xlim(c(-15,15))
+ggplot(df, aes(x, colour = g)) + stat_ecdf() + ylab("CDF") + xlab("value")#+ xlim(c(-15,15))
 ```
 
+Performing the Liiliefors test in R is super-straighforward:
 
 ```{r , message=FALSE , echo=TRUE}
 #http://www.inside-r.org/packages/cran/nortest/docs/lillie.test
-library(nortest)
-lillie.test(x); lillie.test(y)
+library(nortest)#load the necessary library
+lillie.test(x) #Lilliefors test for dataset x
+lillie.test(y) #Lilliefors test for dataset y
 ```
 
 Thus, as the $p$-value for $y$ is less than $10^{-3}$, we can conclude with $>99.9$% confidence that $y$ was NOT drawn from a normal distribution (and phew! as we generated $y$ from a Cauchy distribution). Moreover, as the $p$-value for $x$ was $>0.2$, we cannot conclude with any credible confidence that it was not drawn from a normal distribution (this is also a sanity check).
 
-for more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
+For more cool approaches (thinking about skewness, kurtosis; other statistical tests, such as Shapiro-Walk and Anderson-Darling, see here: http://statsthewayilikeit.com/about/is-my-data-normally-distributed/)
 
-**Exercise**
-Using one of the following datasets generated in the code chunks below, do the following (dataset 1: house fly wing lengths; dataset 2: previously generated data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem),
+**Exercise:**
+
+Using one of the following datasets loaded/generated in the code chunks below, do the following (dataset 1: house fly wing lengths; dataset 2: previously generated data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem):
 
 1. Plot the Q-Q-plot and discuss what it tells you;
 2. Plot the ECDF of the data, along with the CDF of the Gaussian distribution (with mean and standard deviation those of the data);
@@ -119,11 +110,6 @@ x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
 qplot(x , binwidth = 0.005) #plot histogram of means
 ```
 
-**Code for (some of) solution:**
-```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
-qqplot.data( x ) + xlab("theoretical (Gaussian)") + ylab("sample of sample means")
-lillie.test(x)
-```
 #Student's t-tests
 
 ##One sample t-test
@@ -134,14 +120,14 @@ Then the alternative hypothesis is
 $$H_1: \mu \neq \mu_0.$$
 Here we beeswarm plot some normally distributed data, along with a horizontal line to represent a possible null hyothesis (here $\mu_0 = -0.7$ is represented by a horizontal red line).
 
-```{r , message=FALSE , echo=FALSE , include=FALSE}
+```{r ,  fig.width = 4 , fig.height = 3 , message=FALSE , echo=FALSE , include=FALSE}
 library(beeswarm)
 bs1 <- beeswarm(rnorm(250),
          pch = 16 , do.plot = TRUE)
 bs1$type <- "mutant"
 ```
 
-```{r , message=FALSE , echo=FALSE }
+```{r ,  fig.width = 4 , fig.height = 3 , message=FALSE , echo=FALSE }
 dfl <- as.data.frame(cbind(seq(min(bs1$x),max(bs1$x) , by = max(bs1$x) - min(bs1$x)), rep(-0.7,2)))
 ggplot( bs1 , aes( x = x , y =y  )) + geom_point(size = 3) +
   xlab("") + ylab("value")  +
@@ -153,15 +139,45 @@ ggplot( bs1 , aes( x = x , y =y  )) + geom_point(size = 3) +
 
 To test the null hypothesis, we consider the t-statistic
 $$T = \frac{|\bar{x}-\mu_0|}{\text{SEM}}.$$
-Intuition: this t-statistic measures how many "standard errors" the sample mean is away from the (null) hypothesized mean.
+**Intuition**: this t-statistic measures how many "standard errors" the sample mean is away from the (null) hypothesized mean.
 
-Formalism: this statistic has the Student t-distribution $\text{Pr}(t)$ with $n-1$ degrees of freedom. The p-value is defined as the area under the curve where $|t|>|T|$ (include relevant plot here).
+**Formalism**: this statistic has the Student t-distribution $\text{Pr}(t)$ with $n-1$ degrees of freedom. The p-value is defined as the area under the curve where $|t|>|T|$.
 
-Example: if the p-value $<0.05$, we conclude with $95\%$ confidence that $\mu \neq \mu_0$. In general, if the p-value $<\alpha$, then we can conclude with $100(1-\alpha)\%$ confidence that $\mu\neq\mu_0$.
 
-Question: Given $n=16$ data points, what is the minimum effect size $|\bar{x} - \mu_0|$ that you can detect at the $95\%$ confidence level? 
 
-Answer: at the $95\%$ confidence level, we require that $T>2$ (actually a bit more); but 
+
+**Example**: if the p-value $<0.05$, we conclude with $95\%$ confidence that $\mu \neq \mu_0$. In general, if the p-value $<\alpha$, then we can conclude with $100(1-\alpha)\%$ confidence that $\mu\neq\mu_0$.
+Below we plot the probability of seeing any given effect size, measured in standard deviations away from the (null) hypothesized mean, given $n=16$.
+I have also shaded in red the effect sizes that are not statistically significant at the $95%$ confidence level.
+
+```{r , fig.width = 5 , fig.height = 4 , message=FALSE , echo=FALSE , warning=FALSE}
+n <- 16
+t <- seq(-4,4, by = 0.01)
+y <- dt(t*sqrt(n) , df = n-1)
+df <- as.data.frame(cbind(t,y) )
+colnames( df) <- c("t" , "y")
+alpp <- 0.95
+#alpha <- 0.5
+interval <- 1 - (1 - alpp)/2
+#interval <- 0.1
+lo1 <- -qt(interval , df = n-1 )/sqrt(n)
+up1 <-  qt(interval , df = n-1 )/sqrt(n)
+yo  <- ifelse( t < up1 & t > lo1, t , 0 )
+df$yo <- yo
+ggplot( df , aes( x=t , y=y )) + 
+  geom_line()+
+  geom_area(mapping = aes( yo ) , fill = "red") +
+  scale_y_continuous(limits = c(0, 0.4)) +
+  scale_x_continuous(limits = c(-2, 2))  +
+  xlab("Estimated effect size (measured in standard deviations away from the 
+       (null) hypothesized mean)") +
+  ylab("Probability")
+```
+
+
+**Question**: Given $n=16$ data points, what is the minimum effect size $|\bar{x} - \mu_0|$ that you can detect at the $95\%$ confidence level? 
+
+**Answer**: at the $95\%$ confidence level, we require that $T>2$ (actually a bit more); but 
 $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
 
 **Exercise:**
@@ -170,10 +186,6 @@ $T =\frac{|\bar{x}-\mu_0|\sqrt{n}}{\sigma}$. Combining these and plugging in $n 
 
 2. Reseachers claim that there is [*wisdom in crowds*](http://www.diplomacy.edu/resources/books/reviews/wisdom-crowds-why-many-are-smarter-few). Let's test it! More specifically, the claim is that if you ask people to guess the number of jelly beans in a jar, the *average guess* shuold be pretty close to the *true mean*. So: each person in the room will guess the number of jelly beans. The exericise is to use a t-test to test the null hypothesis $H_0$ that the average guess is equal to $J$, the number of beans in the jar. Also discuss whether the assumptions underlying the t-test are satisfied. *Also*, in this exercise, we will type the data into R and save it as a .csv using 'writecsv'.
 
-```{r , message=FALSE , echo=FALSE , include=FALSE }
-x <- rnorm(10, mean = 1 , sd = 2)
-t.test(x)
-```
 
 ##Welch's t-test
 
@@ -212,32 +224,10 @@ See Welch, B. L. (1947), "The generalization of "student's" problem when several
 1. Plot the microtubule lifetime data (mean $\pm$ standard error) as a function as tubulin concentration; 
 2. Perform t-tests for a variety of pairs of datasets at differing [Tb].
 
-**Code for solution:**
-```{r , message=FALSE , echo=TRUE }
-data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
-mlt <- apply( data , 2 , function(x) mean(x,na.rm = TRUE))
-n <- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
-sem <- mlt/sqrt(n) #standard errors
-dfnew <- data.frame(cbind(colnames(data),as.numeric(mlt),as.numeric(sem)))
-p <- ggplot(dfnew, aes( x = X1 , y = mlt))
-p + geom_point() +
-  geom_errorbar(aes(ymin=mlt-sem, ymax=mlt+sem), width=.1)
-```
-
-```{r , message=FALSE , echo=TRUE }
-t.test( subset(data$`9_uM` , !is.na(data$`9_uM`) ) , subset(data$`7_uM` , !is.na(data$`7_uM`) ) )
-t.test( subset(data$`12_uM` , !is.na(data$`12_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
-t.test( subset(data$`7_uM` , !is.na(data$`7_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
-```
-**Note:** Also check out 
-
-```{r , message=FALSE , echo=TRUE }
-pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
-```
-
 N.b. If the population variances are same & so are the sample sizes, then we can do better!
 
 ##Two sample t-test
+<span style="color:red">Note: this and the next section (Paired t-tests and Blocking) are cool and actually quite important, but we will probably not have time: I think I will leave the information here in order for people to have a reference, but I will not include exercises. </span>
 
 The two-sample t-test assumes that the number of measurements are the same (i.e., $n=m$) and that the two distributions have the same variance  (i.e., $\text{SD}_x = \text{SD}_y$). In this case, we can use all the measurements to estimate the underlying population variance such that $\text{SEM} = \sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}/2$ and thus
 $$T = \frac{2|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}.$$
@@ -248,17 +238,16 @@ To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/
 
 
 ##Paired t-tests and Blocking
-<span style="color:red">Perhaps motivate this at the end of the previous section?</span>
 
 <h4>Paired t-test</h4>
 
-In the wise words of Joe Howard, **"I recommend, whenever possible, designing experiments so you can use a paired t-test."** Why would he say this?
+In the wise words of Joe Howard, **"I recommend, whenever possible, designing experiments so you can use a paired t-test."** Now why would he say this? Let's see:
 
 Well, a two-sample paired t-test is a regular two-sample t-test in which each $x_i$ (control) has a corresponding $y_i$ (experiment). The easiest way to achieve this is by performing the control and experiment together a number of times so that all conditions are the same for each $x_i$ and $y_i$ (besides the one variable corresponding to the experiment, e.g., a genetic knockdown). The you just use the one-sample t-test on the differences $\{x_i - y_i\}$ with the null hypothesis that $\mu_{X-Y}=0$: BOOM!
 
 **Exercise:**
 
-Perform a paired t-test on the following data (coming soon!).
+Probably no exercise here but let's see.
 
 <h4>Blocking & Randomized Block Design</h4>
 
@@ -268,30 +257,19 @@ Intuition: Let's say that you do a bunch of controls and experiments under sligh
 
 #Correction Methods (E.g. the Bonferroni Correction)
 
-Problem: When you are performing and comparing many experiments, there is a problem. For example, let's take the absurd case in which you have a control and then you perform an experiment that has no effect (a placebo) and you do it 20 times. We know that 5% of the time you will get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments! We then need a stricter criterion for statistical significance: enter the Bonferroni Correction.
+**Problem**: When you are performing and comparing many experiments, there is a problem. For example, let's take the case in which you have a control and then you perform an experiment that has no effect (a placebo) and you do it 20 times. We know that 5% of the time you will **randomly** get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments! We then need a stricter criterion for statistical significance: enter the Bonferroni Correction.
 
-The Bonferroni Correction: let's say that you perform $n$ experiments and you want a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). We reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of tht t-test).
+The **Bonferroni Correction**: let's say that you perform $n$ experiments and you want a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). We reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of tht t-test).
 
-Note: this is a conservative test, in the sense that it is prone to producing false negatives (*type II errors*).
+**Note**: this is a conservative test, in the sense that it is prone to rejecting the alternative hypothesis when the alternative hypothesis is true( that is, it can produce *false negatives* or *type II errors*.
 
 **Exercise:**
 Perform t-tests on all 10 pairs of the microtubule datasets (i) without the Bonferroni correction & (ii) with the Bonferroni correction.
 
-*Hint*: type the phrase *bonferroni correction r* into your favourite search engine.
-
-**Code for solution:**
-
-```{r , message=FALSE , echo=TRUE }
-data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
-library( reshape)
-df <- melt(data)
-pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
-pairwise.t.test(df$value, df$variable, p.adj = "bonf" , pool.sd = FALSE)
-```
+*Hint*: type the phrase *Bonferroni Correction R* into your favourite search engine.
 
 
-#F-test
-<span style="color:red">The headings may need to be organized slightly differently.</span>
+#ANOVA & $F-$tests
 
 An F-test is any statistical test in which the test statistic has an F-distribution under the null hypothesis. It is most often used when comparing statistical models that have been fitted to a data set, in order to identify the model that best fits the population from which the data were sampled. (according to wikipedia)
 
@@ -300,15 +278,15 @@ An F-test is any statistical test in which the test statistic has an F-distribut
 <h4>Distinguishing multiple groups of numerical data with distinct means.</h4>
 
 
-Let's say that we have  $n$ groups of data $D_i$, drawn from populations with respective *population means* $\alpha_1 , \alpha_2 , \ldots , \alpha_n$.
+Let's say that we have  $n$ groups of data $M_i=\{D_{ij}\}_{j\in J}$, drawn from populations with respective *population means* $\alpha_1 , \alpha_2 , \ldots , \alpha_n$.
 
 **Challenge**: Test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_n$.
 
 **Solution**: Use the method of *analysis of variance* (ANOVA), which should really be called *analysis of the mean*.
 
-**Intution**: The sample means $\bar{D}_i$ will be different. Th real question is: could this *between-group* variance arise from the each *within-group* variance?
+**Intution**: The sample means $\bar{M}_i$ will be different. Th real question is: could the *between-group* variance arise statistically purely from the variance *within groups*?
 
-**Method**: To answer this, we look at the $F-$statistic which, intutively is 
+**Method**: To answer this, we look at the $F-$statistic which, intutively, is 
 
 $$F = \frac{\text{between-group variability}}{\text{within-group variability}}.$$
 
@@ -329,7 +307,7 @@ p <- ggplot( data , aes( x = type , y = age))
 p + geom_boxplot() + geom_jitter( alpha = 0.1 )
 ```
 
-This is one way to perform ANOVA in R:
+This is how we can perform ANOVA in R:
 
 ```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE}
 aov.ex1 <- aov( age~type , data)
@@ -367,17 +345,17 @@ In such a two-way ANOVA, the expression level of a gene is expressed by
 
 $$E_{ijk} = T_i + S_j + (T\cdot S)_{ij} + \varepsilon_{ijk},$$
 
-Here $S$ & $T$ are factors (categorical variables), and in (Pavladis, 2003), $S$ consists of 2 levels that are different mouse strains and $T$ 6 regions of the brain. This is a generalization of the one-way ANOVA set-up above (one factor with three levels). Note that it is still a linear model and has three *effect* terms: *main effects* $T$ & $S$ and an *interaction effect* $TS$. When performing ANOVA in such a study, we get three $F$-statistics and thus three $p-$values for each gene: one for each of the possible effects. This same model is fitted to all genes and then, for each effect, we can rank the genes by strength of the effect in question.
+Here $S$ & $T$ are factors (categorical variables), and in (Pavladis, 2003), $S$ consists of 2 levels that are different mouse strains and $T$ 6 regions of the brain. This is a generalization of the one-way ANOVA set-up above (one factor with three levels). Note that it is still a linear model and has three *effect* terms: *main effects* $T$ & $S$ and an *interaction effect* $T\cdot S$. When performing ANOVA in such a study, we get three $F$-statistics and thus three $p-$values for each gene: one for each of the possible effects. This same model is fitted to all genes and then, for each effect, we can rank the genes by strength of the effect in question.
 
-We will consider the example from (Pavladis, 2003):
-*Using ANOVA for gene selection from microarray studies of the nervous system.*
+We will consider the example from (Pavladis, 2003),
+*Using ANOVA for gene selection from microarray studies of the nervous system.* To quote the paper in question at some length,
 
-<blockquote><p style="font-size: 75%">In this example, we replicate part of the analysis of the data of Sandberg et al. [9] described in Pavlidis and Noble [2], here using the ‘‘R’’ statistical language, which is freely available on the Internet and runs under many platforms [10]. The file sandberg-sampledata.txt contains data for 1000 genes measured using one- channel oligonucleotide arrays (out of the >11,000 in the original data set), and is available on the author's web site along with all the commands used and additional information...This data set contains 24 samples (microarrays), with two mouse strains tested (129 and B6), and six brain regions: amygdala (ag), cerebellum (cb), cortex (cx), entorhinal cortex (ec), hippocampus (hp), and midbrain (mb). Two replicates were performed for each region in each strain [9]. This is a balanced two-way design with high-quality data, though with fewer replicates per group than one would like in order to sensitively detect interaction effects. The factors are strain and region, with levels 129/B6 and ag/cb/cx/ec/hp/mb, respectively. We are interested in identifying genes which are differentially expressed between strains, regions, and those which show interactions between strain and region. An example of the latter would be a gene that is expressed at high levels in the cerebellum of 129 mice, but at low levels in B6 cerebellum, compared to other regions.</p></blockquote>
+<blockquote><p style="font-size: 75%">The file sandberg-sampledata.txt contains data for 1000 genes measured using one- channel oligonucleotide arrays (out of the >11,000 in the original data set)...This data set contains 24 samples (microarrays), with two mouse strains tested (129 and B6), and six brain regions: amygdala (ag), cerebellum (cb), cortex (cx), entorhinal cortex (ec), hippocampus (hp), and midbrain (mb). Two replicates were performed for each region in each strain [9]. This is a balanced two-way design with high-quality data, though with fewer replicates per group than one would like in order to sensitively detect interaction effects. The factors are strain and region, with levels 129/B6 and ag/cb/cx/ec/hp/mb, respectively. We are interested in identifying genes which are differentially expressed between strains, regions, and those which show interactions between strain and region. An example of the latter would be a gene that is expressed at high levels in the cerebellum of 129 mice, but at low levels in B6 cerebellum, compared to other regions.</p></blockquote>
 
 **Exercise**
 
 1. Import "sandberg-sampledata.txt" as a dataframe called 'data'-- but first look at the file in a text editor and see whether there are column names (header) and/or row names: this will effect how you import it;
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=FALSE , eval = TRUE}
 data<-read.table("sandberg-sampledata.txt", header=T, row.names=1)
 ```
 2. Select any row (gene) and figure out what the data means;
@@ -390,22 +368,14 @@ add_factors <- function(x) {
 }
 df <- apply(data , 1 , add_factors)
 ```
-4. Perform ANOVA on a single gene;
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
-single_gene_anova <- aov(x ~ strain + region + strain*region, df[[1]])
-summary( single_gene_anova )
-```
-4. Use 'apply' OR a 'for loop' to perform ANOVA on all genes!
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
-anovaresults <- lapply(df, function(gene) aov(x ~ strain + region + strain*region, gene))
-```
-5. Write all the p-values to a .txt and save it for later use.
-```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
-anova_res <- lapply( anovaresults , anova)
-pvalues<-data.frame( lapply(anova_res, function(x) { x["Pr(>F)"][1:3,] }) )
-write.table(t(pvalues), file = "anova-results.txt", quote = F, sep = '\t')
-```
-##Example 2: testing for multimodality.
+4. Perform ANOVA on a single gene and output/summarize the result;
+5. Use 'apply' OR a 'for loop' to perform ANOVA on all genes!
+6. Write all the p-values to a .txt and save it for later use;
+7. Rank the genes in order of strength of effect of the interaction term $T\cdot S$.
+##Example 4: testing for multimodality.
+
+<span style="color:red">We will probably NOT make it this far but this is a cool application of the $F-$test. </span>
+
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
 ##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
@@ -451,3 +421,96 @@ $$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
 and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom.
 
 Problem: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from 0.
+
+#Code chunks for Solutions to Exercises
+
+**Exercise:**
+
+Using one of the following datasets loaded/generated in the code chunks below, do the following (dataset 1: house fly wing lengths; dataset 2: previously generated data that we claimed to be *Gaussian* in order to demonstrate the Central Limit Theorem):
+
+1. Plot the Q-Q-plot and discuss what it tells you;
+2. Plot the ECDF of the data, along with the CDF of the Gaussian distribution (with mean and standard deviation those of the data);
+3. perform a Lilliefors test on the data and interpret the result.
+
+**Code for (some of) solution:**
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+qqplot.data( x ) + xlab("theoretical (Gaussian)") + ylab("sample of sample means")
+lillie.test(x)
+```
+
+**Exercise:**
+
+1. Plot the microtubule lifetime data (mean $\pm$ standard error) as a function as tubulin concentration; 
+2. Perform t-tests for a variety of pairs of datasets at differing [Tb].
+
+**Code for solution:**
+```{r , message=FALSE , echo=TRUE }
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+mlt <- apply( data , 2 , function(x) mean(x,na.rm = TRUE))
+n <- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
+sem <- mlt/sqrt(n) #standard errors
+dfnew <- data.frame(cbind(colnames(data),as.numeric(mlt),as.numeric(sem)))
+p <- ggplot(dfnew, aes( x = X1 , y = mlt))
+p + geom_point() +
+  geom_errorbar(aes(ymin=mlt-sem, ymax=mlt+sem), width=.1)
+```
+
+**Essential Note**: In the above you shoudld actually plot concentration on the x-axis **as a numerical variable**!!
+
+```{r , message=FALSE , echo=TRUE }
+t.test( subset(data$`9_uM` , !is.na(data$`9_uM`) ) , subset(data$`7_uM` , !is.na(data$`7_uM`) ) )
+t.test( subset(data$`12_uM` , !is.na(data$`12_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
+t.test( subset(data$`7_uM` , !is.na(data$`7_uM`) ) , subset(data$`10_uM` , !is.na(data$`10_uM`) ) )
+```
+**Note:** Also check out 
+
+```{r , message=FALSE , echo=TRUE }
+pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
+```
+
+**Exercise:**
+Perform t-tests on all 10 pairs of the microtubule datasets (i) without the Bonferroni correction & (ii) with the Bonferroni correction.
+
+*Hint*: type the phrase *bonferroni correction r* into your favourite search engine.
+
+**Code for solution:**
+
+```{r , message=FALSE , echo=TRUE }
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+library( reshape)
+df <- melt(data)
+pairwise.t.test(df$value, df$variable, p.adj = "none" , pool.sd = FALSE)
+pairwise.t.test(df$value, df$variable, p.adj = "bonf" , pool.sd = FALSE)
+```
+**Exercise** (code for solution embedded)
+
+1. Import "sandberg-sampledata.txt" as a dataframe called 'data'-- but first look at the file in a text editor and see whether there are column names (header) and/or row names: this will effect how you import it;
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+data<-read.table("sandberg-sampledata.txt", header=T, row.names=1)
+```
+2. Select any row (gene) and figure out what the data means;
+3. Run the following code and figure out what it does:
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+strain <- gl(2,12,24, label=c("129","bl6"))
+region <- gl(6,2,24, label=c("ag", "cb", "cx", "ec", "hp", "mb"))
+add_factors <- function(x) { 
+  m<-data.frame(strain,region, x);
+}
+df <- apply(data , 1 , add_factors)
+```
+4. Perform ANOVA on a single gene;
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+single_gene_anova <- aov(x ~ strain + region + strain*region, df[[1]])
+summary( single_gene_anova )
+```
+5. Use 'apply' OR a 'for loop' to perform ANOVA on all genes!
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = TRUE}
+anovaresults <- lapply(df, function(gene) aov(x ~ strain + region + strain*region, gene))
+```
+6. Write all the p-values to a .txt and save it for later use;
+```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
+anova_res <- lapply( anovaresults , anova)
+pvalues<-data.frame( lapply(anova_res, function(x) { x["Pr(>F)"][1:3,] }) )
+write.table(t(pvalues), file = "anova-results.txt", quote = F, sep = '\t')
+```
+7. Rank the genes in order of strength of effect of the interaction term $T\cdot S$.
