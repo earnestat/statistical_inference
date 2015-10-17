@@ -42,25 +42,18 @@ help(qplot)
 ```
 
 
-**Exercise**
+**Exercise**:
 
 1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
-2. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
-3. How do these histrograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
+2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *dataframe* and will be one of your best friends when performing data analysis in R; 
+3. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
+4. How do these histograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
 
-**Code for solution**
-
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-#code chunk here:
-library( ggplot2 ) #load ggplot2 library for handsome plotting structures
-dataM <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from .csv
-colnames(dataM)
-qplot( dataM$`9_nM_MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
-```
+**Notes**:
 
 - Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed;
 - There are many other potential rules of thumb, such Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley & https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)
-- One can also define bin width instead of the number of bins.
+- One can also define binwidth instead of the number of bins.
 
 <h4>Loading data from within R</h4>
 
@@ -99,7 +92,7 @@ qplot( x ) #plot a histogram of the data
 1. Generate & plot data drawn from a (i) uniform distribution (for sample sizes of $n=100,500$) & (ii) an exponential distribution with rates $=1,3$.
 2. For a dataset of your choice, plot the empirical probability density function instead of the histogram: all this means that the y-axis is normalized so that the $\sum\limits_\text{bins}f(\text{bins}) = 1$ & the interpretation is that $f$ provides the probability of a data point being in that bin.
 
-*Note*: I haven't told you the functions used to generate these datasets. You'll need to find them somewhow! A huge part of coding is finding the right function. *Hint*: search engines are your friends.
+**Note**: I haven't told you the functions used to generate these datasets. You'll need to find them somewhow! A huge part of coding is finding the right function. *Hint*: search engines are your friends.
 
 
 ##Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
@@ -121,23 +114,15 @@ ggplot(data, aes(x = `12_uM`)) + stat_ecdf() + xlab("Microtubule lifetime") +
 
 1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
 
-**Code for solution**
-
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-x <- rnorm(1000 , mean = 1 , sd = 2) ##generate 1000 data points from a normal
-#distribution with mean = 1, sd = 1
-df <- data.frame(x = x)
-ggplot(df, aes(x)) + stat_ecdf() + ylab("ECDF") #plot ECDF of the data
-```
-
 ##Third way to plot (univariate) data: box-plot
 
-We now plot the microtubule lifetime data as a box-plot (to be defined below).
+We now plot the microtubule lifetime data as a set of box-plots (to be defined below) with [Tb] on the x-axis.
 
-However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. 
+However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'reshape2' that helps you reshape dataframes: two important function are 'melt' and 'dcast', which are analogues of melting and cast metal -- see more [here](http://seananderson.ca/2013/10/19/reshape.html).
 
 ```{r,  message = FALSE ,  echo = TRUE}
-library( reshape )
+library( reshape2 ) #this library contains the function that we'll need in order to reshape the dataframe
+#as desired
 mt_data <- melt( data ) #melt data as described above
 colnames(mt_data) <- c("tubulin_concentration" , "lifetime") #rename the columns
 mt_bp <- ggplot( mt_data , aes( x = factor(tubulin_concentration) , y = lifetime)) #initiate plot
@@ -149,11 +134,11 @@ mt_bp + geom_boxplot() + xlab("[Tb]") #plot the box-plot
 1. Execution of the above code spat out a warning: what was this about?
 2. When I initiated the plotting structure 'mt_bp', I turned 'tubulin_concentration' into a 'factor': what is a 'factor'?
 
-##Third way to plot (univariate) data: column scatter plot (with jitter!)
+##Fourth way to plot (univariate) data: column scatter plot (with jitter!)
 
 For small amounts of data, you should plot all the data, not just the box-plot, which summarizes aspeects of the data. A column scatter plot (with jitter) is one way to achieve this and you can layer it on top of a box-plot:
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 #data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
 datamm <- read.csv("mm.csv")
 p <- ggplot( datamm , aes( factor(Expt) , Speed ))
@@ -165,7 +150,7 @@ p + geom_boxplot() + geom_jitter(aes(colour = factor(Expt))) + guides(colour=gui
 
 **Question**: What is a problem with the way in which I have plotted both the box-plot and the jitter plot above?
 
-##Third way to plot (univariate) data: beeswarm plot
+##Fifth way to plot (univariate) data: beeswarm plot
 
 If you have more data, it may overlap in a jitter plot: one way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out:
 
@@ -190,12 +175,6 @@ help(breast)
 
 **Question**: Is there the correct amount of data for a beeswarm plot here?
 
-**Code for solution**
-```{r,  message = FALSE ,  echo = TRUE}
-beeswarm(lifetime ~ tubulin_concentration, data = mt_data,
-         pch = 16, pwcol = 1 + 2*as.numeric(tubulin_concentration),
-         xlab = "Tubulin concentration", ylab = "Lifetime")
-```
 
 #Summary Statistics
 
@@ -212,6 +191,8 @@ $$p(x) = \sum\limits_i(x - x_i)^2.$$
 
 To calculate the mean of dataset, we use the function 'mean' in R:
 ```{r,  message = FALSE ,  echo = TRUE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+datamm <- read.csv("mm.csv")
 datamm_ep1 <- subset(datamm , Expt == 1) ##what have I done here?
 mean_exp1 <- mean( datamm_ep1$Speed )
 print( mean_exp1)
@@ -223,13 +204,21 @@ You can also calculate the mean of each column of a dataframe by using the 'appl
 apply( data , 2 , mean)
 ```
 
-*Question*: Whoa!! This reported NA's. Why did this happen? How can we avoid it?
+**Question**: Whoa!! This reported NA's. Why did this happen? How can we avoid it?
 
-*Code for solution*:
+**Answer & Code**:
 ```{r,  message = FALSE ,  echo = TRUE}
 #for more on 'apply' and its variants, see here: #https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
 apply( data , 2 , function(x) mean(x,na.rm = TRUE))
 ```
+
+**Exercise**:
+
+Compute the mean across all experiments in the Michelson-Morley dataset. There are two methods that I would suggest trying:
+
+1. Use 'by' (it's similar to 'apply') and you can find information about it here:
+https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/;
+2. Reshaping the data using 'dcast' from the "reshape2" library and then using 'apply'.
 
 <h4>Warning! The mean can be a crappy statistic</h4>
 
@@ -238,7 +227,7 @@ Note: the mean is not always a good statistic, particularly for skewed and bimod
 Here are 3 cases in which the *mean* is not a great summary statistic to report:
 
 1. a dataset with outliers (for example, if a reseacher accidentally adds a zero to a couple of data points when transcribing data; note: outliers will be defined below, when we have a few more tools under our statistical belt);
-```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE , echo=FALSE}
 x <- runif(10)
 y <- 12
 df <- as.data.frame( c( x , y) )
@@ -247,11 +236,12 @@ df$type = "data"
 m <- signif( mean(df$value) , 2)
 llb <- paste("mean = " , m)
 op <- ggplot( df , aes( x = type , y = value))
-op + geom_point(alpha = 0.3) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
+#op + geom_point(alpha = 0.3) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
 op + geom_jitter( size = 4 , alpha = 0.5) +
   annotate("text",  label = llb ,  x = 1, y= 6) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
 ```
 
+**Question**: what have the outliers done to the mean in the above? Quantify roughly how bad the situation is.
 
 
 2. data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities )
@@ -275,7 +265,7 @@ p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 5, y = 160, label = l
 multiplot(p1, p2, cols=2)
 ```
 
-- data from a skewed distribution (e.g. gamma distribtuion -- arises from multistep processes) -- in the example below, the mean is ~2 and the peak of the histogram occurs at ~1:
+3. data from a skewed distribution (e.g. gamma distribution -- arises from multistep processes) -- in the example below, the mean is ~2 and the peak of the histogram occurs at ~1:
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 x <- rgamma(10000 , 2 ,1)
 qplot(x)
@@ -302,6 +292,7 @@ x <- c(1,2,2,3,4,5,5,6,7)
 y <- c(1,2,2,3,4,5,5,60,70)
 df <- data.frame(x,y)
 print( c( mean(x) , mean(y)) )
+print( c( median(x) , median(y)) )
 dfm <- melt(df)
 mp <- ggplot(dfm , aes( x = variable , y = value))
 mp + geom_boxplot() + xlab("")
@@ -309,7 +300,7 @@ mp + geom_boxplot() + xlab("")
 
 <h4>Mode</h4>
 
-The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). Give a visual example. When the histogram/probability distribution function has rwo or more modes, we call it *bi-modal* and *multi-modal* respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, miximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
+The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). When the histogram/probability distribution function has two or more modes, we call it *bi-modal* and *multi-modal*, respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, maximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo = FALSE}
 source("multiplot.R")
@@ -339,28 +330,30 @@ $$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
 
 and $\sigma$, the square root of the variance, is called the *standard deviation* of the data.
 
-Cool note: having a two summary statistics such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.
+**Cool note**: having two summary statistics, such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.
 
 <h4>Normal (Gaussian) Distribution</h4>
 
-Motivation:
+**Motivation**:
 
-- The Central Limit Theorem! WOWSER.
 - Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
 - Measurement error (e.g. using a ruler) is often normally distributed.
+- The Central Limit Theorem! See below.
 
-Equation: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
+**Equation**: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2}),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the distribution.
 
 <h4>Exponential Distribution</h4>
 
-Motivation:
+**Motivation**:
 
 - Radioactive decay;
-- Any Poisson Process has exponentially distributed waiting times (will prove below OR in appendix; will included numerical example in the exercises);
+- Any Poisson Process has exponentially distributed waiting times (if you don't know what this means, that's fine! You will soon);
 
-Equation: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
+**Equation**: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$, where $\mu$ is the mean of the distribution. 
 
-Key: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm). Also, standard deviation can give us insight into the existence of outliers:
+<h4>Variance & Outliers</h4>
+
+**Key**: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm). Also, standard deviation can give us insight into the existence of outliers:
 
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 x <- c(1,2,2,3,4,5,5,6,7)
@@ -372,13 +365,6 @@ print( apply( df , 2 , sd) )
 **Question**: How can we see from mean & standard deviation of the above datasets that one of them may contain outliers?
 
 **Exercise**: Compute the standard deviation of one of the microtubule lifetime datasets (for all concentrations) OR the the Michelson-Morley data (all experiments).
-
-**Code for solution**:
-```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
-by(datamm$Speed, datamm$Expt , sd)
-#OR
-tapply(datamm$Speed, datamm$Expt , sd)
-```
 
 <h4>Interquartile Range</h4>
 
@@ -407,7 +393,7 @@ see about bagplots (bivariate boxplots) here: https://en.wikipedia.org/wiki/Bagp
 
 <h4>Standard Error of the Mean</h4>
 
-Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$ (define all of these things OR give an intuition via example; also note that you have only defined mean & variance for finite datasets as of yet, not for probability distributions). Noe the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the *standard error of the sample mean* is
+Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$. Noe the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the *standard error of the sample mean* is
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
 
@@ -422,17 +408,23 @@ sem <- mlt/sqrt(n) #standard errors
 print(sem)
 ```
 
+**Exercise**: Figure out what each line of the code above does.
+
 #Central Limit Theorem
 
-The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator* (to be defined), is itself distributed (it's also a random variable), in the limit of large samples:
+The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator*, is itself distributed, in the limit of large samples:
 
 Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribution $P$ (with mean $\mu$ and variance $\sigma^2$). The sample average is defined as
 
 $$S_n = \frac{X_1 + X_2 + \ldots + X_n}{n}$$
 
-and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will demonstrate part of its power when dealing with Student's t-test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician)had to say about the CLT:
+and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will demonstrate part of its power when dealing with Student's t-test later. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician) had to say about the CLT:
 
 <blockquote><p style="font-size: 75%">I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.</p></blockquote>
+
+<h4>Examples of the CLT</h4>
+
+1. Here we perform a simple demonstration of the Central Limit Theorem, hi which our random variable defined by $p(0)=p(1)=0.5$:
 
 ```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
 ##Here we perform a simple demonstration of the Central Limit Theorem
@@ -444,6 +436,10 @@ m <- 10000 #number of trials
 x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
 qplot(x , binwidth = 0.005) #plot histogram of means
 ```
+
+2. This example will take the form of an **exercise**: choose one the microtubule lifetime datasets and compute the mean of a random subset of it; do this 10,000 times and plot the resulting histogram;
+
+3. In which we  estimate $\pi$ using a Monte Carlo method:
 
 ```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
 ##Here we perform a simple demonstration of the Central Limit Theorem
@@ -469,6 +465,16 @@ x <- replicate(m,approx_pi(n)) #approximate pi m times
 m <- mean(x) #compute mean of your estimates
 qplot( x , binwidth = 0.01) #plot distribution of estimates
 ```
+
+#Rules of Thumb for Experimental Data
+
+More to come so watch this space. Very generic rules of thumb:  
+
+- To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
+- To say something about the variance, have at least $n = 30$ data points: this is because the **standard error of the standard deviation** is $\approx\frac{\sigma}{\sqrt{2(n-1)}}$ (see [this paper(http://web.eecs.umich.edu/~fessler/papers/files/tr/stderr.pdf)) so that, if you have 30 data points, then your **standard error of the standard deviation** is $\approx 13%$ of $\sigma$, or an order of magnitude less than it;
+- To say anything about the actual distribution, have at least $n = 100$ data points. This is really motivatable by considering the **standard error of skewness** and **standard error of kurtosis**, about which you can find more [here](http://estatistics.eu/what-is-statistics-standard-error-of-skewness-standard-error-of-kurtosis/).
+
+These are incredibly generic rules!  Keep them in mind and re-evaluate them when you get some data!
 
 #An Incomplete Compendium of Distributions (perhaps this should occur earlier)
 
@@ -521,10 +527,87 @@ Equation: $P(x) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x
 
 This list is already long enough for the current purposes of introduction to distributions. There are also Pareto (power-law) distributions, Cauchy distributions, Laplace distributions and a very many more... (perhaps list more with a reference or two).
   
-#Rules of Thumb for Experimental Data
 
-More to come so watch this space. Very generic rules of thumb:  
 
-- To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
-- To say something about the variance, have at least $n =30$ data points;
-- To say anything about the actual distribution, have at least $n = 100$ data points.
+#Code for Solutions to Exercises
+
+**Exercise**
+
+1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
+2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *dataframe* and will be one of your best friends when performing data analysis in R; 
+3. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
+4. How do these histograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
+
+**Code chunks for solution**
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+#code chunk here:
+library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+dataM <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from .csv
+colnames(dataM)
+qplot( dataM$`9_nM_MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
+```
+
+**Exercise**
+
+1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
+
+**Code for solution**
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+x <- rnorm(1000 , mean = 1 , sd = 2) ##generate 1000 data points from a normal
+#distribution with mean = 1, sd = 1
+df <- data.frame(x = x)
+ggplot(df, aes(x)) + stat_ecdf() + ylab("ECDF") #plot ECDF of the data
+```
+
+**Exercise**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
+
+**Question**: Is there the correct amount of data for a beeswarm plot here?
+
+**Code for solution**:
+```{r,  message = FALSE ,  echo = TRUE}
+beeswarm(lifetime ~ tubulin_concentration, data = mt_data,
+         pch = 16, pwcol = 1 + 2*as.numeric(tubulin_concentration),
+         xlab = "Tubulin concentration", ylab = "Lifetime")
+```
+
+**Exercise**:
+
+Compute the mean across all experiments in the Michelson-Morley dataset. There are two methods that I would suggest trying:
+
+1. Use 'by' (it's similar to 'apply') and you can find information about it here:
+https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/;
+2. Reshaping the data using 'dcast' from the "reshape2" library and then using 'apply'.
+
+**Code for Solution**:
+
+```{r,  message = FALSE ,  echo = TRUE}
+datamm <- read.csv("mm.csv")
+by(datamm$Speed , datamm$Expt , mean)
+```
+There is another supercool way in which we reshape (cast) the data and then use 'apply':
+```{r,  message = FALSE ,  echo = TRUE}
+d <- dcast(datamm , Run ~ Expt , value.var = "Speed")
+apply( d[,2:6] , 2 , mean)
+```
+
+**Code for solution**:
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+by(datamm$Speed, datamm$Expt , sd)
+#OR
+tapply(datamm$Speed, datamm$Expt , sd)
+```
+
+**Exercise**:
+
+2. This example will take the form of an **exercise**: choose one the microtubule lifetime datasets and compute the mean of a random subset of it; do this 10,000 times and plot the resulting histogram;
+
+**Code for solution**:
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
+d12 <- data$`12_uM`
+samples <- replicate(10000,sample( d12 , 300,replace = TRUE))
+means <- apply( samples , 2 , mean)
+qplot(means)
+```
