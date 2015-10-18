@@ -95,7 +95,6 @@ Statistical Motivations &amp; Definitions
 </h1>
 <div id="there-are-many-in-which-to-plot-data" class="section level1">
 <h1><span class="header-section-number">1</span> There are many in which to plot data</h1>
-<p>A section on how to plot data (histograms, box plots, beeswarms), outlier detection etc…</p>
 <div id="first-way-to-plot-univariate-data-histogram" class="section level2">
 <h2><span class="header-section-number">1.1</span> First way to plot (univariate) data: histogram</h2>
 <p>When we say <em>univariate data</em>, all we mean is that there is one variable. The 1st way to plot such data is in a histogram. But first we need some data. There are 3 ways to get data into R:</p>
@@ -109,8 +108,7 @@ Statistical Motivations &amp; Definitions
 Importing data into R
 </h4>
 <p>The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop. We have it as a .csv (“Comma Separated Values”) file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown <em>in vitro</em> under different tubulin concentrations and each column is a different [Tb].</p>
-<pre class="r"><code>#code chunk here:
-library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+<pre class="r"><code>library( ggplot2 ) #load ggplot2 library for handsome plotting structures
 data &lt;- read.csv(&quot;MG_catastrophe_data/lifetimes_tubulin.csv&quot; , check.names=FALSE) #load data from .csv
 ##this is a dataframe -- a very important structure in R
 colnames(data) #print the column names in the datframe 'data'</code></pre>
@@ -505,6 +503,7 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates</code></pre>
 <div id="an-incomplete-compendium-of-distributions-perhaps-this-should-occur-earlier" class="section level1">
 <h1><span class="header-section-number">5</span> An Incomplete Compendium of Distributions (perhaps this should occur earlier)</h1>
 <p>This section is a prototype: I need to flesh out equations, descriptions, motivaations and whatever else (eg. means, variances etc…). Oh, and include Figures: make it at least a little bit pleasing on the eye, please, Hugo!</p>
+<p><span style="color:red">I will actually probably end up deleting this section OR have it as an appendix/reference.</span></p>
 <div id="normal-gaussian-distribution" class="section level2">
 <h2><span class="header-section-number">5.1</span> Normal (Gaussian) Distribution</h2>
 <p>Motivation:</p>

@@ -9,8 +9,6 @@ output:
 <h1>Statistical Motivations & Definitions</h1>
 #There are many in which to plot data
 
-A section on how to plot data (histograms, box plots, beeswarms), outlier detection etc... 
-
 ##First way to plot (univariate) data: histogram
 
 When we say *univariate data*, all we mean is that there is one variable. The 1st way to plot such data is in a histogram. But first we need some data. There are 3 ways to get data into R:
@@ -28,7 +26,6 @@ We will go through each of these modes:
 The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop. We have it as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
 
 ```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
-#code chunk here:
 library( ggplot2 ) #load ggplot2 library for handsome plotting structures
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
 ##this is a dataframe -- a very important structure in R
@@ -479,6 +476,8 @@ These are incredibly generic rules!  Keep them in mind and re-evaluate them when
 #An Incomplete Compendium of Distributions (perhaps this should occur earlier)
 
 This section is a prototype: I need to flesh out equations, descriptions, motivaations and whatever else (eg. means, variances etc...). Oh, and include Figures: make it at least a little bit pleasing on the eye, please, Hugo!
+
+<span style="color:red">I will actually probably end up deleting this section OR have it as an appendix/reference.</span>
 
 ##Normal (Gaussian) Distribution
 
