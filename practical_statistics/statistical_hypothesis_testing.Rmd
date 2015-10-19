@@ -1,7 +1,7 @@
 ---
 title: "Notes on practical statistics II"
 output:
-  pdf_document:
+  html_document:
     toc: true
     fig_caption: true
     number_sections: true
@@ -372,6 +372,7 @@ df <- apply(data , 1 , add_factors)
 5. Use 'apply' OR a 'for loop' to perform ANOVA on all genes!
 6. Write all the p-values to a .txt and save it for later use;
 7. Rank the genes in order of strength of effect of the interaction term $T\cdot S$.
+
 ##Example 4: testing for multimodality.
 
 <span style="color:red">We will probably NOT make it this far but this is a cool application of the $F-$test. </span>
