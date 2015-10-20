@@ -58,6 +58,8 @@ precisely as our intuition told us.
 
 Now how confident can we be of this estimate? Our intuition is merely qualitative when it comes to this question: all we can really say is that the more data we have, the more we can be sure of our estimate. To quantitate this intuition, we use the Central Limit Theorem.
 
+<span style="color:red">**Note**: I would really like to see here a (short) discussion of the intuition that our confidence is realted to the variance of the result when perofrming the experiment many times -- then the participants could simulate it themselves and make their own error bars! </span>
+
 ##The CLT and confidence intervals on a biased coin flip
 
 First notice that $\hat{p}=k/n$ is also $S_n$, an estimate of the mean of the distribution given by $P(1)=p, P(0)=1-p$ (that is, we call a *head* 1 and a tail *0*). Then the Central Limit Theorem tells us that as $n$ gets large (in practice, $n>20$ should be fine), $\hat{p}=S_n$ is distributed like $N(\mu,\sigma^2/n),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the binomial distribution. Hence $\hat{p}$ is ~normally distributed with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$.
@@ -109,6 +111,7 @@ Examples:
 - The sample mean $\bar{x} =\sum x_i/n$ is an unbiased estimator;
 - The (uncorrected) sample variance $=\sum(x_i - \bar{x})^2/n$ is a biased estimator: the usual definition of sample variance $=\sum(x_i - \bar{x})^2/(n-1)$ is, however, an unbiased estimator of sample variance.
 
+
 #(simple) Linear Regression basics
 
 The challenge: we have some data $D=\{x_i,y_i\}$ that looks like it could be linear, with some noise:
@@ -128,6 +131,9 @@ p + geom_point()
 ```
 
 We form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*:
+
+<span style="color:red">**Example (anything) & Exercise (spindle size?)**: Perform linear regression & see how easy it is! Without knowing anything you cant do it. Now let's see what you actually did. Wanna have polynomial regression also??</span>
+
 
 ##Ordinary least squares (OLS)
 
@@ -175,6 +181,9 @@ Coming up:
 - Using bootstrapping to get error estimates on your parameters.
 
 ###Anscombe's Quartet demonstrates violations of OLS assumptions
+
+<span style="color:red">**Exercise**: Perform linear regression on Anscome's Quartet! Maybe even get all the results? mean, sd, etc....</span>
+
 
 Anscombe's Quarter consists of four datasets, each consisting of 11 data points. Each data set has the same $\bar{x}, \bar{y}, \text{SD}_x , \text{SD}_y$, correlation coefficient and linear regression line (OLS):
 
@@ -269,6 +278,7 @@ results <- boot(data=df, statistic=bs,
                 R=1000, formula=y~x)
 print(results)
 ```
+<span style="color:red">**Exercise**: You do a bootstrap. Also, how about weighted least squares?? See here and follow the trail...http://www.itl.nist.gov/div898/handbook/pmd/section4/pmd452.htm#uw & https://onlinecourses.science.psu.edu/stat501/node/352</span>
 
 ##Modeling a power law
 
