@@ -31,6 +31,8 @@ We will first look at condition i), which we have as a .csv ("Comma Separated Va
 
 ```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
 library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+setwd("~/repos/statistical_inference/practical_statistics/")#You need to set your working directory
+#in order to access the files/data necessary -- we'll discuss this.
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
 ##this is a dataframe -- a very important structure in R
 colnames(data) #print the column names in the datframe 'data'
@@ -43,7 +45,7 @@ help(qplot)
 ```
 
 
-**Exercise**:
+**Exercise (~15 minutes)**:
 
 1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
 2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *dataframe* and will be one of your best friends when performing data analysis in R; 
@@ -88,7 +90,7 @@ x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
 qplot( x ) #plot a histogram of the data
 ```
 
-**Exercise**
+**Exercise (~10 minutes)**:
 
 1. Generate & plot data drawn from a (i) uniform distribution (for sample sizes of $n=100,500$) & (ii) an exponential distribution with rates $=1,3$.
 2. For a dataset of your choice, plot the empirical probability density function instead of the histogram: all this means that the y-axis is normalized so that the $\sum\limits_\text{bins}f(\text{bins}) = 1$ & the interpretation is that $f$ provides the probability of a data point being in that bin.
@@ -96,13 +98,14 @@ qplot( x ) #plot a histogram of the data
 **Note**: I haven't told you the functions used to generate these datasets. You'll need to find them somewhow! A huge part of coding is finding the right function. *Hint*: search engines are your friends.
 
 
+**Pros & Cons of Histograms**: Histograms are great visual tools because they allow you to see immediately how your variable is distributed; they should, however, be taken with a grain of salt, because what you see is also a function of your choice of bin size.
+
 ##Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
 
 The ECDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is the total number of data points.
 
 - The intuition is that this tells you the probability of being less than or to equal to the value of interest;
-- This is a great way to visualize and compare distributions as there is no binning and thus no artefacts introduced by binning!
-- A word of warning: there is correlation in the curve (as opposed to a histogram): All that I'm saying here is that if there is a large fluctuation for a low value, then this flucutation may be seen throughout the rest of the curve.
+
 
 Let's first have a look at the ECDF for some of the microtubule lifetime dataset:
 
@@ -111,7 +114,13 @@ ggplot(data, aes(x = `12_uM`)) + stat_ecdf() + xlab("Microtubule lifetime") +
   ylab("ECDF")#plot ECDF of the data
 ```
 
-**Exercise**
+
+**Pros & Cons of CDFs**:
+
+- CDFs are a great way to visualize and compare distributions as there is no binning and thus no artefacts introduced by binning!
+- A word of warning: there is correlation in the curve (as opposed to a histogram): All that I'm saying here is that if there is a large fluctuation for a low value, then this flucutation may be seen throughout the rest of the curve. it is important to keep this in mind.
+
+**Exercise (~10 minutes)**:
 
 1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
 
@@ -119,7 +128,7 @@ ggplot(data, aes(x = `12_uM`)) + stat_ecdf() + xlab("Microtubule lifetime") +
 
 We now plot the microtubule lifetime data as a set of box-plots (to be defined below) with [Tb] on the x-axis.
 
-However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'reshape2' that helps you reshape dataframes: two important function are 'melt' and 'dcast', which are analogues of melting and cast metal -- see more [here](http://seananderson.ca/2013/10/19/reshape.html).
+However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'reshape2' that helps you reshape dataframes: two important function are 'melt' and 'dcast', which are analogues of melting and cast metal -- for more information see [here](http://seananderson.ca/2013/10/19/reshape.html).
 
 ```{r,  message = FALSE ,  echo = TRUE}
 library( reshape2 ) #this library contains the function that we'll need in order to reshape the dataframe
@@ -135,9 +144,14 @@ mt_bp + geom_boxplot() + xlab("[Tb]") #plot the box-plot
 1. Execution of the above code spat out a warning: what was this about?
 2. When I initiated the plotting structure 'mt_bp', I turned 'tubulin_concentration' into a 'factor': what is a 'factor'?
 
+**Pros & Cons of box-plots**:
+
+- Box-plots are a great way to see summary statistics in your data: for example, the median, the quartiles and outliers (all to be defined below) -- they are good at showing where *most* of your data lies;
+- Box plots are not a good way to show all of your data: if you have $<30$ data points, you should just plot it all in a scatter plot; if you have $<100$ data points, you cold use a beeswarm plot; we will look at these now.
+
 ##Fourth way to plot (univariate) data: column scatter plot (with jitter!)
 
-For small amounts of data, you should plot all the data, not just the box-plot, which summarizes aspeects of the data. A column scatter plot (with jitter) is one way to achieve this and you can layer it on top of a box-plot:
+For small amounts of data, you should plot all the data, not just the box-plot, which summarizes aspeects of the data. A column scatter plot (with jitter) is one way to achieve this and you can even layer it on top of a box-plot:
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 #data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
@@ -151,9 +165,16 @@ p + geom_boxplot() + geom_jitter(aes(colour = factor(Expt))) + guides(colour=gui
 
 **Question**: What is a problem with the way in which I have plotted both the box-plot and the jitter plot above?
 
+**Pros & Cons of scatter plots**:
+
+- Scatter plots are great for small amounts of data;
+- If you have large amounts of data, scatter plots can be messy and confusing because points may overlap;
+- There is no hard and fast rule as to what *large amounts of data* means: you need to play around with it yourself and see what conveys the information that you are trying to convey.
+
+
 ##Fifth way to plot (univariate) data: beeswarm plot
 
-If you have more data, it may overlap in a jitter plot: one way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out:
+If you have more data, it may overlap in a jitter plot. One way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out. We will not use ggplot2 for this, as to do so gets too technical, but if yo're interested, see [here](https://denishaine.wordpress.com/2011/09/16/beeswarm-plot-with-ggplot2/).
 
 
 ```{r,  message = FALSE ,  echo = TRUE}
@@ -172,10 +193,14 @@ In order to see more about the dataset used above, execute the following command
 help(breast)
 ```
 
-**Exercise**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
+**Exercise (~10 minutes)**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
 
 **Question**: Is there the correct amount of data for a beeswarm plot here?
 
+**Pros & Cons of beeswarm plots**:
+
+- Bee swarm plots are a great way to visulaize all of your data if there is too much of it for a scatter plot;
+- You can have too much data for a bee swarm, in which case you'll want to use a box-plot, for example.
 
 #Summary Statistics
 
@@ -471,6 +496,8 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates
 #References
 
 (Gardner et al., 2011).
+
+R cheat sheets: https://www.rstudio.com/resources/cheatsheets/
 
 #Code for Solutions to Exercises
 
