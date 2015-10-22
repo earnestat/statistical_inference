@@ -463,70 +463,10 @@ m <- mean(x) #compute mean of your estimates
 qplot( x , binwidth = 0.01) #plot distribution of estimates
 ```
 
-#Rules of Thumb for Experimental Data
 
-More to come so watch this space. Very generic rules of thumb:  
+#References
 
-- To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
-- To say something about the variance, have at least $n = 30$ data points: this is because the **standard error of the standard deviation** is $\approx\frac{\sigma}{\sqrt{2(n-1)}}$ (see [this paper(http://web.eecs.umich.edu/~fessler/papers/files/tr/stderr.pdf)) so that, if you have 30 data points, then your **standard error of the standard deviation** is $\approx 13%$ of $\sigma$, or an order of magnitude less than it;
-- To say anything about the actual distribution, have at least $n = 100$ data points. This is really motivatable by considering the **standard error of skewness** and **standard error of kurtosis**, about which you can find more [here](http://estatistics.eu/what-is-statistics-standard-error-of-skewness-standard-error-of-kurtosis/).
-
-These are incredibly generic rules!  Keep them in mind and re-evaluate them when you get some data!
-
-#An Incomplete Compendium of Distributions (perhaps this should occur earlier)
-
-This section is a prototype: I need to flesh out equations, descriptions, motivaations and whatever else (eg. means, variances etc...). Oh, and include Figures: make it at least a little bit pleasing on the eye, please, Hugo!
-
-<span style="color:red">I will actually probably end up deleting this section OR have it as an appendix/reference.</span>
-
-##Normal (Gaussian) Distribution
-
-Motivation:
-
-- The Central Limit Theorem! WOWSER.
-- Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
-- Measurement error (e.g. using a ruler) is often normally distributed.
-
-Equation: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
-
-##Binomial Distribution
-
-Motivation:
-
-- Flipping coins!
-
-Equation: $P(k|n) = {n\choose k}p^k(1 - p)^{n-k}$, where $p$ is the binomial probability (the probability of flipping heads).
-
-##Poisson Distribution
-
-Motivation:
-
-- Counting things.
-
-Equation: $P(k) = \frac{\lambda^k}{k!}e^{-\lambda}$, for $k \in \{0,1,2,3,\ldots\}$.
-
-##Exponential Distribution
-
-Motivation:
-
-- Radioactive decay;
-- Any Poisson Process has exponentially distributed waiting times (will prove below OR in appendix; will included numerical example in the exercises);
-
-Equation: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
-
-##Gamma Distribution
-
-Motivation:
-
-- Results from multi-step processes (and thus generalizes the exponential distribution)
-
-Equation: $P(x) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
-
-##Other Distributions
-
-This list is already long enough for the current purposes of introduction to distributions. There are also Pareto (power-law) distributions, Cauchy distributions, Laplace distributions and a very many more... (perhaps list more with a reference or two).
-  
-
+(Gardner et al., 2011)
 
 #Code for Solutions to Exercises
 

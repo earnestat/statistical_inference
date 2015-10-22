@@ -7,6 +7,17 @@ output:
     number_sections: true
 ---
 
+#Rules of Thumb for Experimental Data
+
+More to come so watch this space. Very generic rules of thumb:  
+
+- To say *anything* about the mean, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (ref.) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of have a fair coin and getting a false positive, meaning a result that appears to contradict reality';
+- To say something about the variance, have at least $n = 30$ data points: this is because the **standard error of the standard deviation** is $\approx\frac{\sigma}{\sqrt{2(n-1)}}$ (see [this paper(http://web.eecs.umich.edu/~fessler/papers/files/tr/stderr.pdf)) so that, if you have 30 data points, then your **standard error of the standard deviation** is $\approx 13%$ of $\sigma$, or an order of magnitude less than it;
+- To say anything about the actual distribution, have at least $n = 100$ data points. This is really motivatable by considering the **standard error of skewness** and **standard error of kurtosis**, about which you can find more [here](http://estatistics.eu/what-is-statistics-standard-error-of-skewness-standard-error-of-kurtosis/).
+
+These are incredibly generic rules!  Keep them in mind and re-evaluate them when you get some data!
+
+
 #Statistical Hypothesis Testing: An Intuition
 
 Two key aspects of practical stastics are:
@@ -404,24 +415,8 @@ Examples: Give a few examples.
 
 For more, see Larkin R. P. (1979). An algorithm for assessing bimodality vs. unimodality in a univariate distribution. Behav. Res. Methods Instrum. 11, 467–468.
 
-#Appendix
 
-##Definition of the F-statistic
 
-The following is primarily from Rice, Ch. 12: let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
-
-$$Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.$$
-Assumption: $\varepsilon_{ij}$ are i.i.d Gaussian; we also normalize such that $\sum\alpha_i = 0$.
-Then
-$$SS_{TOT} = SS_{W} + SS_{B},$$
-
-where $SS_{TOT} = \sum\limits_{ij}(Y_{ij}-\bar{Y}_{..})^2$ is the total sum of squares of the data, $SS_{W}=\sum\limits_{ij}(Y_{ij}-\bar{Y}_{i.})^2$ is the sum of squares within groups (unexplained variance) & $SS_{B}=\sum\limits_{i}(\bar{Y}_{i.}-\bar{Y}_{..})^2$ is the sum of squares between groups (explained variance). We look at the F-statistic
-
-$$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
-
-and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom.
-
-Problem: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from 0.
 
 #Code chunks for Solutions to Exercises
 
