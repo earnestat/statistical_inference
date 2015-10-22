@@ -21,9 +21,13 @@ We will go through each of these modes:
 
 <h4>Importing data into R</h4>
 
+The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop:
 
+**A little bit of biological background:** Microtubules are cytoskeletal polymers that alternate between periods of slow growth and rapid shrinkage. The conversion from the *growing* state to the *shrinking* state is called microtubule *catastrophe* and the time it takes from nucleation to catatrophe is called the microtubule's *lifetime*. Gardner & co-authors used a TIRF assay (we won't go into details of what this is here) to measure microtubule lifetime *in vitro* under 3 conditions: i) in the presence of tubulin alone (well, with buffer + ATP), ii) in the presence of tubulin and the microtubule-associated protein (MAP) Kip3 & iii) in the presence of tubulin and the MAP MCAK.  In i), the authors perform the assay at different tubulin concentrations and in ii) & iii) at different concentrations of the relevant MAP. The idea of the paper is to see how different MAP's effect the lifetime of microtubules.
 
-The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop. We have it as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
+We will first look at condition i), which we have as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
+
+**How we will store & visualize the data in R**: We will use a visualization library called **ggplot2** -- there is a bit of a learning curve in figuring out how to use it but once you've got it going in, it can be used to create beautiful figures with ease. It is based around Leland Wilkinson's [*Grammar of Graphics*](https://www.springer.com/us/book/9780387245447) and many publications, such as the [New York Times](http://www.nytimes.com/interactive/sports/football/2013-fantasy-football-tier-charts-QB.html), use it. In order to use ggplot2 to its fullest capabilities, we will store our data as **dataframe** objects -- we will play around with these a great deal in these Workshops -- all you need to know now is that '[a] data frame is a list of variables of the same number of rows with unique row names' according to R's documentation (if this is still opaque, we'll figure out below what a dataframe is by looking at one!).
 
 ```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
 library( ggplot2 ) #load ggplot2 library for handsome plotting structures
@@ -466,7 +470,7 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates
 
 #References
 
-(Gardner et al., 2011)
+(Gardner et al., 2011).
 
 #Code for Solutions to Exercises
 
