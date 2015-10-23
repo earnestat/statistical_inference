@@ -6,8 +6,8 @@ output:
     fig_caption: true
     number_sections: true
 ---
-<h1>Statistical Motivations & Definitions</h1>
-#There are many in which to plot data
+
+#First steps: plotting data
 
 ##First way to plot (univariate) data: histogram
 
@@ -23,11 +23,11 @@ We will go through each of these modes:
 
 The authors of (Gardner et al., 2011) have generously allowed us to use their dataset for this Workshop:
 
-**A little bit of biological background:** Microtubules are cytoskeletal polymers that alternate between periods of slow growth and rapid shrinkage. The conversion from the *growing* state to the *shrinking* state is called microtubule *catastrophe* and the time it takes from nucleation to catatrophe is called the microtubule's *lifetime*. Gardner & co-authors used a TIRF assay (we won't go into details of what this is here) to measure microtubule lifetime *in vitro* under 3 conditions: i) in the presence of tubulin alone (well, with buffer + ATP), ii) in the presence of tubulin and the microtubule-associated protein (MAP) Kip3 & iii) in the presence of tubulin and the MAP MCAK.  In i), the authors perform the assay at different tubulin concentrations and in ii) & iii) at different concentrations of the relevant MAP. The idea of the paper is to see how different MAP's effect the lifetime of microtubules.
+**A little bit of biological background:** Microtubules are cytoskeletal polymers that alternate between periods of slow growth and rapid shrinkage. The conversion from the *growing* state to the *shrinking* state is called microtubule *catastrophe* and the time it takes from nucleation to catatrophe is called the microtubule's *lifetime*. Gardner & co-authors used a TIRF assay (we won't go into details of what this is here) to measure microtubule lifetime *in vitro* under 3 conditions: i) in the presence of tubulin alone (well, with buffer + ATP), ii) in the presence of tubulin and the microtubule-associated protein (MAP) Kip3 & iii) in the presence of tubulin and the MAP MCAK.  In i), the authors perform the assay at different tubulin concentrations and in ii) & iii) at different concentrations of the relevant MAP. The idea of the paper is to see how different MAPs effect the lifetime of microtubules.
 
 We will first look at condition i), which we have as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
 
-**How we will store & visualize the data in R**: We will use a visualization library called **ggplot2** -- there is a bit of a learning curve in figuring out how to use it but once you've got it going in, it can be used to create beautiful figures with ease. It is based around Leland Wilkinson's [*Grammar of Graphics*](https://www.springer.com/us/book/9780387245447) and many publications, such as the [New York Times](http://www.nytimes.com/interactive/sports/football/2013-fantasy-football-tier-charts-QB.html), use it. In order to use ggplot2 to its fullest capabilities, we will store our data as **dataframe** objects -- we will play around with these a great deal in these Workshops -- all you need to know now is that '[a] data frame is a list of variables of the same number of rows with unique row names' according to R's documentation (if this is still opaque, we'll figure out below what a dataframe is by looking at one!).
+**How we will store & visualize the data in R**: We will use a visualization library called **ggplot2** -- there is a bit of a learning curve in figuring out how to use it but once you've got it going on, it can be used to create beautiful figures with ease. It is based around Leland Wilkinson's [*Grammar of Graphics*](https://www.springer.com/us/book/9780387245447) and many publications, such as the [New York Times](http://www.nytimes.com/interactive/sports/football/2013-fantasy-football-tier-charts-QB.html), use it. In order to use ggplot2 to its fullest capabilities, we will store our data as **data frame** objects -- we will play around with these a great deal in these Workshops -- all you need to know now is that '[a] data frame is a list of variables of the same number of rows with unique row names', according to R's documentation (if this definition leaves the concept still opaque, we'll figure out below what a dataframe is by looking at one!).
 
 ```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
 library( ggplot2 ) #load ggplot2 library for handsome plotting structures
@@ -47,7 +47,7 @@ help(qplot)
 
 **Exercise (~15 minutes)**:
 
-1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
+1. Run the above code & figure out what each line does; notice that it throws a warning to the console: what does this warning mean? Play around with binwidth parameter;
 2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *dataframe* and will be one of your best friends when performing data analysis in R; 
 3. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
 4. How do these histograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
@@ -55,18 +55,24 @@ help(qplot)
 **Notes**:
 
 - Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed;
-- There are many other potential rules of thumb, such Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley & https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)
+- There are many other potential rules of thumb for the number of bins, such as Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley; also see [Wikipedia](https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)).
 - One can also define binwidth instead of the number of bins.
 
 <h4>Loading data from within R</h4>
 
+When you install R, it ships with a plethora of datasets built into it. We will look at the *mtcars* dataset. For a list of other available inbuilt datasets, execute the following command in your console:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE, eval=FALSE}
+data()
+```
+We will now look at the *mtcars* dataset:
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
 cars <- mtcars #pre-existing dataset in R
 p1 <- ggplot(data = cars , aes(x=mpg)) #initialize plot to look at miles per gallon
 p1 + geom_histogram( binwidth = 1 ) #plot histogram & play around with binwidth if desired
 ```
 
-I know that this section is supposed to focus on plotting histograms of univariate data BUT ggplot2 makes plotting bivariate data so easy that coldn't help including a little bit here:
+I know that this section is supposed to focus on plotting histograms of univariate data BUT ggplot2 makes plotting bivariate data so easy that couldn't help including a little bit here:
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
 p2 <- ggplot( data = cars , aes( x = mpg , y = wt)) #initialize plot to look at the relationship
 #between variables (bivariate) miles /gallon & weight (lb/1000)
@@ -81,10 +87,10 @@ p2 + geom_point() + stat_smooth( method = "lm") + xlab("miles per gallon") + yla
 R contains inbuilt random number generators that we can use to draw random numbers from, for example, uniform and Gaussian distributions. There are two points to note:
 
 1. The default random number generator in R is the Mersenne Twister, which is actually a *pseudorandom number generator* (PRNG), not a *true random number generator*;
-2. It is *very important* to set the seed of your PRNG before using it! This tells your computer where to start generating the random numbers; it follows that, if you run your code, you get the same random numbers and this is **essential for reproducible results**.
+2. It is *very important* to set the seed of your PRNG before using it! This tells your computer where to start generating the random numbers; it follows that, if you run your code twice, you get the same random numbers both times and this is **essential for reproducible results**.
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-set.seed(42) #
+set.seed(42) # set the seed of your PRNG
 x <- rnorm(1000 , mean = 0 , sd = 1) ##generate 1000 data points from a normal
 #distribution with mean = 1, sd = 1
 qplot( x ) #plot a histogram of the data
@@ -100,7 +106,7 @@ qplot( x ) #plot a histogram of the data
 
 **Pros & Cons of Histograms**: Histograms are great visual tools because they allow you to see immediately how your variable is distributed; they should, however, be taken with a grain of salt, because what you see is also a function of your choice of bin size.
 
-##Second way to plot (univariate) data: (empirical) cumulative distribution function (ECDF or CDF)
+##Second way to plot (univariate) data: empirical cumulative distribution function (ECDF)
 
 The ECDF $F(x) = \frac{\text{number of data points} \leq x}{n}$, where $n$ is the total number of data points.
 
@@ -124,16 +130,16 @@ ggplot(data, aes(x = `12_uM`)) + stat_ecdf() + xlab("Microtubule lifetime") +
 
 1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
 
-##Third way to plot (univariate) data: box-plot
+##Third way to plot data: box-plot
 
-We now plot the microtubule lifetime data as a set of box-plots (to be defined below) with [Tb] on the x-axis.
+*Box-plots* are a great way to visualize where most of the data lies, along with *outliers* and *summary statistics* such as *median* (all of these to be defined precisely below). We now plot the microtubule lifetime data as a set of box-plots with [Tb] on the x-axis.
 
-However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'reshape2' that helps you reshape dataframes: two important function are 'melt' and 'dcast', which are analogues of melting and cast metal -- for more information see [here](http://seananderson.ca/2013/10/19/reshape.html).
+However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a dataframe in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'tidyr' that helps you reshape dataframes: two important function are 'gather()' and 'spread()', which make 'wide' data 'long' and 'long' data 'wide', respectively-- we'll see precisely what this means in a minute -- for more information see [here](http://blog.rstudio.org/2014/07/22/introducing-tidyr/).
 
 ```{r,  message = FALSE ,  echo = TRUE}
-library( reshape2 ) #this library contains the function that we'll need in order to reshape the dataframe
+library(tidyr) #this library contains the function that we'll need in order to reshape the dataframe
 #as desired
-mt_data <- melt( data ) #melt data as described above
+mt_data <- gather( data ) #gather data as described above
 colnames(mt_data) <- c("tubulin_concentration" , "lifetime") #rename the columns
 mt_bp <- ggplot( mt_data , aes( x = factor(tubulin_concentration) , y = lifetime)) #initiate plot
 mt_bp + geom_boxplot() + xlab("[Tb]") #plot the box-plot
@@ -149,9 +155,9 @@ mt_bp + geom_boxplot() + xlab("[Tb]") #plot the box-plot
 - Box-plots are a great way to see summary statistics in your data: for example, the median, the quartiles and outliers (all to be defined below) -- they are good at showing where *most* of your data lies;
 - Box plots are not a good way to show all of your data: if you have $<30$ data points, you should just plot it all in a scatter plot; if you have $<100$ data points, you cold use a beeswarm plot; we will look at these now.
 
-##Fourth way to plot (univariate) data: column scatter plot (with jitter!)
+##Fourth way to plot data: column scatter plot (with jitter!)
 
-For small amounts of data, you should plot all the data, not just the box-plot, which summarizes aspeects of the data. A column scatter plot (with jitter) is one way to achieve this and you can even layer it on top of a box-plot:
+For small amounts of data, you should plot all the data, not just the box-plot (which summarizes aspects of the data). A column scatter plot (with jitter) is one way to achieve this and you can even layer it on top of a box-plot:
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 #data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
@@ -172,9 +178,9 @@ p + geom_boxplot() + geom_jitter(aes(colour = factor(Expt))) + guides(colour=gui
 - There is no hard and fast rule as to what *large amounts of data* means: you need to play around with it yourself and see what conveys the information that you are trying to convey.
 
 
-##Fifth way to plot (univariate) data: beeswarm plot
+##Fifth way to plot data: beeswarm plot
 
-If you have more data, it may overlap in a jitter plot. One way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out. We will not use ggplot2 for this, as to do so gets too technical, but if yo're interested, see [here](https://denishaine.wordpress.com/2011/09/16/beeswarm-plot-with-ggplot2/).
+If you have more data, it may overlap in a jitter plot. One way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out. We will not use ggplot2 for this, as to do so gets too technical, but if you're interested, see [here](https://denishaine.wordpress.com/2011/09/16/beeswarm-plot-with-ggplot2/).
 
 
 ```{r,  message = FALSE ,  echo = TRUE}
@@ -200,17 +206,17 @@ help(breast)
 **Pros & Cons of beeswarm plots**:
 
 - Bee swarm plots are a great way to visulaize all of your data if there is too much of it for a scatter plot;
-- You can have too much data for a bee swarm, in which case you'll want to use a box-plot, for example.
+- You can have too much data for a beeswarm, in which case you'll want to use a box-plot, for example.
 
 #Summary Statistics
 
-How can we numerically describe & summarise data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *varibility*, also called *dispersion*.
+How can we numerically describe & summarise data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure'. (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *varibility*, also called *dispersion*. We shall explore these now.
 
 ##Measures of Central Tendency
 
 <h4>Mean</h4>
   
-The *mean* of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that it *is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!):
+The **mean** of a dataset $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognise as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that  *the mean is the number that is, on average, closest to all of the data*, that is, it minimizes the the squared error sum (you can prove this with a bit of calculus & algebra!):
 
 $$p(x) = \sum\limits_i(x - x_i)^2.$$
 
@@ -242,8 +248,7 @@ apply( data , 2 , function(x) mean(x,na.rm = TRUE))
 
 Compute the mean across all experiments in the Michelson-Morley dataset. There are two methods that I would suggest trying:
 
-1. Use 'by' (it's similar to 'apply') and you can find information about it here:
-https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/;
+1. Use 'by' (it's similar to 'apply') and you can find information about it [here](https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/);
 2. Reshaping the data using 'dcast' from the "reshape2" library and then using 'apply'.
 
 <h4>Warning! The mean can be a crappy statistic</h4>
@@ -270,7 +275,7 @@ op + geom_jitter( size = 4 , alpha = 0.5) +
 **Question**: what have the outliers done to the mean in the above?
 
 
-2. data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities )
+2. data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities);
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
 ##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
@@ -302,14 +307,14 @@ mean(x)
 
 <h4>Median</h4>
 
-To find the *median* of your dataset, list them from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. 
+To find the **median** of your dataset, list all data from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. 
 
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 mean(x)
 median(x)
 ```
 
-The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outlier and this will not alter the median. For example the dataset $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. 
+The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outliers and this will not alter the median. For example the dataset $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. 
 
 I include a demonstrative plot below. Although I have not introduced box-plots formally yet, the bar in the middle of the box is the median of the dataset: you can see that the medians are the same and yet the means are very different due to the presence of outliers:
 
@@ -319,14 +324,14 @@ y <- c(1,2,2,3,4,5,5,60,70)
 df <- data.frame(x,y)
 print( c( mean(x) , mean(y)) )
 print( c( median(x) , median(y)) )
-dfm <- melt(df)
-mp <- ggplot(dfm , aes( x = variable , y = value))
+dfm <- gather(df)
+mp <- ggplot(dfm , aes( x = key , y = value))
 mp + geom_boxplot() + xlab("")
 ```
 
 <h4>Mode</h4>
 
-The *mode* is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). When the histogram/probability distribution function has two or more modes, we call it *bi-modal* and *multi-modal*, respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, maximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
+The **mode** is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). When the histogram/probability distribution function has two or more modes, we call it *bi-modal* and *multi-modal*, respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, maximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo = FALSE}
 source("multiplot.R")
@@ -341,34 +346,34 @@ p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 10, y = 190, label = 
 p2
 ```
 
-Also see [here](http://mathworld.wolfram.com/Mode.html) for some interesting notes on relation between mode, median, mean & something called the Pearson mode skewness: 
+Also see [here](http://mathworld.wolfram.com/Mode.html) for some interesting notes on relation between mode, median, mean & something called the Pearson mode skewness.
 
 ##Measures of Variability/Dispersion
 
 <h4>Range</h4>
-The range of a dataset $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
+The **range** of a dataset $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
 
 <h4>Variance & Standard Deviation</h4>
 
-The *variance* is a measure of how far a dataset is spread out. Recalling the mean $\mu = \frac{1}{n}\sum\limits_i x_i$, the variance is defined to be
+The **variance** is a measure of how far a dataset is spread out. Recalling the mean $\mu = \frac{1}{n}\sum\limits_i x_i$, the variance is defined to be
 
 $$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
 
-and $\sigma$, the square root of the variance, is called the *standard deviation* of the data.
+and $\sigma$, the square root of the variance, is called the **standard deviation** of the data.
 
 **Cool note**: having two summary statistics, such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.
 
-<h4>Normal (Gaussian) Distribution</h4>
+<h4>Example: Normal (Gaussian) Distribution</h4>
 
 **Motivation**:
 
 - Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
-- Measurement error (e.g. using a ruler) is often normally distributed.
+- Measurement error (e.g., from using a ruler) is often normally distributed.
 - The Central Limit Theorem! See below.
 
 **Equation**: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2}),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the distribution.
 
-<h4>Exponential Distribution</h4>
+<h4>Example: Exponential Distribution</h4>
 
 **Motivation**:
 
@@ -379,7 +384,7 @@ and $\sigma$, the square root of the variance, is called the *standard deviation
 
 <h4>Variance & Outliers</h4>
 
-**Key**: variance and standard deviation are sensitive to outliers (see, e.g., http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm). Also, standard deviation can give us insight into the existence of outliers:
+**Key**: variance and standard deviation are sensitive to outliers (see [here](http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm), for example). Also, standard deviation can give us insight into the existence of outliers:
 
 ```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
 x <- c(1,2,2,3,4,5,5,6,7)
@@ -390,18 +395,18 @@ print( apply( df , 2 , sd) )
 ```
 **Question**: How can we see from mean & standard deviation of the above datasets that one of them may contain outliers?
 
-**Exercise**: Compute the standard deviation of one of the microtubule lifetime datasets (for all concentrations) OR the the Michelson-Morley data (all experiments).
+**Exercise (~10 minutes)**: Compute the standard deviation of one of the microtubule lifetime datasets (for all concentrations) OR the the Michelson-Morley data (all experiments).
 
 <h4>Interquartile Range</h4>
 
-Recall that the *median* splits the data into a top 50% and a bottom 50%. We can similarly split these regions into their top and bottom halves: $Q_1$, the *1st quartile*, is defined to be the median of the bottom 50% (i.e. the median of the data consisting of all $x_i$ less than the median) & $Q_3$, the *3rd quartile*, is defined to be the median of the top 50% of the data. We then define the *interquatile range* to be $IQR = Q_3 - Q_1$, a measure of how spread out the data is (and it is a robust measure! particularly with respect to outliers).
+Recall that the *median* splits the data into a top 50% and a bottom 50%. We can similarly split these regions into their top and bottom halves: $Q_1$, the **1st quartile**, is defined to be the median of the bottom 50% (i.e. the median of the data consisting of all $x_i$ less than the median) & $Q_3$, the **3rd quartile**, is defined to be the median of the top 50% of the data. We then define the **interquatile range** to be $IQR = Q_3 - Q_1$, a measure of how spread out the data is (and it is a robust measure! particularly with respect to outliers).
 
-Having defined the *median* and *quartiles*, we can now define a *box-plot* (also known as a box-and-whisker diagram), which provides a very useful way of visualizing data. In a box plot,
+Having defined the *median* and *quartiles*, we can now define a **box-plot** (also known as a box-and-whisker diagram), which provides a very useful way of visualizing data. In a box plot,
 
 - The top and bottom of the box are $Q_3$ and $Q_1$, respectively;
 - The band in the middle is the median;
 - The ends of the top and bottom whiskers are $Q_3 + 1.5\times IQR$ & $Q_1 - 1.5\times IQR$, respectively (note: there are other possible conventions for the whiskers, however this is the rule that we shall use, unless specified otherwise);
-- The outliers can be plotted as points; in fact, all of this quantile business allows us to give a precise definition of outliers as all data points that are above $Q_3 + 1.5\times IQR$ or that are below $Q_1 - 1.5\times IQR$ (there are other definitions, still an active area of research; see here, for example: https://www.siam.org/meetings/sdm10/tutorial3.pdf)
+- The outliers can be plotted as points; in fact, all of this quantile business allows us to give a precise definition of outliers as all data points that are above $Q_3 + 1.5\times IQR$ or that are below $Q_1 - 1.5\times IQR$ (there are other definitions, still an active area of research; see [here](https://www.siam.org/meetings/sdm10/tutorial3.pdf), for example).
 
 Here are boxplots from the famed Michelson-Morley experiment, in which the data is the speed of light in different experiments:
 ```{r , fig.width = 12 , fig.height = 3 , message = FALSE , echo=FALSE}
@@ -419,7 +424,7 @@ see about bagplots (bivariate boxplots) here: https://en.wikipedia.org/wiki/Bagp
 
 <h4>Standard Error of the Mean</h4>
 
-Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$. Noe the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the **standard error of the sample mean** is
+Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$. Now the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the **standard error of the sample mean** is
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
 
@@ -450,7 +455,7 @@ and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\si
 
 <h4>Examples of the CLT</h4>
 
-1. Here we perform a simple demonstration of the Central Limit Theorem, hi which our random variable defined by $p(0)=p(1)=0.5$:
+1. Here we perform a simple demonstration of the Central Limit Theorem, in which our random variable is defined by $p(0)=p(1)=0.5$:
 
 ```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
 ##Here we perform a simple demonstration of the Central Limit Theorem
@@ -463,7 +468,7 @@ x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
 qplot(x , binwidth = 0.005) #plot histogram of means
 ```
 
-2. This example will take the form of an **exercise (~15minutes)**: choose one the microtubule lifetime datasets and compute the mean of a random subset of it; do this 10,000 times and plot the resulting histogram;
+2. This example will take the form of an **exercise (~15 minutes)**: choose one the microtubule lifetime datasets and compute the mean of a random subset of it; do this 10,000 times and plot the resulting histogram;
 
 3. In which we  estimate $\pi$ using a Monte Carlo method:
 
@@ -501,87 +506,5 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates
 
 R cheat sheets: https://www.rstudio.com/resources/cheatsheets/
 
-#Code for Solutions to Exercises
+Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley
 
-**Exercise**
-
-1. Run the above code & figure out what each line does; notice that it throws a warnig to the console: what does this warning mean? Play around with binwidth parameter;
-2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *dataframe* and will be one of your best friends when performing data analysis in R; 
-3. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
-4. How do these histograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
-
-**Code chunks for solution**
-
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-#code chunk here:
-library( ggplot2 ) #load ggplot2 library for handsome plotting structures
-dataM <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from .csv
-colnames(dataM)
-qplot( dataM$`9_nM_MCAK` , binwidth = 100 ,xlab = "MT lifetime at 9 nm MCAK") #plot a histogram of the data at 12uM
-```
-
-**Exercise**
-
-1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a dataframe);
-
-**Code for solution**
-
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
-x <- rnorm(1000 , mean = 1 , sd = 2) ##generate 1000 data points from a normal
-#distribution with mean = 1, sd = 1
-df <- data.frame(x = x)
-ggplot(df, aes(x)) + stat_ecdf() + ylab("ECDF") #plot ECDF of the data
-```
-
-**Exercise**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
-
-**Question**: Is there the correct amount of data for a beeswarm plot here?
-
-**Code for solution**:
-```{r,  message = FALSE ,  echo = TRUE}
-beeswarm(lifetime ~ tubulin_concentration, data = mt_data,
-         pch = 16, pwcol = 1 + 2*as.numeric(tubulin_concentration),
-         xlab = "Tubulin concentration", ylab = "Lifetime")
-```
-
-**Exercise**:
-
-Compute the mean across all experiments in the Michelson-Morley dataset. There are two methods that I would suggest trying:
-
-1. Use 'by' (it's similar to 'apply') and you can find information about it here:
-https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/;
-2. Reshaping the data using 'dcast' from the "reshape2" library and then using 'apply'.
-
-**Code for Solution**:
-
-```{r,  message = FALSE ,  echo = TRUE}
-datamm <- read.csv("mm.csv")
-by(datamm$Speed , datamm$Expt , mean)
-```
-There is another supercool way in which we reshape (cast) the data and then use 'apply':
-```{r,  message = FALSE ,  echo = TRUE}
-d <- dcast(datamm , Run ~ Expt , value.var = "Speed")
-apply( d[,2:6] , 2 , mean)
-```
-
-**Exercise (~10 minutes)**: Compute the standard deviation of one of the microtubule lifetime datasets (for all concentrations) OR the the Michelson-Morley data (all experiments).
-
-**Code for solution**:
-```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
-by(datamm$Speed, datamm$Expt , sd)
-#OR
-tapply(datamm$Speed, datamm$Expt , sd)
-```
-
-**Exercise**:
-
-2. This example will take the form of an **exercise**: choose one the microtubule lifetime datasets and compute the mean of a random subset of it; do this 10,000 times and plot the resulting histogram;
-
-**Code for solution**:
-```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
-data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
-d12 <- data$`12_uM`
-samples <- replicate(10000,sample( d12 , 300,replace = TRUE))
-means <- apply( samples , 2 , mean)
-qplot(means)
-```
