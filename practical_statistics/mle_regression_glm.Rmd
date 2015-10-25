@@ -8,8 +8,14 @@ output:
 ---
 <h1>Maximum Likelihood Estimation, Linear Regression & Generalized Linear Models</h1>
 
-#Maximum Likelihood Estimation:
-Let's say that we want figure out the proportion of cases in which a mutation has a particular effect: for example, how often does a mutant die. If we think of survival as *heads* and death as *tails*, we can model this as a biased coin flip with $P(H) = p$ and $P(T) = 1 - p$.
+#Maximum Likelihood Estimation.
+
+##Example 1: a coin-flip
+Let's say that we want figure out the proportion of cases in which a mutation has a particular effect: for example, how often does a mutant die. 
+
+<span style="color:red">Give more simple examples of when using binomial is a good idea. </span>
+
+If we think of survival as *heads* and death as *tails*, we can model this as a biased coin flip with $P(H) = p$ and $P(T) = 1 - p$.
 
 Set-up: I flip a biased coin $n$ times and retrieve $k$ heads and $n-k$ tails, 
 
@@ -21,9 +27,14 @@ Answer: My estimate is $k/n$?
 
 An intuitive answer to the 1st question is $\hat{p} = k/n$. We will now see why:
 
+###Estimating the binomial probability $p$
+
 Recall that the binomial distribution is given by 
 
 $$P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
+
+<span style="color:red">Explain this equation and the notatation. </span>
+
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
 library( ggplot2 )
@@ -46,21 +57,25 @@ p <- ggplot( df , aes( x = x , y = value, color = type))
 p + geom_point() + scale_fill_discrete()
 ```
 
-Now in our case we don't want the probability of flipping a certain number of heads, given $p$, we want the likelihood that $p(H)=p$, given a certain number of heads! To this end, we define the *likelihood* of any given $p$ given the data $D$ to be the probability of that data $D$, given $p(H) = p$:
+Now in our case we don't want the probability of flipping a certain number of heads, given $p$, we want the likelihood that $p(H)=p$, given a certain number of heads! To this end, we define the **likelihood** of any given $p$ given the data $D$ to be the probability of that data $D$, given $p(H) = p$:
 
 $$\mathcal{L}(p | k \text{ heads}) := P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
 
-The *maximum likelihood estimate* (MLE) $\hat{p}$ of $p$ is the value that maximizes the likelihood function $\mathcal{L}(p | k \text{ heads})$. A little bit of calculus & algebra later (see Appendix) reveals that
+The **maximum likelihood estimate** (MLE) $\hat{p}$ of $p$ is the value that maximizes the likelihood function $\mathcal{L}(p | k \text{ heads})$. A little bit of calculus & algebra later (see Appendix) reveals that
 
 $$\hat{p} = \frac{n}{k},$$
 
 precisely as our intuition told us.
 
+**Computational Note**: Because the likelihood is usuallly very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood (more on this below).
+
+###How confident can we be of our estimate $\hat{p}$?
+
 Now how confident can we be of this estimate? Our intuition is merely qualitative when it comes to this question: all we can really say is that the more data we have, the more we can be sure of our estimate. To quantitate this intuition, we use the Central Limit Theorem.
 
 <span style="color:red">**Note**: I would really like to see here a (short) discussion of the intuition that our confidence is realted to the variance of the result when perofrming the experiment many times -- then the participants could simulate it themselves and make their own error bars! </span>
 
-##The CLT and confidence intervals on a biased coin flip
+###The CLT and confidence intervals on a biased coin flip
 
 First notice that $\hat{p}=k/n$ is also $S_n$, an estimate of the mean of the distribution given by $P(1)=p, P(0)=1-p$ (that is, we call a *head* 1 and a tail *0*). Then the Central Limit Theorem tells us that as $n$ gets large (in practice, $n>20$ should be fine), $\hat{p}=S_n$ is distributed like $N(\mu,\sigma^2/n),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the binomial distribution. Hence $\hat{p}$ is ~normally distributed with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$.
 
@@ -94,23 +109,117 @@ pl + geom_point(size = 3 , alpha = 1) +
         axis.text=element_text(size=22))
 ```
 
+<span style="color:red">
 - You can even simulate it yourself! Wait, you did at the end of the 1st class!
+ </span>
 
-##A slight digression on *estimators* & *estimation theory*;
+<h4> Computation example: performing MLE in R.</h4>
 
-Suppose there is a fixed parameter $\theta$ that we cannot know directly, for example, the population mean. Then an *estimator* is a function that maps a sample drawn from the population to an estimate of $\theta$. An estimator of $\theta$ is commonly denoted by $\hat{\theta}$. You already know examples of estimators, such as
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+library(stats4)
+p <- 0.9
+n <- 1 #number of samples for each trial
+m <- 10000 #number of trials
+x <- rbinom( m , n , p )/n # sample distribution and return vector of means
+#define log likelihood function below:
+LL <- function( p ){
+  R <- dbinom( x , 1, p)
+  -sum(log(R))
+}
+fit <- mle(LL , start = list(p = 0.9))
+summary(fit)
+```
 
-- Sample mean, which is an *estimator* of the population mean;
-- Sample variance, which is an *estimator* of the population variance;
 
-These two estimators are quite different however, in that the sample mean is an *unbiased estimator*, while the sample variance is a *biased estimator*. Let me explain: assume that we're sampling a distribution $P_\theta(x)=P(x|\theta)$ (where $\theta$ is some real number) and we have an estimator $\hat{\theta}$ of $\theta$. Then, recalling that $\text{E}_\theta[\hat{\theta}]$ is the *expected value* (or *mean*) of $\hat{\theta}$ over all possible samples drawn from $P_\theta(x)$, we define the *bias* of the estimator $\hat{\theta}$ to be
-$$\text{Bias}_\theta[\hat{\theta}] = \text{E}_\theta[\hat{\theta}] - \theta.$$
-If the bias of an estimator is zero, we call it *unbiased*. Otherwise, we call it *biased*.
-Examples:
 
-- The sample mean $\bar{x} =\sum x_i/n$ is an unbiased estimator;
-- The (uncorrected) sample variance $=\sum(x_i - \bar{x})^2/n$ is a biased estimator: the usual definition of sample variance $=\sum(x_i - \bar{x})^2/(n-1)$ is, however, an unbiased estimator of sample variance.
 
+
+
+##Example 2: Microtubule lifetimes
+
+Do these follow exponential OR gamma distributions? Explain what there are here and give an intuition towards (log) likelihood.
+
+Also, some of what follows here should be exercises.
+
+<h4>Exponential distribution for tubulin alone</h4>
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+LL_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R)
+}
+fit_exp <- mle( LL_exp , start = list( rate = 1) )
+summary(fit_exp)
+#confint(fit)
+```
+
+
+<h4>Gamma distribution for tubulin alone</h4>
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+LL_gamma <- function( shape , rate ){
+  R <- dgamma( x , shape , rate , log = TRUE)
+  -sum(R)
+}
+fit_gamma <- mle( LL_gamma , start = list( shape = 1 ,rate = 1) , method = "L-BFGS-B" , lower = 0.00001)
+summary(fit_gamma)
+```
+
+<h4>Exponential distribution for tubulin & MCAK</h4>
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`9_nM_MCAK`
+LL_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R)
+}
+fit1 <- mle( LL_exp , start = list( rate = 1) )
+summary(fit1)
+#confint(fit)
+```
+
+
+<h4>Gamma distribution for tubulin & MCAK</h4>
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`9_nM_MCAK`
+x <- x[!is.na(x)]
+LL_gamma <- function( shape , rate ){
+  R <- dgamma( x , shape , rate , log = TRUE)
+  -sum(R)
+}
+fit2 <- mle( LL_gamma , start = list( shape = 1 ,rate = 1) , method = "L-BFGS-B" , lower = 0.00001)
+summary(fit2)
+```
+
+**YOU NEED TO PROVIDE PLOTS OF THESE MODELS IN ORDER TO MOTIVATE THE CHALLENGE OF MODEL SELECTION:**
+
+#Model Selection
+
+Many ways to select the best model: we want one that rewards models that fit well BUT that also penalizes models with many free parameters (in the spirit of Occam's razor & due to overfitting). The Akaike information criterion is an example of such a measure.
+
+##The Akaike Information criterion
+
+The Akaike information criterion
+
+$$\text{AIC} = -2\text{ln}(L) + K,$$
+
+where $L$ is the maximum likelihood of the model (i.e., the likelihood function evaluated at the MLE) and $K$ the number of free parameters in the model.
+
+To currently quote Wikipedia, *the preferred model is the one with the minimum AIC value.* Hence AIC rewards goodness of fit (as assessed by the likelihood function), but it also includes a penalty that is an increasing function of the number of estimated parameters.
+
+**Essential note**: the AIC is NOT a statistical test that tells you how good a fit is, it is merely a way to compare a number of models.
+
+**Exercise**: Use AIC to compare exponential and gamma models of MT catastrophe.
+
+**Note**: Can use other criteria, such as Bayesian information criterion (BIC).
+
+Also, see here: http://brianomeara.info/tutorials/aic/
 
 #(simple) Linear Regression basics
 
@@ -280,7 +389,9 @@ print(results)
 ```
 <span style="color:red">**Exercise**: You do a bootstrap. Also, how about weighted least squares?? See here and follow the trail...http://www.itl.nist.gov/div898/handbook/pmd/section4/pmd452.htm#uw & https://onlinecourses.science.psu.edu/stat501/node/352</span>
 
-##Modeling a power law
+#Nonlinear least squares
+
+##Example: Modeling a power law
 
 Power laws occur all throughout biology (see Kleiber's Law & Geoff West papers); they are also the primary mode of thinking about scaling in biology, which is currently very sexy!
 
