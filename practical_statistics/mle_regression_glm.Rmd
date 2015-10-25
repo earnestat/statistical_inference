@@ -69,6 +69,8 @@ precisely as our intuition told us.
 
 **Computational Note**: Because the likelihood is usuallly very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood (more on this below).
 
+<span style="color:red">**Note**: Log laws here? Or at the very least state what $-LL$ is in this case. </span>
+
 ###How confident can we be of our estimate $\hat{p}$?
 
 Now how confident can we be of this estimate? Our intuition is merely qualitative when it comes to this question: all we can really say is that the more data we have, the more we can be sure of our estimate. To quantitate this intuition, we use the Central Limit Theorem.
@@ -87,7 +89,7 @@ When $p = 0.5$, this is
 $\approx  \frac{k}{n} \pm \frac{1}{\sqrt{n}}$ and when $n=400$, for example, this is $\approx 0.5 \pm 0.05$.
 If, on the other hand, $P(H)=0.75$, $1.96\times\text{SD}\approx 1/\sqrt{4n/3}$ and to get the same size $95\%$ confidence intervals, we only require 300 tosses of the coin.
 
-```{r , fig.width = 9 , fig.height = 5 , message = FALSE , echo=FALSE}
+```{r , fig.width = 9 , fig.height = 5 , message = FALSE , echo=FALSE ,warning=FALSE}
 p1 <- 0.5
 p2 <- 0.75
 x <- seq(1,401 , by = 10)
@@ -117,9 +119,9 @@ pl + geom_point(size = 3 , alpha = 1) +
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
 library(stats4)
-p <- 0.9
+p <- 0.75
 n <- 1 #number of samples for each trial
-m <- 10000 #number of trials
+m <- 300 #number of trials
 x <- rbinom( m , n , p )/n # sample distribution and return vector of means
 #define log likelihood function below:
 LL <- function( p ){
@@ -207,7 +209,7 @@ Many ways to select the best model: we want one that rewards models that fit wel
 
 The Akaike information criterion
 
-$$\text{AIC} = -2\text{ln}(L) + K,$$
+$$\text{AIC} = -2\text{ln}(L) + 2K,$$
 
 where $L$ is the maximum likelihood of the model (i.e., the likelihood function evaluated at the MLE) and $K$ the number of free parameters in the model.
 
@@ -220,6 +222,8 @@ To currently quote Wikipedia, *the preferred model is the one with the minimum A
 **Note**: Can use other criteria, such as Bayesian information criterion (BIC).
 
 Also, see here: http://brianomeara.info/tutorials/aic/
+
+Also, do see this: http://www.r-bloggers.com/fitting-a-model-by-maximum-likelihood/
 
 #(simple) Linear Regression basics
 
