@@ -1,28 +1,35 @@
 ---
-title: "Notes on practical statistics IV"
+title: "Practical statistics IV: Bayesian Inference for Dummies"
 output:
   html_document:
     toc: true
     fig_caption: true
     number_sections: true
 ---
-<h1>An Introduction to Bayesian Inference</h1>
 
 
 
-We have seen, when fitting models and estimating parameters, that we can retrieve mean estimates and confidence intervals on these estimates. But can we get the distributions? We can and one method to do so occurs in Bayesian inference.
+We have seen, when fitting models and estimating parameters, that we can retrieve mean estimates and confidence intervals on these estimates. But can we get the distributions of where these estimates may lie? We can and one method to do so occurs in Bayesian inference.
 
 #Bayes' Theorem
 
+Recall that $P(A|B)$ simply denotes the probability of $A$, given $B$. Then Bayes' Theorem states that
+
 $$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
 
-Insert proof here, Hugo.
+**Proof**: The probability of $A$ **and** $B$ is $P(A,B) = P(A)P(B|A)$ (Eqn 1), that is, the probability of $A$, multiplied by the probability of $B$, given $A$. However, due to the symmetry of the formulation, $P(A,B) = P(B,A) = P(B)P(A|B)$ (Eqn 2). From (Eqns 1 & 2),
+
+$$P(B)P(A|B) = P(A)P(B|A).$$
+
+Dividing both sides by $P(B)$ yields Bayes' Theorem
+
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}.$$
 
 #Bayes' Theorem and Parameter Estimation
 
 ##Priors, likelihoods, posteriors and parameter estimation
 
-**Example**: biased coin flip with binomial probability $P(H)=\lambda$ and data $D$ consisting of $k$ heads and $n-k$ tails.
+**Example**: A biased coin flip with binomial probability $P(H)=\lambda$ and data $D$ consisting of $k$ heads and $n-k$ tails.
 
 **Challenge**: Given the data $D$, we want to estimate the parameter $\lambda$.
 
@@ -34,7 +41,7 @@ In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)
 
 **Note**: What is the prior? Really, what do we know about $\lambda$ before we see any data? Well, as it is a probability, we know that $0 \leq \lambda \leq 1$. If we haven't flipped any coins yet, we don't know much else: so it seems logical that all values of $\lambda$ are equally like, i.e., $P(\lambda) = 1,$ for $0 \leq \lambda \leq 1$. This is known as an *uninformative prior* because it contains little information (there are other uninformative priors we may use in this situation, such as the *Jeffreys prior*, to be discussed later). People who like to hate on Bayesian inference tend to claim that the need to choose a prior makes Bayesian methods somewhat arbitrary, but as we'll now see, if you have enough data, the likelihood dominates over the prior and the latter doesn't matter so much.
 
-**Example**: Binomial -- provide derivation and figures below are for $n=100,k=40$ & $n=1000,k=450$, respectively.
+**Example**: Binomial: i) given data $D$ consisting of $n$ coin tosses & $k$ heads, the likelihood function is given by $L \propto \lambda^k(1-\lambda)^{n-k}$; ii) given a uniform prior, the posterior is proportional to the likelihood -- below we plot two posteriors: for $n=100,k=40$ & $n=1000,k=450$, respectively. These posteriors are *normalized* so that their modes are at $1$.
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
 #see here: http://www.r-bloggers.com/r-and-bayesian-statistics/
@@ -58,7 +65,7 @@ plot2 <- qplot( lambda , posterior2, geom = "line" )
 grid.arrange(plot1, plot2, ncol=2)
 ```
 
-**Exercise 1**:
+**Exercise 1 (~15 minutes)**:
 
 Compute and plot the posterior for two priors (uniform & 'crazy coin') for a variety of $n,k$-pairs:
 
@@ -66,9 +73,10 @@ Compute and plot the posterior for two priors (uniform & 'crazy coin') for a var
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 p <- seq(0,1 , by =0.001)
 prior1 <- dunif(p) #uniform prior
-prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior
+prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior -- this prior is NOT normalized but that's OK
+#as we're using it to calculate the unnormalized posterior.
 ```
-2. The likelihood function is given by $L = p^k(1-p)^{n-k}$ -- fill in the function in the code below (multiplication in R is $*$  and 'to the power' $**$):
+2. The likelihood function is given by $L \propto \lambda^k(1-\lambda)^{n-k}$ -- fill in the function in the code below (multiplication in R is $*$  and 'to the power' $**$):
 ```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=TRUE, eval = FALSE}
 likelihood <- function( n , k ){
   #write likelihood function here in R notation
@@ -78,23 +86,28 @@ likelihood <- function( n , k ){
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE, eval = FALSE}
 ##here is a function that will plot your posteriors nicely:
 plot_posteriors <- function( p , post1 , post2){
+  post1 <- post1/max(post1)
+  post2 <- post2/max(post2)
   df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
   pl <- ggplot( df , aes( x = p , y = post1 , colour = "Uniform"))
   pl + geom_line() + geom_line( aes(y = post2 , colour = "Crazy Coin")) +
     scale_colour_manual(name = 'Prior', values = c("red", "blue") ) +
     ylab("posterior")
 }
-##set n & k
-n <- 
-k <- 
+##YOUR JOB: set n & k
+n <-
+k <-
 LL <- likelihood(n,k)
-#compute the posteriors here and normalize them (by dividing by the maximum)
+#YOUR JOB: compute the posteriors here
 post1 <- 
 post2 <- 
 plot_posteriors(p , post1 , post2) #this will plot the posteriors
 ```
 4. Try $(n,k) = (1,1) , (40,20) , (80,40)$.
 
+Notice how the effect of the prior becomes less apparent in the posterior as the amount of data increases!
+
+Your plots should look something along the lines of these:
 ```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=FALSE}
 plot_posteriors <- function( p , post1 , post2){
   df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
@@ -206,16 +219,17 @@ $$P(\alpha , \beta) = (\alpha\beta)^{-1}.$$
 
 ##Finding the best estimate: the posterior mode
 
-Recall that we need to find the *posterior mode*. Just as we saw in MLE, the numbers in question get super-small super-quickly so we actually minimize the *negative log-posterior*. As
+Recall that we need to find the **posterior mode**. Just as we saw in maximum likelihood estimation, the numbers in question get super-small super-quickly so we actually minimize the **negative log posterior**. As
 
 $$P(\lambda | D)  \propto P( D | \lambda)P(\lambda),$$
 
 the *negative log-posterior* is
 
-$$-\text{ln}(P(\lambda | D)) = C + \sum\text{ln}(P( D_i | \lambda)) + \text{ln}(P(\lambda)).$$
+$$-\text{ln}(P(\lambda | D)) = C - \sum\text{ln}(P( D_i | \lambda)) - \text{ln}(P(\lambda)).$$
 
 To minimize this with respect to $\lambda$, we can forget about the constant $C$.
 
+**Discussion point**: Identify the **log prior** and the **log likelihood** in the above formulation of the **negative log posterior**.
 
 **Example** (uniform prior):
 ```{r , fig.width = 4 , fig.height = 3}
@@ -245,7 +259,9 @@ So we can compute 'best estimates' of the parameters of interest using Bayesian 
 
 We're now going to check back in with our microtubule lifetime data from (Gardner et al., 2011) to perform parameter estimation for i) an exponential distribution & ii) a gamma distribution.
 
-**Exercise**: Below find the code the compute the *posterior mode* of the rate parameter of an exponential distribution, given the microtubule lifetime data & a uniform prior. Hack the code in the required line to use the Jeffreys prior.
+**Exercise 2 (~10 minutes)**: 
+
+Below find the code the compute the *posterior mode* of the rate parameter of an exponential distribution, given the microtubule lifetime data & a uniform prior. Hack the code in the required line to use the Jeffreys prior.
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
@@ -276,11 +292,11 @@ res_exp$par
 
 **What's happening in the background here**:
 
-Exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assume uniform prior on $\mu$ (we will do the same using Jeffreys' prior), the posterior
+The exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assuming a uniform prior on $\mu$, the posterior
 
 $$P(\mu|D) \propto \prod_i \frac{\text{exp}(-x_i/\mu)}{\mu}$$
 
-and the log-posterior $\text{log}P(\mu|D)= C + n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*.
+and the log posterior $\text{log}P(\mu|D)= C + n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ The above code minimizes the *negative log posterior*.
 ```{r , fig.width = 8 , fig.height = 3 , echo=FALSE , eval=FALSE}
 D <- rexp(100 , rate = 10) #generate exponentially distributed data
 N <- length(D)
@@ -308,15 +324,9 @@ print(res$par)# print rate
 ```
 
 
-<h4>Bayesian parameter estimation for a Gamma distribution</h4>
+###Bayesian parameter estimation for a Gamma distribution
 
-Now do the same with a gamma distribution, for which the probability distribution is $P(x|\alpha,\beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
-
-Then the log likelihood function is $$LL = \sum_i[(\alpha -1)\text{log}(x_i) - \beta x_i] + n\alpha\text{log}(\beta) - n\text{log}(\Gamma(\alpha)).$$
-
-For a uniform prior, the log posterior is the log likelihood plus a constant. We will fit a gamma (remember: multistep) distribution to the microtubule lifetime data in a minute. 
-
-**Solution**:
+**We now fit a gamma distribution to the microtubule lifetime data, using a Jeffreys prior**:
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
 x <- data$`12_uM`
@@ -334,9 +344,13 @@ res_gam$par
 ```
 
 
+**What's happening in the background here**:
 
+The gamma distribution has probability distribution $P(x|\alpha,\beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
 
+Then the log likelihood function is $$LL = \sum_i[(\alpha -1)\text{log}(x_i) - \beta x_i] + n\alpha\text{log}(\beta) - n\text{log}(\Gamma(\alpha)).$$
 
+For a Jeffreys prior $P(\alpha , \beta) = (\alpha\beta)^{-1},$ the log prior is $-\text{log}(\alpha)-\text{log}(\beta).$
 
 ```{r , fig.width = 4 , fig.height = 3 , echo=FALSE , eval=FALSE}
 df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
@@ -367,36 +381,73 @@ Now we have two models: one looks like a better fit; the other has less paramete
 
 ###The one-dimensional case
 
-In the one-dimensional case, the *posterior mode* $\lambda_0$ satisfies the condition
+In order to decipher the standard deviation of the posterior, we will need to delve into a bit more sophisticated mathematics, namely some basic calculus. If this scares you, the code used to compute the standard deviation is below. Do try to understand a bit of what is happening, though: get outside your comfort zone.
 
-$$\frac{dP}{d\lambda}|_{\lambda_0} = 0.$$
+**Statement of result**:
 
-Technically,we also require that the 2nd derivative is $<0$. Once again, instead of working with $P$, we look to its logarithm $L$, which we Taylor expand about the point $\lambda = \lambda_0$:
+Under the (usually reasonable) assumption that the **posterior distribution** is *approximately Gaussian* around the *posterior mode* ${\lambda_0}$, then the **standard deviation** of the posterior
 
-$$L = L(\lambda_0) + \frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2 + \ldots ,$$
+$$\sigma = (-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0})^{-1/2},$$
 
-in which the linear term is missing as $\lambda_0$ is a local maximum. Ignoring higher-order terms yields
+where $L$ is the log posterior.
 
-$$P \approx A\text{exp}[\frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2],$$
+**Intuition & sanity check**: Recall that ${\lambda_0}$ is the maximum of the **posterior distribution**: the 2nd derivative tells us how quickly the posterior drops off from this maximum so that the larger $-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0}$ is, the smaller $\sigma$ should be. This accords with the equation above.
 
-for a normalization constant $A$. This is none other than a Gaussian distribution with standard deviation
+**Example**:
 
-$$\sigma_{\lambda_0} = (-\frac{dL^2}{d\lambda^2}|_{\lambda_0})^{-1/2}.$$
-
-Thus, to calculate the error bars $\sigma_{\lambda_0}$, we look at the 2nd derivative in the log-posterior space.
+Calculating the standard deviation of the posterior distribution when fitting an exponential distribution to the microtubule lifetime data.
 
 ```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+Lp_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R) + log( rate )
+}
+#fit_exp <- mle( Lp_exp , start = list( rate = 1) )
+#summary(fit_exp)
+res_exp <- optim(c(1.5) , Lp_exp, method = "L-BFGS-B" , lower = 0.000001 ) #minimize -LL with boundary = 0
 library(numDeriv)
 h <- hessian( Lp_exp , res_exp$par ) #calculate 2nd derivative
 std_dev_exp <- sqrt(1/h) #this is the standard deviation
 #print posterior mode + sd
 cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 5) , '' )
 ```
+
+We now provide an intuitive proof of why $\sigma$ is as we say it is above: we provide this for completeness so, if the mathematics is a bit much, feel free to skip it.
+
+**Intuitive demonstration of result**:
+
+In the one-dimensional case, the *posterior mode* $\lambda_0$ satisfies the condition
+
+$$\frac{dP}{d\lambda}\bigg|_{\lambda_0} = 0.$$
+
+Technically,we also require that the 2nd derivative is $<0$. Once again, instead of working with $P$, we look to its logarithm $L$, which we Taylor expand about the point $\lambda = \lambda_0$:
+
+$$L = L(\lambda_0) + \frac{1}{2}\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0}(\lambda - \lambda_0)^2 + \ldots ,$$
+
+in which the linear term is missing as $\lambda_0$ is a local maximum. Ignoring higher-order terms yields
+
+$$P \approx A\text{exp}\bigg[\frac{1}{2}\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0}(\lambda - \lambda_0)^2\bigg],$$
+
+for a normalization constant $A$. This is none other than a Gaussian distribution with standard deviation
+
+$$\sigma = (-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0})^{-1/2}.$$
+
+Thus, to calculate the error bars $\sigma$, we look at the 2nd derivative in the log-posterior space.
+
+
 ###The two-dimensional case
 
 Similarly, in two dimensions, the standard deviation of individual parameter estimates is related to the [Hessian matrix of 2nd derivatives](https://en.wikipedia.org/wiki/Hessian_matrix) $\mathbf{H}$ (also see Sivia & Skilling, 2006, Chapter 3 for a great explanation of all of this).
 
 Then the standard deviation $\sigma_i$ of the $i$th parameter is the $(i,i)-$th entry of $[-\mathbf{H}^{-1}]^{1/2}$.
+
+**Note**: $-\mathbf{H}^{-1}$ is called the **covariance matrix**.
+
+**Example**:
+
+Calculating the standard deviations of the posterior distribution when fitting a gamma distribution to the microtubule lifetime data.
 
 ```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
 h <- hessian( Lp_gamma , res_gam$par )#calculate 2nd derivatives (Hessian)
@@ -413,12 +464,84 @@ Now that we have two models (exponential , gamma) and parameters estimated in a 
 
 #Bayesian Model Selection
 
-##The probability of a model, given data
+##The probability of a model, given data, and the Bayes factor
 
 
-Lets say that we have a model $M$ and some data $D$. We want to know how to compute $P(M|D)$, the probability of the model $M$, in light of the data $D$. Bayes Theorem can help us with this:
+Lets say that we have a model $M$ and some data $D$. We want to know how to compute $P(M|D)$, the probability of the model $M$, in light of the data $D$. Bayes' Theorem can help us with this:
 
-$$P(M|D) = P(D|M)P(M).$$
+$$P(M|D) = \frac{P(D|M)P(M)}{P(D)}.$$
+
+Then, given two models $M_1, M_2$, we can look at the ratio
+
+$$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(M_1)}{P(M_2)}\frac{P(D|M_1)}{P(D|M_2)}$$
+
+of the probabilities of the models $M_1$ & $M_2$, respectively. But what is $\frac{P(M_1)}{P(M_2)}$?? If we initially have no reason to prefer one model over another, we assume that this ratio $=1$ (Sivia, 2006 jokes that the only reason to initially prefer one model over the other is if we know something about the people that constructed them!). Then  
+
+$$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(D|M_1)}{P(D|M_2)}$$
+
+This is called the **Bayes factor** and if it is $>1,$ we would accept model $M_1$ over model $M_2$, although for it to strongly support model $M_1$, we require that the **Bayes factor** $>>1$.
+See [here](http://fedc.wiwi.hu-berlin.de/xplore/ebooks/html/csa/node124.html) for Jeffreys' table for interpreting the Bayes factor.
+
+###Example: modeling microtubule lifetime 
+
+Let $M_1$ be the exponential model for the microtubule lifetime data, $M_2$ the gamma model. We shall use uniform priors for ease here. Then one can show that (see Section 4.2 below for details, along with Sivia, 2006)
+
+$$P(M_1|D) = \frac{P(M_1)P(D|\mu_0 , M_1)\sigma_1}{\mu_{max}-\mu_{min}},$$
+
+where $\sigma_1$ is the standard deviation of the posterior, $\mu_0$ the posterior mode and $\mu_{max}$ & $\mu_{min}$ are maximum & minimum possible values of $\mu,$ respectively (there has been some debate as how these are chosen, but they often arise naturally and rarely alter the **Bayes factor** dramatically). Moreover,
+
+$$P(M_2|D) = \frac{P(M_2)P(D|\alpha_0 , \beta_0 , M_2)\text{det}\sqrt{\sigma_2^2}}{(\alpha_{max}-\alpha_{min})(\beta_{max}-\beta_{min})},$$
+
+where $\sigma_2$ is the covariance matrix $-\mathbf{H}^{-1}$ (also state what $\alpha_0$, etc... are). Then
+
+$$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(D|\mu_0 , M_1)}{P(D|\alpha_0 , \beta_0 , M_2)}
+  \frac{(\alpha_{max}-\alpha_{min})(\beta_{max}-\beta_{min})}{(\mu_{max}-\mu_{min})}
+  \frac{\sigma_1}{\text{det}\sqrt{\sigma_2^2}}.$$
+
+**Computational calculation of the Bayes factor**:
+
+A lower bound for $\mu, \alpha$ and $\beta$ is $0$. An upper bound for $\mu, \beta$ is $0.1$ and $14$ for $\alpha$ (explain why briefly). Thus
+
+$$\frac{(\alpha_{max}-\alpha_{min})(\beta_{max}-\beta_{min})}{(\mu_{max}-\mu_{min})} = 14.$$
+
+Now we calculate the log Bayes factor:
+
+```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+#exponential fit
+Lp_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R)
+}
+res_exp <- optim(c(1.5) , Lp_exp, method = "L-BFGS-B" , lower = 0.000001 ) #minimize -LL with boundary = 0
+library(numDeriv)
+h <- hessian( Lp_exp , res_exp$par ) #calculate 2nd derivative
+std_dev_exp <- sqrt(1/h) #this is the standard deviation
+##gamma fit
+Lp_gamma <- function( m ){
+  shape = m[1]
+  rate = m[2]
+  R <- dgamma( x , shape , rate , log = TRUE)
+  -sum(R)
+}
+res_gam <- optim(c(10.5 , 20) , Lp_gamma, method = "L-BFGS-B" , lower = c(1e-100,1e-100) ) 
+#minimize -LL with boundary = 0
+h <- hessian( Lp_gamma , res_gam$par )#calculate 2nd derivatives (Hessian)
+cvm <- solve(h) #invert the matrix
+std_dev <- sqrt(cvm) #square root to give sd
+###now calcultate likelihoods for posterior modes:
+LLex <- - Lp_exp(res_exp$par) #exponential
+LLgam <- - Lp_gamma(res_gam$par) #gamma
+bt <- 14 #bounds term
+bf <- LLex - LLgam + log(std_dev_exp) - log(det(std_dev)) + log(bt)
+print( bf/log(10))
+```
+
+Thus the Bayes factor is $\approx 10^{-69.8}$, with a very large preference for the gamma distribution.
+
+
+##Ways to think about calculating the Bayes factor
 
 **Question**: What is the *prior*, the *likelihood* and the *posterior* in this formulation?
 
@@ -435,7 +558,7 @@ Lets simplify the scenario slightly by assuming a *uniform prior* on $\lambda$. 
 
 If we also once again make the Gaussian assumption around the *posterior mode* $\lambda_0$(which does hold much of the time), we see that
 
-$$P(D|M ,  \lambda) = P(D|M ,  \lambda_0)\text{exp}[-\frac{(\lambda-\lambda_0)^2}{2\delta\lambda^2}].$$
+$$P(D|M ,  \lambda) = P(D|M ,  \lambda_0)\text{exp}\bigg[-\frac{(\lambda-\lambda_0)^2}{2\delta\lambda^2}\bigg].$$
 
 It follows that
 
@@ -443,11 +566,11 @@ $$P(D|M) = \frac{P(D|\lambda_0, M)\delta\lambda\sqrt{2\pi}}{\lambda_{max}-\lambd
 
 Then, given two models $M_1, M_2$, with one free parameter each, $\lambda$ and $\mu$ respectively,
 
-$$\frac{P(D|M_1)}{P(D|M_2)} = \frac{P(M_1)}{P(M_2)}\frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.$$
+$$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(M_1)}{P(M_2)}\frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.$$
 
 But what is $\frac{P(M_1)}{P(M_2)}$?? If we initially have no reason to prefer one model over another, we assume that this ratio $=1$ and then 
 
-$$\frac{P(D|M_1)}{P(D|M_2)} = \frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.$$
+$$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.$$
 
 ##A two variable model
 
@@ -460,4 +583,4 @@ Then look at specifics of exponential vs gamma microtubule catastrophe.
 #References
 
 - Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe. Cell 147: 1092– 103.
-- Data Analysis: A Bayesian Tutorial by Sivia & Skilling (2006) Oxford University Press
+- Data Analysis: A Bayesian Tutorial by Sivia & Skilling (2006) Oxford University Press.
