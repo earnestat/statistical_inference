@@ -79,8 +79,12 @@ img {
 <li><a href="#the-two-dimensional-case"><span class="toc-section-number">3.2.2</span> The two-dimensional case</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#bayesian-model-selection"><span class="toc-section-number">4</span> Bayesian Model Selection</a></li>
-<li><a href="#markov-chain-monte-carlo-algorithm"><span class="toc-section-number">5</span> Markov Chain Monte Carlo algorithm</a></li>
+<li><a href="#bayesian-model-selection"><span class="toc-section-number">4</span> Bayesian Model Selection</a><ul>
+<li><a href="#the-probability-of-a-model-given-data"><span class="toc-section-number">4.1</span> The probability of a model, given data</a></li>
+<li><a href="#a-two-variable-model"><span class="toc-section-number">4.2</span> A two variable model</a></li>
+<li><a href="#example-models-of-microtubule-lifetime"><span class="toc-section-number">4.3</span> Example: models of microtubule lifetime</a></li>
+</ul></li>
+<li><a href="#references"><span class="toc-section-number">5</span> References</a></li>
 </ul>
 </div>
 
@@ -163,7 +167,7 @@ Lp &lt;- function( p ){
 }
 res &lt;- optim(c(0.5) , Lp , method = &quot;L-BFGS-B&quot; , lower = 0.0001 , upper = 0.999 ) #minimize -LL with boundary = 0
 res$par</code></pre>
-<pre><code>## [1] 0.7431633</code></pre>
+<pre><code>## [1] 0.7509758</code></pre>
 <p><strong>Example</strong> (Jeffreys prior):</p>
 <pre class="r"><code>bin_data &lt;- rbinom(1024, 1  , 0.25)
 Lp &lt;- function( p ){
@@ -172,7 +176,7 @@ Lp &lt;- function( p ){
 }
 res &lt;- optim(c(0.5) , Lp , method = &quot;L-BFGS-B&quot; , lower = 0.0001 , upper = 0.999 ) #minimize -LL with boundary = 0
 res$par</code></pre>
-<pre><code>## [1] 0.2497562</code></pre>
+<pre><code>## [1] 0.2712617</code></pre>
 <p><strong>What about error bars in the Bayesian setting?</strong> We’ll check out how to compute them after a couple more examples.</p>
 <div id="bayesian-parameter-estimation-for-an-exponential-distribution" class="section level3">
 <h3><span class="header-section-number">3.1.1</span> Bayesian parameter estimation for an exponential distribution</h3>
@@ -273,14 +277,40 @@ cat('beta = ' , res_gam$par[2] , '+-'  , std_dev[2,2])</code></pre>
 </div>
 <div id="bayesian-model-selection" class="section level1">
 <h1><span class="header-section-number">4</span> Bayesian Model Selection</h1>
-<p>Introduce.</p>
-<p>Then look at specifics of exponential vs gamma microtubule catastrophe.</p>
-<p>More complex cases, for example, need more complex methods. Introduce an example and then discuss MCMC methods.</p>
+<div id="the-probability-of-a-model-given-data" class="section level2">
+<h2><span class="header-section-number">4.1</span> The probability of a model, given data</h2>
+<p>Lets say that we have a model <span class="math">\(M\)</span> and some data <span class="math">\(D\)</span>. We want to know how to compute <span class="math">\(P(M|D)\)</span>, the probability of the model <span class="math">\(M\)</span>, in light of the data <span class="math">\(D\)</span>. Bayes Theorem can help us with this:</p>
+<p><span class="math">\[P(M|D) = P(D|M)P(M).\]</span></p>
+<p><strong>Question</strong>: What is the <em>prior</em>, the <em>likelihood</em> and the <em>posterior</em> in this formulation?</p>
+<p>Let’s look at the term <span class="math">\(P(D|M)\)</span> in the case where the model <span class="math">\(M\)</span> has one free parameter <span class="math">\(\lambda\)</span> and let’s first assume that <span class="math">\(\lambda\)</span> is discrete, that is, that it can take on only a finite number of values <span class="math">\(\lambda_i\)</span>, indexed by <span class="math">\(i\)</span>. Then</p>
+<p><span class="math">\[P(D|M) = \sum_i P(D , \lambda_i |M) = \sum_i P(D |M ,  \lambda_i)P(\lambda_i|M).\]</span></p>
+<p>We are really interested in the case in which <span class="math">\(\lambda\)</span> is continuous &amp; NOT discrete, for example, the binomial probability, which can take on infinitely many values between <span class="math">\(0\)</span> and <span class="math">\(1\)</span>. The continuous analog of the equation above is</p>
+<p><span class="math">\[P(D|M) = \int P(D |M ,  \lambda)P(\lambda|M)d\lambda.\]</span></p>
+<p>Lets simplify the scenario slightly by assuming a <em>uniform prior</em> on <span class="math">\(\lambda\)</span>. Then <span class="math">\(P(\lambda|M) = \frac{1}{\lambda_{max}-\lambda_{min}},\)</span> for <span class="math">\(\lambda_{min} &lt; \lambda &lt; \lambda_{max}\)</span>.</p>
+<p>If we also once again make the Gaussian assumption around the <em>posterior mode</em> <span class="math">\(\lambda_0\)</span>(which does hold much of the time), we see that</p>
+<p><span class="math">\[P(D|M ,  \lambda) = P(D|M ,  \lambda_0)\text{exp}[-\frac{(\lambda-\lambda_0)^2}{2\delta\lambda^2}].\]</span></p>
+<p>It follows that</p>
+<p><span class="math">\[P(D|M) = \frac{P(D|\lambda_0, M)\delta\lambda\sqrt{2\pi}}{\lambda_{max}-\lambda_{min}}.\]</span></p>
+<p>Then, given two models <span class="math">\(M_1, M_2\)</span>, with one free parameter each, <span class="math">\(\lambda\)</span> and <span class="math">\(\mu\)</span> respectively,</p>
+<p><span class="math">\[\frac{P(D|M_1)}{P(D|M_2)} = \frac{P(M_1)}{P(M_2)}\frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.\]</span></p>
+<p>But what is <span class="math">\(\frac{P(M_1)}{P(M_2)}\)</span>?? If we initially have no reason to prefer one model over another, we assume that this ratio <span class="math">\(=1\)</span> and then</p>
+<p><span class="math">\[\frac{P(D|M_1)}{P(D|M_2)} = \frac{P(D|\lambda_0 , M_1)}{P(D|\mu_0 , M_2)}\frac{\delta\mu(\lambda_{max}-\lambda_{min})}{\delta\lambda(\mu_{max}-\mu_{min})}.\]</span></p>
 </div>
-<div id="markov-chain-monte-carlo-algorithm" class="section level1">
-<h1><span class="header-section-number">5</span> Markov Chain Monte Carlo algorithm</h1>
-<p><strong>Description</strong>:</p>
-<p><strong>Example</strong>:</p>
+<div id="a-two-variable-model" class="section level2">
+<h2><span class="header-section-number">4.2</span> A two variable model</h2>
+<p><span class="math">\[P(M|D) = P(D|\lambda_0,\mu_0)(\lambda_{max}-\lambda_{min}))(\mu_{max}-\mu_{min})[-\mathbf{H}^{-1}]^{1/2}.\]</span></p>
+</div>
+<div id="example-models-of-microtubule-lifetime" class="section level2">
+<h2><span class="header-section-number">4.3</span> Example: models of microtubule lifetime</h2>
+<p>Then look at specifics of exponential vs gamma microtubule catastrophe.</p>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1><span class="header-section-number">5</span> References</h1>
+<ul>
+<li>Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe. Cell 147: 1092– 103.</li>
+<li>Data Analysis: A Bayesian Tutorial by Sivia &amp; Skilling (2006) Oxford University Press</li>
+</ul>
 </div>
 
 
