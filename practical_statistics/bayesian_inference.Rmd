@@ -98,11 +98,30 @@ In the case of the binomial distribution, the Jeffreys prior for $\lambda$ is
 
 $$p(\lambda) = \frac{1}{\sqrt{\lambda(1-\lambda)}}.$$
 
+**Intuition**: You should try to use the Jeffreys prior when there are multiple ways/parametrizations to describe the distribution in the likelihood function.
+
+**Example**: For the exponential distribution $P(t) = \mu\text{exp}(-\mu t)$, we can paramterize the distribution using the characteristic rate $\mu$ OR the characteristic time $1/\mu$. The Jeffreys prior on $\mu$ is 
+
+$$P(\mu) = \mu^{-1}.$$
+
+**Example**: For the gamma distribution $P(x|\alpha,\beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$, the Jeffreys prior is
+
+$$P(\alpha , \beta) = (\alpha\beta)^{-1}.$$
+
 #Computing the posterior mode & the standard deviation
 
 ##Finding the best estimate: the posterior mode
 
-Recall that we need to find the *posterior mode*. Just as we saw in MLE, the numbers in question get super-small super-quickly so we actually minimize the *negative log-posterior*.
+Recall that we need to find the *posterior mode*. Just as we saw in MLE, the numbers in question get super-small super-quickly so we actually minimize the *negative log-posterior*. As
+
+$$P(\lambda | D)  \propto P( D | \lambda)P(\lambda),$$
+
+the *negative log-posterior* is
+
+$$-\text{ln}(P(\lambda | D)) = C + \sum\text{ln}(P( D_i | \lambda)) + \text{ln}(P(\lambda)).$$
+
+To minimize this with respect to $\lambda$, we can forget about the constant $C$.
+
 
 **Example** (uniform prior):
 ```{r , fig.width = 4 , fig.height = 3}
@@ -132,13 +151,43 @@ res$par
 
 We're now going to check back in with our microtubule lifetime data from (Gardner et al., 2011) to perform parameter estimation for i) an exponential distribution & ii) a gamma distribution.
 
-**Exercise**: Exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assume uniform prior on $\mu$ (we will do the same using Jeffreys' prior), the posterior
+**Exercise**: Below find the code the compute the *posterior mode* of the rate parameter of an exponential distribution, given the microtubule lifetime data & a uniform prior. Hack the code in the required line to use the Jeffreys prior.
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+Lp_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R) #add term here for Jeffrey's prior
+}
+#fit_exp <- mle( Lp_exp , start = list( rate = 1) )
+#summary(fit_exp)
+res_exp <- optim(c(1.5) , Lp_exp, method = "L-BFGS-B" , lower = 0.000001 ) #minimize -LL with boundary = 0
+res_exp$par
+```
+
+**Solution**:
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+Lp_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE)
+  -sum(R) - log( rate )
+}
+#fit_exp <- mle( Lp_exp , start = list( rate = 1) )
+#summary(fit_exp)
+res_exp <- optim(c(1.5) , Lp_exp, method = "L-BFGS-B" , lower = 0.000001 ) #minimize -LL with boundary = 0
+res_exp$par
+```
+
+**What's happening in the background here**:
+
+Exponential distribution $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$. Assume uniform prior on $\mu$ (we will do the same using Jeffreys' prior), the posterior
 
 $$P(\mu|D) \propto \prod_i \frac{\text{exp}(-x_i/\mu)}{\mu}$$
 
-and the log-posterior $\text{log}P(\mu|D)= C + n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*. We do so with the following code:
-
-```{r , fig.width = 8 , fig.height = 3}
+and the log-posterior $\text{log}P(\mu|D)= C + n\text{log}(1/\mu) - \frac{\sum x_i}{\mu}.$ So we wish to minimize the *negative log posterior*.
+```{r , fig.width = 8 , fig.height = 3 , echo=FALSE , eval=FALSE}
 D <- rexp(100 , rate = 10) #generate exponentially distributed data
 N <- length(D)
 fr <- function(m) {   ## -LL for exponential
@@ -148,9 +197,8 @@ fr <- function(m) {   ## -LL for exponential
 res <- optim(c(10) , fr , method = "L-BFGS-B" , lower = 0 ) #minimize -LL with boundary = 0
 res$par
 ```
-Note in this case that we can also do it analytically (Appendix). Now let's do the same with microtubule lifetime data:
 
-```{r , fig.width = 4 , fig.height = 3}
+```{r , fig.width = 4 , fig.height = 3 , echo=FALSE , eval=FALSE}
 df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
 d <- as.matrix(df)
 data <- matrix( d , ncol = 1)
@@ -162,9 +210,9 @@ fr <- function(m) {   ## -LL for exponential
   - N*(log(m)) + m*sum(data)
 }
 res <- optim(c(100) , fr , method = "L-BFGS-B" , lower = 0.0001 ) #minimize -LL with boundary = 0
-print(1/res$par)# print rate
+print(res$par)# print rate
 ```
-If it were exponential, the rate would be ~$0.0056/s$.
+
 
 <h4>Bayesian parameter estimation for a Gamma distribution</h4>
 
@@ -172,25 +220,31 @@ Now do the same with a gamma distribution, for which the probability distributio
 
 Then the log likelihood function is $$LL = \sum_i[(\alpha -1)\text{log}(x_i) - \beta x_i] + n\alpha\text{log}(\beta) - n\text{log}(\Gamma(\alpha)).$$
 
-For a uniform prior, the log posterior is the log likelihood plus a constant. We will fit a gamma (remember: multistep) distribution to the microtubule lifetime data in a minute. First, we will do it to a synthesized dataset to make sure that our algorithm is working correctly:
+For a uniform prior, the log posterior is the log likelihood plus a constant. We will fit a gamma (remember: multistep) distribution to the microtubule lifetime data in a minute. 
 
-```{r , fig.width = 4 , fig.height = 3}
-data <- rgamma(10000 , shape = 3 , rate = 1)
-N <- length(data )
-qplot(data , binwidth =0.5)
-fr <- function(m) {   ## -LL for exponential
-  m1 <- m[1]
-  m2 <- m[2]
-   - N*m[1]*log(m[2]) + N*log(gamma(m[1])) - (m[1] - 1)*sum(log(data)) + m[2]*sum(data)
+**Solution**:
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM`
+Lp_gamma <- function( m ){
+  shape = m[1]
+  rate = m[2]
+  R <- dgamma( x , shape , rate , log = TRUE)
+  -sum(R) - log( rate ) - log(shape)
 }
-res <- optim(c(10,10) , fr , method = "L-BFGS-B" , lower = c(0.001,0.001) ) #minimize -LL with boundary = 0
-res$par
+#fit_exp <- mle( Lp_exp , start = list( rate = 1) )
+#summary(fit_exp)
+res_gam <- optim(c(10.5 , 20) , Lp_gamma, method = "L-BFGS-B" , lower = c(1e-100,1e-100) ) 
+#minimize -LL with boundary = 0
+res_gam$par
 ```
-It works :-).
 
-Now for the microtubule lifetime data:
 
-```{r , fig.width = 4 , fig.height = 3}
+
+
+
+
+```{r , fig.width = 4 , fig.height = 3 , echo=FALSE , eval=FALSE}
 df <- read.csv("MG_MZ_12uMdata.csv" , header = FALSE)
 d <- as.matrix(df)
 data <- matrix( d , ncol = 1)
@@ -206,23 +260,62 @@ res <- optim(c(10,10) , fr , method = "L-BFGS-B" , lower = c(0.001,0.001) ) #min
 res$par
 ```
 
-Now plot the data with both models -- do so in two ways:
+**Exercise for the avid Workshop participant**: 
+Plot the data with both models -- do so in two ways:
 
 1. Histogram;
 2. eCDF + model CDF!
 
-Now we have two models: one looks like a better fit (gamma; n.b. way better fit); the other has less parameters. Which is a better model? We'll get to that soon. First, as always, we need to talk about confidence intervals (or SDs) on our parameter estimates.
+Now we have two models: one looks like a better fit; the other has less parameters. Which is a better model? We'll get to that soon. First, as always, we need to talk about confidence intervals (or SDs) on our parameter estimates.
 
 
 ##Finding the standard deviation of the posterior
 
+###The one-dimensional case
 
-And standard deviation? Look at the Hessian & the covariance matrices! More details coming.
+In the one-dimensional case, the *posterior mode* $\lambda_0$ satisfies the condition
+
+$$\frac{dP}{d\lambda}|_{\lambda_0} = 0.$$
+
+Technically,we also require that the 2nd derivative is $<0$. Once again, instead of working with $P$, we look to its logarithm $L$, which we Taylor expand about the point $\lambda = \lambda_0$:
+
+$$L = L(\lambda_0) + \frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2 + \ldots ,$$
+
+in which the linear term is missing as we $lambda_0$ is a local maximum. Ignoring higher-order terms yields
+
+$$P \approx A\text{exp}[\frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2],$$
+
+for a normalization constant $A$. This is none other than a Gaussian distribution with standard deviation
+
+$$\sigma_{\lambda_0} = (-\frac{dL^2}{d\lambda^2}|_{\lambda_0})^{-1/2}.$$
+
+Thus, to calculate the error bars $\sigma_{\lambda_0}$, we look at the 2nd derivative in the log-posterior space.
+
+```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
+library(numDeriv)
+h <- hessian( Lp_exp , res_exp$par ) #calculate 2nd derivative
+std_dev_exp <- sqrt(1/h) #this is the standard deviation
+#print posterior mode + sd
+cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 4) , '' )
+```
+###The two-dimensional case
+
+Similarly, in two dimensions, the standard deviation of individual parameter estimates is related to the [Hessian matrix of 2nd derivatives](https://en.wikipedia.org/wiki/Hessian_matrix) $\mathbf{H}$ (also see Sivia & Skilling, 2006, Chapter 3 for a great explanation of all of this).
+
+Then the standard deviation $\sigma_i$ of the $i$th parameter is the $(i,i)-$th entry of $[-\mathbf{H}^{-1}]^{1/2}$.
+
+```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
+h <- hessian( Lp_gamma , res_gam$par )#calculate 2nd derivatives (Hessian)
+cvm <- solve(h) #invert the matrix
+std_dev <- sqrt(cvm) #square root to give sd
+#print posterior mode + sd of alpha:
+cat('alpha = ' , res_gam$par[1] , '+-'  , std_dev[1,1])
+#print posterior mode + sd of beta:
+cat('beta = ' , res_gam$par[2] , '+-'  , std_dev[2,2])
+```
 
 
-
-
-Now we have 2 models: which is a better model? Segue into Bayesian model selection:
+Now that we have two models (exponential , gamma) and parameters estimated in a Bayesian setting, how do we decide which is better??
 
 #Bayesian Model Selection
 
@@ -240,7 +333,7 @@ More complex cases, for example, need more complex methods. Introduce an example
 
 **Example**:
 
-```{r , fig.width = 6 , fig.height = 6 , message = FALSE , echo=FALSE}
+```{r , fig.width = 6 , fig.height = 6 , message = FALSE , echo=FALSE , eval=FALSE}
 #see here: http://www.r-bloggers.com/r-and-bayesian-statistics/
 dat <- data.frame(year = c(2016,2012,2008,2004,2000,1996,1992,1988,1984,1980,1976,1972,1968,1964,1960,1956,1952,1948),
                   gdp.growth = c(NA,1.3,1.3,2.6,8,7.1,4.3,5.2,7.1,-7.9,3,9.8,7,4.7,-1.9,3.2,0.4,7.5),
@@ -254,7 +347,7 @@ summary(breg); plot(breg)
 
 
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE, eval=FALSE}
 #see here: http://www.r-tutor.com/bayesian-statistics/openbugs
 library(R2OpenBUGS)
 library(MASS)
