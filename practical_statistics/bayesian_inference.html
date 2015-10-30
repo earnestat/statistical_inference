@@ -167,7 +167,7 @@ Lp &lt;- function( p ){
 }
 res &lt;- optim(c(0.5) , Lp , method = &quot;L-BFGS-B&quot; , lower = 0.0001 , upper = 0.999 ) #minimize -LL with boundary = 0
 res$par</code></pre>
-<pre><code>## [1] 0.7509758</code></pre>
+<pre><code>## [1] 0.783202</code></pre>
 <p><strong>Example</strong> (Jeffreys prior):</p>
 <pre class="r"><code>bin_data &lt;- rbinom(1024, 1  , 0.25)
 Lp &lt;- function( p ){
@@ -176,7 +176,7 @@ Lp &lt;- function( p ){
 }
 res &lt;- optim(c(0.5) , Lp , method = &quot;L-BFGS-B&quot; , lower = 0.0001 , upper = 0.999 ) #minimize -LL with boundary = 0
 res$par</code></pre>
-<pre><code>## [1] 0.2712617</code></pre>
+<pre><code>## [1] 0.2223862</code></pre>
 <p><strong>What about error bars in the Bayesian setting?</strong> We’ll check out how to compute them after a couple more examples.</p>
 <div id="bayesian-parameter-estimation-for-an-exponential-distribution" class="section level3">
 <h3><span class="header-section-number">3.1.1</span> Bayesian parameter estimation for an exponential distribution</h3>
@@ -198,13 +198,13 @@ res_exp$par</code></pre>
 x &lt;- data$`12_uM`
 Lp_exp &lt;- function( rate ){
   R &lt;- dexp( x , rate , log = TRUE)
-  -sum(R) - log( rate )
+  -sum(R) + log( rate )
 }
 #fit_exp &lt;- mle( Lp_exp , start = list( rate = 1) )
 #summary(fit_exp)
 res_exp &lt;- optim(c(1.5) , Lp_exp, method = &quot;L-BFGS-B&quot; , lower = 0.000001 ) #minimize -LL with boundary = 0
 res_exp$par</code></pre>
-<pre><code>## [1] 0.002632834</code></pre>
+<pre><code>## [1] 0.002625539</code></pre>
 <p><strong>What’s happening in the background here</strong>:</p>
 <p>Exponential distribution <span class="math">\(P(x) = \frac{\text{exp}(-x/\mu)}{\mu}\)</span>. Assume uniform prior on <span class="math">\(\mu\)</span> (we will do the same using Jeffreys’ prior), the posterior</p>
 <p><span class="math">\[P(\mu|D) \propto \prod_i \frac{\text{exp}(-x_i/\mu)}{\mu}\]</span></p>
@@ -222,14 +222,14 @@ Lp_gamma &lt;- function( m ){
   shape = m[1]
   rate = m[2]
   R &lt;- dgamma( x , shape , rate , log = TRUE)
-  -sum(R) - log( rate ) - log(shape)
+  -sum(R) + log( rate ) + log(shape)
 }
 #fit_exp &lt;- mle( Lp_exp , start = list( rate = 1) )
 #summary(fit_exp)
 res_gam &lt;- optim(c(10.5 , 20) , Lp_gamma, method = &quot;L-BFGS-B&quot; , lower = c(1e-100,1e-100) ) 
 #minimize -LL with boundary = 0
 res_gam$par</code></pre>
-<pre><code>## [1] 2.978858869 0.007839853</code></pre>
+<pre><code>## [1] 2.974618134 0.007851262</code></pre>
 <p><strong>Exercise for the avid Workshop participant</strong>: Plot the data with both models – do so in two ways:</p>
 <ol style="list-style-type: decimal">
 <li>Histogram;</li>
@@ -246,7 +246,7 @@ res_gam$par</code></pre>
 <p><span class="math">\[\frac{dP}{d\lambda}|_{\lambda_0} = 0.\]</span></p>
 <p>Technically,we also require that the 2nd derivative is <span class="math">\(&lt;0\)</span>. Once again, instead of working with <span class="math">\(P\)</span>, we look to its logarithm <span class="math">\(L\)</span>, which we Taylor expand about the point <span class="math">\(\lambda = \lambda_0\)</span>:</p>
 <p><span class="math">\[L = L(\lambda_0) + \frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2 + \ldots ,\]</span></p>
-<p>in which the linear term is missing as we <span class="math">\(lambda_0\)</span> is a local maximum. Ignoring higher-order terms yields</p>
+<p>in which the linear term is missing as <span class="math">\(\lambda_0\)</span> is a local maximum. Ignoring higher-order terms yields</p>
 <p><span class="math">\[P \approx A\text{exp}[\frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2],\]</span></p>
 <p>for a normalization constant <span class="math">\(A\)</span>. This is none other than a Gaussian distribution with standard deviation</p>
 <p><span class="math">\[\sigma_{\lambda_0} = (-\frac{dL^2}{d\lambda^2}|_{\lambda_0})^{-1/2}.\]</span></p>
@@ -255,8 +255,8 @@ res_gam$par</code></pre>
 h &lt;- hessian( Lp_exp , res_exp$par ) #calculate 2nd derivative
 std_dev_exp &lt;- sqrt(1/h) #this is the standard deviation
 #print posterior mode + sd
-cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 4) , '' )</code></pre>
-<pre><code>## mu =  0.0026 +- 1e-04</code></pre>
+cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 5) , '' )</code></pre>
+<pre><code>## mu =  0.0026 +- 9.988e-05</code></pre>
 </div>
 <div id="the-two-dimensional-case" class="section level3">
 <h3><span class="header-section-number">3.2.2</span> The two-dimensional case</h3>
@@ -267,10 +267,10 @@ cvm &lt;- solve(h) #invert the matrix
 std_dev &lt;- sqrt(cvm) #square root to give sd
 #print posterior mode + sd of alpha:
 cat('alpha = ' , res_gam$par[1] , '+-'  , std_dev[1,1])</code></pre>
-<pre><code>## alpha =  2.978859 +- 0.1516385</code></pre>
+<pre><code>## alpha =  2.974618 +- 0.1522032</code></pre>
 <pre class="r"><code>#print posterior mode + sd of beta:
 cat('beta = ' , res_gam$par[2] , '+-'  , std_dev[2,2])</code></pre>
-<pre><code>## beta =  0.007839853 +- 0.0004346472</code></pre>
+<pre><code>## beta =  0.007851262 +- 0.0004376106</code></pre>
 <p>Now that we have two models (exponential , gamma) and parameters estimated in a Bayesian setting, how do we decide which is better??</p>
 </div>
 </div>

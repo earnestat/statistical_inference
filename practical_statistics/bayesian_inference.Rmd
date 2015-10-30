@@ -172,7 +172,7 @@ data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE
 x <- data$`12_uM`
 Lp_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE)
-  -sum(R) - log( rate )
+  -sum(R) + log( rate )
 }
 #fit_exp <- mle( Lp_exp , start = list( rate = 1) )
 #summary(fit_exp)
@@ -230,7 +230,7 @@ Lp_gamma <- function( m ){
   shape = m[1]
   rate = m[2]
   R <- dgamma( x , shape , rate , log = TRUE)
-  -sum(R) - log( rate ) - log(shape)
+  -sum(R) + log( rate ) + log(shape)
 }
 #fit_exp <- mle( Lp_exp , start = list( rate = 1) )
 #summary(fit_exp)
@@ -281,7 +281,7 @@ Technically,we also require that the 2nd derivative is $<0$. Once again, instead
 
 $$L = L(\lambda_0) + \frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2 + \ldots ,$$
 
-in which the linear term is missing as we $lambda_0$ is a local maximum. Ignoring higher-order terms yields
+in which the linear term is missing as $\lambda_0$ is a local maximum. Ignoring higher-order terms yields
 
 $$P \approx A\text{exp}[\frac{1}{2}\frac{dL^2}{d\lambda^2}|_{\lambda_0}(\lambda - \lambda_0)^2],$$
 
@@ -296,7 +296,7 @@ library(numDeriv)
 h <- hessian( Lp_exp , res_exp$par ) #calculate 2nd derivative
 std_dev_exp <- sqrt(1/h) #this is the standard deviation
 #print posterior mode + sd
-cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 4) , '' )
+cat('mu = ' , signif(res_exp$par,2) , '+-' , signif(std_dev_exp[1,1] , 5) , '' )
 ```
 ###The two-dimensional case
 
