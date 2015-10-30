@@ -401,12 +401,12 @@ Standard Error of the Mean
 <p>where <span class="math">\(n\)</span> is the sample size and <span class="math">\(s\)</span> is the sample standard deviation. This follows, in fact, from the Central Limit Theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respect to the standard error, as it decreases as the inverse of <span class="math">\(\sqrt(n)\)</span>, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points!</p>
 <p><strong>Example of computation</strong>:</p>
 <pre class="r"><code>data &lt;- read.csv(&quot;data/lifetimes_tubulin.csv&quot; , check.names=FALSE) #load data from .csv
-mlt &lt;- apply( data , 2 , function(x) mean(x , na.rm = TRUE)) #mean lifetime
+slt &lt;- apply( data , 2 , function(x) sd(x , na.rm = TRUE)) #mean lifetime
 n &lt;- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
-sem &lt;- mlt/sqrt(n) #standard errors
+sem &lt;- slt/sqrt(n) #standard errors
 print(sem)</code></pre>
-<pre><code>##    12_uM     7_uM     9_uM    10_uM    14_uM 
-## 14.46648 13.12713 19.11580 23.75821 39.45571</code></pre>
+<pre><code>##     12_uM      7_uM      9_uM     10_uM     14_uM 
+##  8.792836  8.802979 11.485072 13.121386 21.743109</code></pre>
 <p><strong>Exercise 7 (~5 minutes)</strong>: Figure out what each line of the code above does.</p>
 <p><strong>When do I report the standard deviation and when do I report the standard error??</strong> A general rule is as follows: if you are interested in seeing and/or reporting how spread out your data is, state or visualize the <em>standard deviation</em>; if, on the other hand, you are interested in making inferences about the data, such as the value of the population mean or the statistical significance of an effect, report the <em>standard error of the mean</em>. See (Cumming et al., 2007) for further reading. Also see <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1255808/">this paper</a> and <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148365/">this paper</a>.</p>
 </div>

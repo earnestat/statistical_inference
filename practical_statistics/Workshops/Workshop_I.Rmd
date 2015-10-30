@@ -222,7 +222,7 @@ help(breast)
 
 #Summary Statistics
 
-How can we numerically describe & summarize data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure' (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *varibility*, also called *dispersion*. We shall explore these now.
+How can we numerically describe & summarize data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure' (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variability*, also called *dispersion*. We shall explore these now.
 
 ##Measures of Central Tendency
 
@@ -446,9 +446,9 @@ where $n$ is the sample size and $s$ is the sample standard deviation. This foll
 **Example of computation**:
 ```{r,  message = FALSE ,  echo = TRUE}
 data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from .csv
-mlt <- apply( data , 2 , function(x) mean(x , na.rm = TRUE)) #mean lifetime
+slt <- apply( data , 2 , function(x) sd(x , na.rm = TRUE)) #mean lifetime
 n <- apply( data , 2 , function(x) sum(!is.na(x))) #number of data points
-sem <- mlt/sqrt(n) #standard errors
+sem <- slt/sqrt(n) #standard errors
 print(sem)
 ```
 
