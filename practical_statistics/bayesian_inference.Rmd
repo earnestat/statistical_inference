@@ -8,13 +8,15 @@ output:
 ---
 <h1>An Introduction to Bayesian Inference</h1>
 
-One Mode of Motivation: we have seen, when estimating parameters, that we can retrieve mean estimates and confidence intervals. But can we get the distribution? One method to do so is Bayesian paramater estimation model fitting.
+
+
+We have seen, when fitting models and estimating parameters, that we can retrieve mean estimates and confidence intervals on these estimates. But can we get the distributions? We can and one method to do so occurs in Bayesian inference.
 
 #Bayes' Theorem
 
 $$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
 
-Easy to prove: so do it.
+Insert proof here, Hugo.
 
 #Bayes' Theorem and Parameter Estimation
 
@@ -44,19 +46,111 @@ lambda <- seq( 0 , 1 , by = 0.01)
 prior <- rep( 1 , length(lambda))
 likelihood1 <- lambda**k1*(1-lambda)**(n1-k1)
 posterior1 <- likelihood1*prior
+posterior1 <- posterior1/max(posterior1)
 plot1 <- qplot( lambda , posterior1, geom = "line" ) 
 ##
 n2 <- 1000
 k2 <- 450
 likelihood2 <- lambda**k2*(1-lambda)**(n2-k2)
 posterior2 <- likelihood2*prior
+posterior2 <- posterior2/max(posterior2)
 plot2 <- qplot( lambda , posterior2, geom = "line" ) 
 grid.arrange(plot1, plot2, ncol=2)
 ```
 
 **Exercise 1**:
 
-Compute and plot the posterior for two priors (uniform & 'crazy coin') for a variety of $n = 1 , 4 , 16 , 64, 256 , 1024 , 4096$.
+Compute and plot the posterior for two priors (uniform & 'crazy coin') for a variety of $n,k$-pairs:
+
+1. The priors are as follows:
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+p <- seq(0,1 , by =0.001)
+prior1 <- dunif(p) #uniform prior
+prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior
+```
+2. The likelihood function is given by $L = p^k(1-p)^{n-k}$ -- fill in the function in the code below (multiplication in R is $*$  and 'to the power' $**$):
+```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=TRUE, eval = FALSE}
+likelihood <- function( n , k ){
+  #write likelihood function here in R notation
+}
+```
+3. Below, we'll compute & plot the posterior for $n=0,k=0$ (no data):
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE, eval = FALSE}
+##here is a function that will plot your posteriors nicely:
+plot_posteriors <- function( p , post1 , post2){
+  df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
+  pl <- ggplot( df , aes( x = p , y = post1 , colour = "Uniform"))
+  pl + geom_line() + geom_line( aes(y = post2 , colour = "Crazy Coin")) +
+    scale_colour_manual(name = 'Prior', values = c("red", "blue") ) +
+    ylab("posterior")
+}
+##set n & k
+n <- 
+k <- 
+LL <- likelihood(n,k)
+#compute the posteriors here and normalize them (by dividing by the maximum)
+post1 <- 
+post2 <- 
+plot_posteriors(p , post1 , post2) #this will plot the posteriors
+```
+4. Try $(n,k) = (1,1) , (40,20) , (80,40)$.
+
+```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=FALSE}
+plot_posteriors <- function( p , post1 , post2){
+  df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
+  pl <- ggplot( df , aes( x = p , y = post1 , colour = "Uniform"))
+  pl + geom_line() + geom_line( aes(y = post2 , colour = "Crazy Coin")) +
+    scale_colour_manual(name = 'Prior', values = c("red", "blue") ) +
+    ylab("posterior")
+}
+
+p <- seq(0,1 , by =0.001)
+prior1 <- dunif(p) #uniform prior
+prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior
+
+n <- 0
+#k <- rbinom(1 , n , p = 0.75)
+k <- 0
+likelihood <- p**k*(1-p)**(n-k)
+post1 <- likelihood*prior1
+post2 <- likelihood*prior2
+post1 <- post1/max(post1)
+post2 <- post2/max(post2)
+pp1 <- plot_posteriors( p , post1 , post2)
+
+n <- 1
+#k <- rbinom(1 , n , p = 0.75)
+k <- 1
+likelihood <- p**k*(1-p)**(n-k)
+post1 <- likelihood*prior1
+post2 <- likelihood*prior2
+post1 <- post1/max(post1)
+post2 <- post2/max(post2)
+pp2 <- plot_posteriors( p , post1 , post2)
+
+n <- 40
+#k <- rbinom(1 , n , p = 0.75)
+k <- n/2
+likelihood <- p**k*(1-p)**(n-k)
+post1 <- likelihood*prior1
+post2 <- likelihood*prior2
+post1 <- post1/max(post1)
+post2 <- post2/max(post2)
+pp3 <- plot_posteriors( p , post1 , post2)
+
+
+n <- 80
+#k <- rbinom(1 , n , p = 0.75)
+k <- n/2
+likelihood <- p**k*(1-p)**(n-k)
+post1 <- likelihood*prior1
+post2 <- likelihood*prior2
+post1 <- post1/max(post1)
+post2 <- post2/max(post2)
+pp4 <- plot_posteriors( p , post1 , post2)
+
+grid.arrange(pp1, pp2, pp3 , pp4, ncol=2)
+```
 
 **What to report once you have the posterior distribution**:
 
@@ -80,7 +174,7 @@ With a bit of algebra (transformation of variables), we can show that choosing t
 
 <h4>The Jeffreys prior</h4>
 
-The *Jeffreys prior* is invariant, in following sense: if I choose the Jeffreys prior on a set of variables and Oli chooses the Jeffreys prior on a transformation (reparametrization) of those variables, then we have both chosen the same prior.
+The *Jeffreys prior* is invariant, in following sense: if I choose the Jeffreys prior on a set of variables and Oli chooses the Jeffreys prior on a transformation (reparametrization) of those variables, then we will have both chosen the same prior.
 
 We include the definition of the Jeffreys prior in the one-parameter case, for completeness. You will need to know a bit more about probability theory to understand the definition, however. If this is not the case, skip it or learn it!
 
@@ -145,7 +239,7 @@ res <- optim(c(0.5) , Lp , method = "L-BFGS-B" , lower = 0.0001 , upper = 0.999 
 res$par
 ```
 
-**What about error bars in the Bayesian setting?** We'll check out how to compute them after a couple more examples.
+So we can compute 'best estimates' of the parameters of interest using Bayesian inference but **what about error bars in the Bayesian setting?** We'll check out how to compute them after a couple more examples.
 
 ###Bayesian parameter estimation for an exponential distribution
 
