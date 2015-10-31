@@ -1,12 +1,11 @@
 ---
-title: "Notes on practical statistics III"
+title: "Practical Statistics III: Maximum Likelihood Estimation, Linear Regression & Nonlinear least squares"
 output:
   html_document:
     toc: true
     fig_caption: true
     number_sections: true
 ---
-<h1>Maximum Likelihood Estimation, Linear Regression & Generalized Linear Models</h1>
 
 #Maximum Likelihood Estimation.
 
@@ -71,7 +70,7 @@ $$\hat{p} = \frac{n}{k},$$
 
 precisely as our intuition told us.
 
-**Computational Note**: Because the likelihood is usuallly very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood $-\mathcal{LL}$ (more on this below).
+**Computational Note**: Because the likelihood is usually very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood $-\mathcal{LL}$ (more on this below).
 
 
 
@@ -207,7 +206,7 @@ LL_exp <- function( rate ){
 4. Use the 'summary()' function to print out the results;
 
 **Solution**:
-```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE, eval=TRUE , warning=FALSE}
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE, eval=TRUE , warning=FALSE}
 data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
 x <- data$`12_uM`
 LL_exp <- function( rate ){
@@ -311,14 +310,14 @@ p +  geom_histogram(aes(y = ..density..) , binwidth = 75) +
   xlab("lifetime")
 ```
 
-**Interpretation**: The addition of MCAK alters the lifetimes of microtubules NOT by changing the rate parameter dramatically, BUT by reducing the shape parameter from ~2.9 to ~1.3. A common interpretation of this is that it reduces a multipstep process to nearely a single step process (see above for intuition behind gamma distribution); **Exercise for the avid participant**: Figure out how Kip3 alters the lifetimes of microtubules.
+**Interpretation**: The addition of MCAK alters the lifetimes of microtubules NOT by changing the rate parameter dramatically, BUT by reducing the shape parameter from ~2.9 to ~1.3. A common interpretation of this is that it reduces a multistep process to nearly a single step process (see above for intuition behind gamma distribution); **Exercise for the avid participant**: Figure out how Kip3 alters the lifetimes of microtubules.
 
 **To the eye**, the gamma fits look better than the exponential fits: but are they? Let's direct our attention now to quantitative methods for model selection:
 
 
 #Model Selection
 
-There are many ways to select the best model: we want one that rewards models that fit well BUT that also penalizes models with many free parameters (in the spirit of Occam's razor & due to overfitting). The Akaike information criterion is an example of such a measure.
+There are many ways to select the best model: we want one that rewards models that fit well BUT that also penalizes models with many free parameters (in the spirit of Occam's razor & due to over-fitting). The Akaike information criterion is an example of such a measure.
 
 ##The Akaike Information criterion
 
@@ -378,7 +377,7 @@ p + geom_point() + stat_smooth( method = "lm" )
 
 We form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*. More details will follow after you perform a simple regression.
 
-##Your turn: spindle size as a function of droplet diameter.
+##Your turn: spindle size as a function of droplet diameter
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
 df <- read.csv("spindle_size_MG.csv")
@@ -430,7 +429,7 @@ There are many ways to think about this:
 
 
 
-**The more urgent questions we need to answer are** 'Why and when does this OLS method work?' and 'What assumptions underly this method?' People (and software!) tend to apply this method blindly and to not realise that their approach may violate any number of its underlying assumptions, rendering it invalid. So when is it appropriate to use the ordinary least squares method and why?
+**The more urgent questions we need to answer are** 'Why and when does this OLS method work?' and 'What assumptions underlie this method?' People (and software!) tend to apply this method blindly and to not realize that their approach may violate any number of its underlying assumptions, rendering it invalid. So when is it appropriate to use the ordinary least squares method and why?
 
 ###The assumptions underlying OLS: linear regression is nothing more than an example of MLE!
 
@@ -457,7 +456,7 @@ If assumptions are violated, not all is lost!! You just need to be a bit clevere
 ###Anscombe's Quartet demonstrates violations of OLS assumptions
 
 
-Anscombe's Quartet consists of four datasets, each consisting of 11 data points. Each data set has the same $\bar{x}, \bar{y}, \text{SD}_x , \text{SD}_y$, correlation coefficient and linear regression line (OLS):
+Anscombe's Quartet consists of four data-sets, each consisting of 11 data points. Each data set has the same $\bar{x}, \bar{y}, \text{SD}_x , \text{SD}_y$, correlation coefficient and linear regression line (OLS):
 
 ```{r , fig.width = 8 , fig.height = 6 , message = FALSE , echo = FALSE}
 require(gridExtra)
@@ -543,8 +542,8 @@ The easiest way to retrieve confidence intervals on your parameter estimates is 
 The algorithm is as follows:
 
 1. Perform the fit to get parameter estimates for the model $y=\hat{f}(x)$;
-2. Boostrap the residuals (i.e., sample with replacement) and add the new sampled residuals to the model to get another dataset $D'$ -- that is, for every original data point $\{x_i , y_i \}$, randomly select a residual $\varepsilon_j$ and generate a new data point $\{x_i , y_i' \}$, where $y_i'=\hat{f}(x)+\varepsilon_j$ -- do this for every original data point to retrieve a new, synthesized (bootstrapped) data set $D' = \{x_i , y_i' \}_{i\in I}$;
-3. Perform another fit on the new bootstrapped data to retrieve new paramater estimates $\hat{a'},\hat{b'}$.
+2. Bootstrap the residuals (i.e., sample with replacement) and add the new sampled residuals to the model to get another data-set $D'$ -- that is, for every original data point $\{x_i , y_i \}$, randomly select a residual $\varepsilon_j$ and generate a new data point $\{x_i , y_i' \}$, where $y_i'=\hat{f}(x)+\varepsilon_j$ -- do this for every original data point to retrieve a new, synthesized (bootstrapped) data set $D' = \{x_i , y_i' \}_{i\in I}$;
+3. Perform another fit on the new bootstrapped data to retrieve new parameter estimates $\hat{a'},\hat{b'}$.
 4. Perform steps 2-3 above $n$ (commonly $=1000$) times. Then we have $n$ estimates for $a,b$, giving us a distribution, and we can look at the statistics of these distributions, such standard deviation, variance and confidence intervals.
 
 This is all very straightforward to implement in R (for more, see http://www.statmethods.net/advstats/bootstrapping.html): 
@@ -648,23 +647,23 @@ AIC(fitg , lin_fit)
 
 #References
 
-Odde, D.J., Cassimeris, L., and Buettner, H.M. (1995). Kinetics of microtubule catastrophe assessed by probabilistic analysis. Biophys. J. 69, 796–802.
+- Odde, D.J., Cassimeris, L., and Buettner, H.M. (1995). Kinetics of microtubule catastrophe assessed by probabilistic analysis. Biophys. J. 69, 796–802.
 
-Odde, D.J., Buettner, H.M., and Cassimeris, L. (1996). Spectral analysis of microtubule assembly dynamics. AIChE J. 42, 1434–1442.
+- Odde, D.J., Buettner, H.M., and Cassimeris, L. (1996). Spectral analysis of microtubule assembly dynamics. AIChE J. 42, 1434–1442.
 
-Stepanova, T., Smal, I., van Haren, J., Akinci, U., Liu, Z., Miedema, M., Limpens, R., van Ham, M., van der Reijden, M., Poot, R., et al. (2010). History-dependent catastrophes regulate axonal microtubule behavior. Curr. Biol. 20, 1023–1028.
+- Stepanova, T., Smal, I., van Haren, J., Akinci, U., Liu, Z., Miedema, M., Limpens, R., van Ham, M., van der Reijden, M., Poot, R., et al. (2010). History-dependent catastrophes regulate axonal microtubule behavior. Curr. Biol. 20, 1023–1028.
 
-M. Kleiber, “Body size and metabolism,” Hilgardia, vol. 6, pp. 315–351, 1932.
+- M. Kleiber, “Body size and metabolism,” Hilgardia, vol. 6, pp. 315–351, 1932.
 
-J. F. Gillooly, J. H. Brown, G. B. West, V. M. Savage, and E. L. Charnov, “Effects of size and temperature on metabolic rate,” Science, vol. 293, pp. 2248–51, Sep 2001.
+- J. F. Gillooly, J. H. Brown, G. B. West, V. M. Savage, and E. L. Charnov, “Effects of size and temperature on metabolic rate,” Science, vol. 293, pp. 2248–51, Sep 2001.
 
-C. R. White and R. S. Seymour, “Mammalian basal metabolic rate is pro- portional to body mass2/3,” Proceedings of the National Academy of Sci- ences, vol. 100, no. 7, pp. 4046–4049, 2003.
+- C. R. White and R. S. Seymour, “Mammalian basal metabolic rate is pro- portional to body mass2/3,” Proceedings of the National Academy of Sci- ences, vol. 100, no. 7, pp. 4046–4049, 2003.
 
-G. B. West, J. H. Brown, and B. J. Enquist, “A general model for the origin of allometric scaling laws in biology,” Science, vol. 276, pp. 122–6, Apr 1997.
+- G. B. West, J. H. Brown, and B. J. Enquist, “A general model for the origin of allometric scaling laws in biology,” Science, vol. 276, pp. 122–6, Apr 1997.
 
-Good, M.C., Vahey, M.D., Skandarajah, A., Fletcher, D.A., and Heald, R. Cytoplasmic Volume Modulates Spindle Size During Embryogenesis. Science  342, 856-860 (2013).
+- Good, M.C., Vahey, M.D., Skandarajah, A., Fletcher, D.A., and Heald, R. Cytoplasmic Volume Modulates Spindle Size During Embryogenesis. Science  342, 856-860 (2013).
 
-Sieg, A. E. et al. Mammalian metabolic allometry: do intraspecific variation, phylogeny, and regression models matter? Am. Nat. 174, 720–733 (2009)
+- Sieg, A. E. et al. Mammalian metabolic allometry: do intraspecific variation, phylogeny, and regression models matter? Am. Nat. 174, 720–733 (2009)
 
 - *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
 
