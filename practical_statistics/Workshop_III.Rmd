@@ -1,0 +1,715 @@
+---
+title: "Practical Statistics III: Maximum Likelihood Estimation, Linear Regression & Nonlinear least squares"
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+    number_sections: true
+---
+
+#Maximum Likelihood Estimation.
+
+**Motivation**: Let's say that we have a mathematical model and some data that we wish to fit the model to: all we mean here by 'fitting' is finding *good estimates* for the parameters in the model. **Maximum likelihood estimation** is a common and widely applicable method of such parameter estimation. We will see, for example, that simple linear regression is a special case of maximum likelihood estimation, as is nonlinear least squares.
+
+##Example 1: a coin-flip
+Let's say that we want figure out the proportion of cases in which a mutation has a particular effect: for example, how often a mutant dies. 
+
+If we think of survival as *heads* and death as *tails*, we can model this as a biased coin flip with $P(H) = p$ and $P(T) = 1 - p$.
+
+**Set-up**: I flip a biased coin $n$ times and retrieve $k$ heads and $n-k$ tails, 
+
+**Questions**:
+
+1. What is my intuitive estimate of the probability of heads $P(H)=p$?
+2. How certain can I be of this estimate? In other words, what type of confidence intervals can I place on it.
+
+An intuitive **answer** to the 1st question is the *best estimate* $\hat{p} = k/n$, the number of heads divided by the total number of coin tosses (note that $\hat{}$ denotes the *best estimate*). We will now see why.
+
+###Estimating the binomial probability $p$
+
+**The binomial distribution**
+
+Recall that, if the probability of heads $P(H)=p$, then the probability of getting $k$ heads out of $n$ coin flips is given by the binomial distribution 
+
+$$P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
+
+In the above $p^k$ is the probability of getting $k$ heads, $(1-p)^{n-k}$ that of getting $n-k$ tosses and ${n \choose k}=\frac{n!}{k!(n-k)!}$ the number of ways to arrange $k$ heads and $(n-k)$ tails.
+
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+setwd("~/repos/statistical_inference/practical_statistics/") #set your working directory here
+library( ggplot2 )
+x <- seq(0,50)
+y1 <- dbinom(x , size = 20 ,prob = 0.7 )
+y2 <- dbinom(x , size = 20 ,prob = 0.5 )
+y3 <- dbinom(x , size = 40 ,prob = 0.5 )
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'size = 20, p = 0.7' #create a new column called 'type'
+df2$type <- 'size = 20, p = 0.5' #create a new column called 'type'
+df3$type <- 'size = 40, p = 0.5' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_point() + scale_fill_discrete()
+```
+
+**What does maximum likelihood mean?**
+
+Now in our case we don't want the probability of flipping a certain number of heads, given $p$, we want the likelihood that $p(H)=p$, given a certain number of heads! To this end, we define the **likelihood** of any given $p$ given the data $D$ to be the probability of that data $D$, given $p(H) = p$:
+
+$$\mathcal{L}(p | k \text{ heads}) := P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
+
+The **maximum likelihood estimate** (MLE) $\hat{p}$ of $p$ is the value that maximizes the likelihood function $\mathcal{L}(p | k \text{ heads})$. A little bit of calculus & algebra later (see Appendix) reveals that
+
+$$\hat{p} = \frac{n}{k},$$
+
+precisely as our intuition told us.
+
+**Computational Note**: Because the likelihood is usually very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood, denoted by $-\mathcal{LL}$ (more on this below).
+
+
+
+**A couple of important log laws:**
+
+1. $\text{log}(xy) = \text{log}(x) + \text{log}(y)$;
+2. $\text{log}(x^a) = a\text{log}(x)$;
+
+**Example**: In the case of the binomial distribution above, the negative log-likelihood 
+
+$$-\mathcal{LL} = -\text{log}{n\choose k} - k\text{log}p - (n-k)\text{log}(1-p)$$
+
+###How confident can we be of our estimate $\hat{p}=\frac{n}{k}$?
+
+Now how confident can we be of this estimate? Our intuition is merely qualitative when it comes to this question: all we can really say is that the more data we have, the more we can be sure of our estimate. To quantitate this intuition, we use the Central Limit Theorem.
+
+**Discussion point**: as we saw in Workshop I when discussing the Central Limit Theorem, this idea of *confidence in our estimate* is related to the variance of the results we would see when performing the experiment many times. **Discuss this.**
+
+###The CLT and confidence intervals on a biased coin flip
+
+First notice that $\hat{p}=k/n$ is also $S_n$, an estimate of the mean of the distribution given by $P(1)=p, P(0)=1-p$ (that is, we call a *head* 1 and a tail *0*). Then the Central Limit Theorem tells us that as $n$ gets large (in practice, $n>20$ should be fine), $\hat{p}=S_n$ is distributed like $N(\mu,\sigma^2/n),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the binomial distribution. Hence $\hat{p}$ is ~normally distributed with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$.
+
+**Note**: the standard deviation of this estimate is a maximum when $p=0.5$, that is, the largest uncertainty occurs when the coin is fair! This is intuitive in the sense that, if $p=1$, we could be fairly certain that it is biased with few coin flips as it would be coming up heads all of the time.
+
+Moreover, as $\hat{p}$ is normally distributed and recalling that $95\%$ of the area under a normal curve lies within $\approx 1.96$ standard deviations from the mean, $95\%$ confidence intervals on the estimate $\hat{p}$ are given by
+$$\hat{p}\pm 1.96\times\text{SD}(\hat{p}).$$
+When $p = 0.5$, this is
+$\approx  \frac{k}{n} \pm \frac{1}{\sqrt{n}}$ and when $n=400$, for example, this is $\approx 0.5 \pm 0.05$.
+If, on the other hand, $P(H)=0.75$, $1.96\times\text{SD}\approx 1/\sqrt{4n/3}$ and to get the same size $95\%$ confidence intervals, we only require 300 tosses of the coin.
+
+```{r , fig.width = 9 , fig.height = 5 , message = FALSE , echo=FALSE ,warning=FALSE}
+p1 <- 0.5
+p2 <- 0.75
+x <- seq(1,401 , by = 10)
+y1 <- 1.96*sqrt(p1*(1-p1))/sqrt(x)
+y2 <- 1.96*sqrt(p2*(1-p2))/sqrt(x)
+df1 <- as.data.frame(cbind( x ,y1  ))
+colnames( df1 ) <- c( 'n' , 'SD')
+df1$probability <- "p=0.5"
+df2 <- as.data.frame(cbind( x ,y2  ))
+colnames( df2 ) <- c( 'n' , 'SD')
+df2$probability <- "p=0.75"
+df <- rbind(df1 , df2)
+pl <- ggplot( df , aes( x = n , y = SD , group = probability , colour = probability ))
+ylabl <- expression(1.96%*%SD(hat(p)))
+pl + geom_point(size = 3 , alpha = 1) + 
+  scale_y_continuous(limits = c(0,0.2) , breaks=seq(0, 0.2, 0.05)) +
+  ylab(ylabl) +
+  theme(axis.title=element_text(size=22) ,
+        axis.text=element_text(size=22))
+```
+
+<h4> Computation example: performing MLE in R.</h4>
+
+In order the use R to compute the MLE, we just need to give it i) the data & ii) the function we wish to minimize. As a sanity check, we now generate some binomial data and use R to compute the the MLE.
+
+**Essential knowledge**: if there are $n$ parameters $p_1,\ldots,p_n$ in a model and the data $D = \{D_i\}$ are independent, then the negative log-likelihood
+
+$$-\mathcal{LL}(p_1,\ldots,p_n|D) = -\sum_i \text{log}P(D_i|p_1,\ldots,p_n)$$
+
+and this is the function that we minimize in R as below, after this note.
+
+**Note**: Independence of data is required so that $P(D|p_1,\ldots,p_n) = \prod_i (D_i|p_1,\ldots,p_n)$.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+library(stats4) #load library
+p <- 0.4 #set the binomial probability
+n <- 1 #number of samples for each trial
+m <- 5000 #number of coin flips
+x <- rbinom( m , 1 , p ) # results of m coin flips
+#define log likelihood function below:
+LL <- function( p ){
+  R <- dbinom( x , 1, p , log = TRUE) #binomial function w/ probability p
+  #NOTE! in the above, log = TRUE automatically takes logs for us: awesome!
+  -sum(R) #-ve log likelihood
+}
+fit <- mle(LL , start = list(p = 0.9))
+summary(fit)
+```
+
+**Exercise 1 (~5 minutes)**: Play around with the binomial probability $p$ and the number of coin flips $n$ in the above code. Make sure that the MLE algorithm is working correctly.
+
+**Solution**: change the variable 'p' in the above code and see what results!
+
+##Example 2: Microtubule lifetimes
+
+##What is the distribution of microtubule lifetimes?
+
+Before (Gardner et al., 2011), it was widely believed that **microtubule lifetimes** were **exponentially distributed** (but see Odde et al., 1995, 1996; Stepanova et al., 2010):
+
+$$P(t|\mu) = \mu \text{exp}(-t\mu),$$
+
+where $\mu$ is the characteristic rate of catastrophe. For this reason, catastrophe was thought to be a single-step (memoriless) process (see Appendix for further details).
+
+Gardner and co-authors hypothesized that lifetimes may actually follow gamma distributions, which are thought of as resulting from multi-step processes. A quality of gamma-distributed lifetimes is that young microtubules are protected.
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+#a plot of typical exponential & gamma distributions
+x <- seq(0,10, by = 0.1) #generate vector for x-axis -- seq() is a great function so remember it!
+y1 <- dexp(x , rate = 1) #exponential distribution function evaluated on vector x
+y2 <- dgamma(x , shape=2)#gamma distribution function evaluated on vector x
+df <- as.data.frame( c(x,y1,y2)) #combine these vectors to give a dataframe
+p <- ggplot( df , aes(x , y1 , col = Distribution)) #initiate plotting structure
+p + geom_line(aes(col = "Exponential")) + geom_line(aes (x,y2, colour = "Gamma") ) +
+  ylab("Probability") #plot figure of distributions
+```
+
+For completeness, I include here the equation for the gamma distribution. It has 2 parameters, a shape parameter $\alpha$ & a rate parameter $\mu$. The probability distribution function is given by
+
+$$P(t|\alpha , \mu) = \frac{\mu^\alpha}{\Gamma(\alpha)}t^{\alpha-1}\text{exp}(-\mu t),$$
+
+where $\Gamma(\alpha)$ is the *Gamma function*.
+
+**Note**: When $\alpha = 1$, $\Gamma(\alpha) = 1$ and $P( t | 1 , \mu) = \mu\text{exp}(-\mu t)$. This is an exponential distribution.
+
+**Aim**: We want to see whether tubulin lifetimes are exponentially or gamma distributed. In order to do so, we proceed in 2 steps:
+
+1. We perform parameter estimation (MLE) for both types of distributions;
+2. We use a criterion for model selection.
+
+We already know how to do 1. and will soon know how to do 2. also. We now proceed to performing MLE for the exponential distribution:
+
+###Exponential distribution for tubulin alone
+
+Recalling the form of the exponential distribution 
+
+$$P(t|\mu) = \mu \text{exp}(-t\mu)$$
+
+and assuming independence of data points, the likelihood function, given data $D=\{t_i\}_{i\in I}$, is
+
+$$\mathcal{L}(\mu | t) = \prod_{i\in I}P(t_i | \mu) = \prod_{i\in I}\mu \text{exp}(-t_i\mu).$$
+
+
+**Exercise 2 (~10 minutes)**:
+
+1. Load "lifetimes_tubulin.csv" and set the variable 'x' to be the 1st column;
+2. I have written below a template for the negative log-likelihood function: complete the code (use the binomial log likelihood above as a reference, if necessary):
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE, eval=FALSE , warning=FALSE}
+LL_exp <- function( rate ){
+  R <- #code for function here
+  -sum(R) #-ve log likelihood
+}
+```
+3. Fit the exponential distribution to the data using 'mle()' and do not forget the argument 'start' that initializes the optimization process;
+4. Use the 'summary()' function to print out the results;
+
+**Solution**:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE, eval=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM` #choose column
+LL_exp <- function( rate ){
+  R <- dexp( x , rate , log = TRUE) #exponential distribution --note log = TRUE computes the log
+  -sum(R) #-ve log likelihood
+}
+fit_exp <- mle( LL_exp , start = list( rate = 1) ) #perform the fit
+summary(fit_exp)  #summarize the fit
+```
+
+
+Let's now plot the probability density of the data with the exponential fit for an eye-test of how good the fit is:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+x <- data$`12_uM` #lifetime data at 12uM
+df <- as.data.frame( x = x) #turn it into dataframe to plot
+###in these 3 lines, we build a dataframe of the fit:
+xx <- seq(0,max(x)) #x-axis
+xex <- dexp(xx , rate =coef(fit_exp)) #y-axis
+df1 <- data.frame( "x" = xx , "y" = xex ) #dataframe
+p <- ggplot( df , aes( x = x))  #initiate plotting structure for data density
+#plot density and add layer of fit on top:
+p +  geom_histogram(aes(y = ..density..)) + geom_line( data = df1 , aes(x=x , y=y) , colour = "red" , size = 2)
+```
+
+
+**Exercise for home (if interested!)**: do the same (i.e. fit an exponential distribution and plot it) for the assay in which the MAP MCAK is also present (any [MCAK]).
+
+###Gamma distribution for tubulin alone
+
+We now fit a gamma distribution to the data in an analogous manner:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`12_uM` #choose column
+LL_gamma <- function( shape , rate ){
+  R <- dgamma( x , shape , rate , log = TRUE)#gamma distribution --note log = TRUE computes the log
+  -sum(R) #-ve log likelihood
+}
+#perform the fit:
+fit_gamma <- mle( LL_gamma , start = list( shape = 1 ,rate = 1) , method = "L-BFGS-B" , lower = 0.00001)
+summary(fit_gamma) #summarize the fit
+```
+
+**Note**: In the 'mle' function, we have a new argument 'lower' -- this is to ensure that the optimization algorithm does not try values below a certain threshold (e.g. a gamma distribution is not defined for shape $<0$); in order to have such a bound, we have necessarily used a slightly different algorithm ('method'), the Limited-memory BFGS Broyden–Fletcher–Goldfarb–Shanno (Bounded). Right!
+
+Now we plot the gamma fit:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+x <- data$`12_uM` #lifetime data at 12uM
+df <- as.data.frame( x = x) #turn it into dataframe to plot
+###in these 3 lines, we build a dataframe of the fit:
+xx <- seq(0,max(x)) #x-axis
+xgam <- dgamma(xx , shape = coef(fit_gamma)[1] , rate =coef(fit_gamma)[2]) #y-axis
+df1 <- data.frame( "x" = xx , "y" = xgam ) #dataframe
+p <- ggplot( df , aes( x = x))  #initiate plotting structure for data density
+#plot density and add layer of fit on top:
+p +  geom_histogram(aes(y = ..density..) , binwidth = 75) +
+ geom_line( data = df1 , aes(x=x , y=y) , colour = "red" , size = 2) +
+  xlab("lifetime")
+```
+
+We can also plot the CDFs:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+P <- ecdf(x) #this is the ECDF (of the data) as a function
+xax <- seq(0,max(x) , by = 1) #define the x-axis
+ec <- P(xax) #ECDF as function of x-axis 
+exp_fit <- pexp(xax , rate =coef(fit_exp)) #exponential CDF for y-axis
+gam_fit <- pgamma(xax , shape = coef(fit_gamma)[1] , rate =coef(fit_gamma)[2]) #gamma CDF for y-axis
+#build dataframe containing x-axis, ECDF, exponential & gamma CDFs for plotting
+df <- data.frame( "x" = xax , "ecdf" = ec , "exponential" = exp_fit , "gamma" = gam_fit)
+p <- ggplot( df , aes(x=x , y = ecdf , colour = "ECDF")) #initiate plotting structure
+##now we plot it all:
+p + geom_line() + geom_line(aes(y=exp_fit, colour = "Exponential")  , label = "1") + geom_line(aes(y=gam_fit, colour = "Gamma") ) +
+  ylab("CDF") + xlab("microtubule lifetime") + 
+    scale_colour_manual(name = 'Distribution', values = c("black", "red", "blue") )
+```
+
+###A key note on mathematical modeling
+
+How do you know to fit an exponential distribution and then to try a gamma distribution? What are the rules of thumb for modeling this type of data? Unfortunately, this Workshop is NOT about mathematical modeling, an incredibly rich super-field of its own. However, do let me say a few things:
+
+1. If you are modeling times, such as microtubule lifetimes, exponential distributions are a good place to start as they are used to model single-step processes, just as gamma distributions are used to model multi-step processes. There are a number of others you could try, such as [Weibull distributions](https://en.wikipedia.org/wiki/Weibull_distribution);
+2. It is essential to remember that some models have mechanistic/physical motivations/interepretations and that others do not;
+3. Models that make testable predictions are essential: if you can't do an experiment to disprove a model, then what is it worth?
+4. In the end, collaborate with a theorist/modeler/statistician: I need to stay in business!
+
+###Gamma distribution for tubulin & MCAK
+
+We now fit a gamma distribution for microtubules grown in the presence of MCAK:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+data <- read.csv("MG_catastrophe_data/lifetimes_mcak.csv" , check.names=FALSE) #load data from #.csv
+x <- data$`9_nM_MCAK` #choose column
+x <- x[!is.na(x)] #remove NAs
+LL_gamma <- function( shape , rate ){
+  R <- dgamma( x , shape , rate , log = TRUE) #gamma distribution -- log = TRUE already logs it
+  -sum(R) #-ve log likelihood
+}
+#perform fit
+fit_gamma_mcak <- mle( LL_gamma , start = list( shape = 1 ,rate = 1) , method = "L-BFGS-B" , lower = 0.00001)
+summary(fit_gamma_mcak) #summarize fit
+df <- as.data.frame( x = x) #turn lifetime data into dataframe to plot
+###in these 3 lines, we build a dataframe of the fit:
+xx <- seq(0,1600) #x-axis
+xex <- dgamma(xx , shape = coef(fit_gamma_mcak)[1] , rate =coef(fit_gamma_mcak)[2]) #y-axis
+df1 <- data.frame( "x" = xx , "y" = xex ) #dataframe
+p <- ggplot( df , aes( x = x))  #initiate plotting structure for data density
+#plot density and add layer of fit on top:
+p +  geom_histogram(aes(y = ..density..) , binwidth = 75) +
+ geom_line( data = df1 , aes(x=x , y=y) , colour = "red" , size = 2) +
+  xlab("lifetime")
+```
+
+**Interpretation**: The addition of MCAK alters the lifetimes of microtubules NOT by changing the rate parameter dramatically, BUT by reducing the shape parameter from ~2.9 to ~1.3. A common interpretation of this is that it reduces a multistep process to nearly a single step process (see above for intuition behind gamma distribution); **Exercise for the avid participant**: Figure out how Kip3 alters the lifetimes of microtubules.
+
+**To the eye**, the gamma fits look better than the exponential fits: but are they? Let's direct our attention now to quantitative methods for model selection:
+
+
+#Model Selection
+
+There are many ways to select the best model: we want one that rewards models that fit well BUT that also penalizes models with many free parameters (in the spirit of Occam's razor & due to over-fitting). The Akaike information criterion is an example of such a measure.
+
+##The Akaike Information criterion
+
+The Akaike information criterion
+
+$$\text{AIC} = -2\text{ln}(L) + 2K,$$
+
+where $L$ is the maximum likelihood of the model (i.e., the likelihood function evaluated at the MLE) and $K$ the number of free parameters in the model.
+
+To currently quote Wikipedia, *the preferred model is the one with the minimum AIC value.* Hence AIC rewards goodness of fit (as assessed by the likelihood function), but it also includes a penalty that is an increasing function of the number of estimated parameters.
+
+**Essential note**: the AIC is NOT a statistical test that tells you how good a fit is, it is merely a way to compare a number of models.
+
+**Exercise 3 (~5 minutes)**: Use AIC to compare exponential and gamma models of MT catastrophe. Check out
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE , eval = FALSE}
+help(AIC)
+```
+
+**Solution**:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE , eval = TRUE}
+AIC(fit_gamma , fit_exp) #perform AIC on exponential & gamma fits
+```
+
+
+**Notes**: 
+
+1. You can use other criteria, such as Bayesian information criterion (BIC). BIC will generally penalize models more heavily than AIC for complexity. They should generally agree as to which model they select and, if not, this would be the time to consult a mathematical modeler and/or a statistician.
+2. We have NOT covered goodness-of-fit tests for models, such as the [$\chi^2$-test](http://stattrek.com/chi-square-test/goodness-of-fit.aspx?Tutorial=AP) (also see [here](http://www.biostathandbook.com/chigof.html)), which you should acquaint yourself with, at the very least. Such tests can be expanded to compare models with one another.
+
+
+**Online resources**: see [here](http://brianomeara.info/tutorials/aic/) and [here](http://www.r-bloggers.com/fitting-a-model-by-maximum-likelihood/) for some more information.
+
+
+#(simple) Linear Regression basics
+
+The challenge: we have some data $D=\{x_i,y_i\}$ that looks like it could be linear, with some noise:
+
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
+set.seed(42)
+m <- 5
+b <- 2
+x <- seq( 0 , 1 , by = 0.01)
+err <- rnorm( length(x) ) #normally distributed error
+y <- m*x + b + err
+df <- as.data.frame( cbind( x , y ))
+p <- ggplot( df , aes( x , y ))
+p + geom_point()
+#p + geom_point() + stat_smooth( method = "lm" )
+```
+
+Performing linear regression in R is super-straightforward:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+p <- ggplot( df , aes( x , y )) #initiate plot
+p + geom_point() + stat_smooth( method = "lm" ) #plot data w/ linear fit & 95% confidence bands
+```
+
+**What have we done here?**
+
+We form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*. More details will follow after you perform a simple regression.
+
+##Your turn: spindle size as a function of droplet diameter
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+df <- read.csv("spindle_size_MG.csv") #load data
+#initialize plotting structure
+p <- ggplot( df , aes(x = Droplet_Diameter_.µm. , y = Spindle_Length_.µm.)) 
+p + geom_point(alpha = 0.5) #plot with an \alpha (= transparency)
+```
+
+**An absurdly concise description of the biological system**: Matt Good & co-authors put *Xenopus* egg extracts in different sized compartments to see whether spindle size was a function of compartment size. See the paper for more details: it's a great system! 
+
+**Exercise 4 (~10 minutes; solution currently embedded)**:
+
+1. Load the data as above;
+2. Use the 'subset' function to select the data such that the droplet diameter is $<80\mu$m;
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+df1 <- subset( df , Droplet_Diameter_.µm. <80) #subset the data
+```
+3. Plot the data with a linear fit;
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning = FALSE}
+p <- ggplot( df1 , aes(x = Droplet_Diameter_.µm. , y = Spindle_Length_.µm.)) #initiate plot
+p + geom_point(alpha = 0.5) + stat_smooth( method = "lm") + xlim(20 , 80) + ylim( 20 , 50) #plot it
+```
+
+**Key note**: Calling 'stat_smooth' will visualize the linear fit but will NOT output the parameters fit (slope & intercept); to achieve this, you will need to do the following:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1) #perform fit
+summary(lin_fit) #summarize fit
+```
+
+##How linear regression works: ordinary least squares (OLS)
+
+Recall that we form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means.
+
+For any $a,b$ we can compute $\varepsilon_i^2$, the square of distance between the y-coordinate of the data $y_i$ and the prediction of the model $ax_i+b$: this distance $\varepsilon_i$ is called the $i$th *residual* and $\varepsilon_i^2=(y_i-ax_i+b)^2$. The sum of the squares of the residuals is given by
+
+$$SS_{red} = \sum\limits_i\varepsilon_i^2 = \sum\limits_i(y_i-ax_i+b)^2$$
+
+and the OLS method for estimating $a,b$ is to find the parameters $\hat{a},\hat{b}$ that minimize $SS_{red}$. Notes: (i) in this case of simple (one independent variable) linear regression, there is an analytic solution for the estimates: $\hat{b} = r_{xy}\times\frac{\text{SD}_y}{\text{SD}_x}$ and $\hat{a} = \bar{y} - \hat{b}\bar{x}$, where $r_{xy}$ is the sample correlation coefficient between the $x_i$ and $y_i$; (ii) In more complex situations of *least-squares curve-fitting*, minimization is performed via an algorithm called *gradient descent*: if you're interested, check it out.
+
+**Key question**: can we get error bars on these estimates? The answer is yes and wait to see how. R will readily plot the OLS estimate for you, along with $95\%$ confidence intervals:
+
+**How good is your linear fit?**
+
+There are many ways to think about this:
+
+1. The coefficient of determination $R^2$ tells you how much of the variance in the dependent variable is explained by the model;
+2. In simple linear regression, $R^2 = r^2$, where $r$ is the correlation coefficient;
+3. There are a number of statistical tests that you could use, for example, the $\chi^2$ (chi-squared) goodness-of-fit test -- we shall not cover these here but Rice & Bevington are good references. 
+
+
+
+**The more urgent questions we need to answer are** 'Why and when does this OLS method work?' and 'What assumptions underlie this method?' People (and software!) tend to apply this method blindly and to not realize that their approach may violate any number of its underlying assumptions, rendering it invalid. So when is it appropriate to use the ordinary least squares method and why?
+
+###The assumptions underlying OLS: linear regression is nothing more than an example of MLE!
+
+Make the assumption that each $y_i = ax_i + b + \varepsilon_i$ where $a$ and $b$ are real numbers and the $\varepsilon_i$ are  drawn independently from $N(0,\sigma^2)$, the Gaussian distribution with mean $0$ and variance $\sigma^2$:
+
+$$P(\varepsilon_i) = \frac{1}{\sigma\sqrt{(2\pi)}}\text{exp}(-\frac{\varepsilon_i}{2\sigma^2}).$$
+
+Then the OLS estimates $\hat{a},\hat{b}$ are none other than the **maximum likelihood estimates** for the parameters $a,b$ (see Appendix for a proof of this).
+
+**ESSENTIAL:** In performing OLS, you have assumed:
+
+- Your residuals are Gaussian with a mean of $0$;
+- They are independent of one another (i.e., uncorrelated);
+- Neither the mean nor the standard deviation is a function of $x$.
+
+These points require slightly more explication: if the mean of the residuals in any thin vertical strip is non-zero, we call the residuals *biased* (otherwise, *unbiased*); if the variance of the residuals differs as a function of $x$, we call the residuals *heteroscedastic* (otherwise, *homoscedastic*):
+
+<div style="horizontal-align:middle; text-align:center; width:400px; height=300px">
+![Figure demsontrating residual bias and heteroscedasticity](residuals.png)
+</div>
+
+If assumptions are violated, not all is lost!! You just need to be a bit cleverer in how you choose and or fit your model: it could be a problem with the signal (choose different model) OR it could be a problem with the noise (choose different noise, i.e., not OLS).
+
+**Note for the eager**: you can usually see by eye whether or not your residuals are *heteroscedastic*. To be more rigorous about this, if there is a lot of data, you can i) divide the x-axis of the residuals plot into bins, ii) compute the variance of the data in each bin & iii) see how much this variance itself varies.
+
+###Anscombe's Quartet demonstrates violations of OLS assumptions
+
+
+Anscombe's Quartet consists of four data-sets, each consisting of 11 data points. Each data set has the same $\bar{x}, \bar{y}, \text{SD}_x , \text{SD}_y$, correlation coefficient and linear regression line (OLS):
+
+```{r , fig.width = 8 , fig.height = 6 , message = FALSE , echo = FALSE}
+require(gridExtra)
+attach( anscombe )
+data <-  anscombe
+###########
+#in which we check it all out:
+###########
+#layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page 
+###########
+#do it 1
+###########
+m1 <- glm( y1~x1 , data = data , family = gaussian )
+
+plot1 <- qplot( x1 , y1 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 2
+###########
+m2 <- glm( y2~x2 , data = data , family = gaussian )
+plot2 <- qplot( x2 , y2 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 3
+###########
+m3 <- glm( y3~x3 , data = data , family = gaussian )
+
+plot3 <- qplot( x3 , y3 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+###########
+#do it 4
+###########
+m4 <- glm( y4~x4 , data = data , family = gaussian )
+plot4 <- qplot( x4 , y4 , data = anscombe ) +
+  stat_smooth( method = 'glm' , family = gaussian )
+grid.arrange(plot1, plot2, plot3, plot4 , ncol=2)
+```
+
+What would the residuals look like here?? Check 'em out:
+
+```{r , fig.width = 8 , warning = FALSE, fig.height = 6 , message = FALSE , echo = FALSE}
+res1 <-ggplot( m1 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res1
+res1 <-ggplot( m1 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res2
+res2 <-ggplot( m2 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res3
+res3 <-ggplot( m3 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+###res4
+res4 <-ggplot( m4 , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+grid.arrange(res1, res2, res3, res4 , ncol=2)
+```
+
+**Computing & plotting residuals in R**:
+
+Here we plot the residuals for the linear fit of Good et al.'s spindle size data:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1) #perform fit
+pres <- ggplot( lin_fit , aes( .fitted , .resid) ) #initiate residuals plotting structure
+pres + geom_point() #plot it
+```
+
+**Exercise 5 (~5 minutes):** Discuss the result.
+
+###Obtaining confidence intervals on your estimates using bootstrapping
+
+The easiest way to retrieve confidence intervals on your parameter estimates is by *bootstrapping* (all this means is 'sampling with replacement', as we shall see).
+
+The algorithm is as follows:
+
+1. Perform the fit to get parameter estimates for the model $y=\hat{f}(x)$;
+2. Bootstrap the residuals (i.e., sample with replacement) and add the new sampled residuals to the model to get another data-set $D'$ -- that is, for every original data point $\{x_i , y_i \}$, randomly select a residual $\varepsilon_j$ and generate a new data point $\{x_i , y_i' \}$, where $y_i'=\hat{f}(x)+\varepsilon_j$ -- do this for every original data point to retrieve a new, synthesized (bootstrapped) data set $D' = \{x_i , y_i' \}_{i\in I}$;
+3. Perform another fit on the new bootstrapped data to retrieve new parameter estimates $\hat{a'},\hat{b'}$.
+4. Perform steps 2-3 above $n$ (commonly $=1000$) times. Then we have $n$ estimates for $a,b$, giving us a distribution, and we can look at the statistics of these distributions, such standard deviation, variance and confidence intervals.
+
+This is all very straightforward to implement in R (for more, see [here](http://www.statmethods.net/advstats/bootstrapping.html)). Due to time constraints in this Workshop, we won't do a worked biological example of bootstrapping, however see below the standard example using the *mtcars* data-set introduced in Workshop I.  
+
+```{r , fig.width = 8 , fig.height = 3 }
+library(boot)
+# function to obtain regression weights 
+bs <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(coef(fit)) 
+} 
+# bootstrapping with 1000 replications 
+results <- boot(data=df1, statistic=bs, 
+  	R=1000, formula=Spindle_Length_.µm. ~ Droplet_Diameter_.µm. )
+
+# view results
+results
+plot(results, index=1) # intercept 
+plot(results, index=2) # slope
+
+# get 95% confidence intervals 
+boot.ci(results, type="bca", index=1) # intercept 
+boot.ci(results, type="bca", index=2) # slope
+```
+
+**For discussion**: Note that when you used 'lm' before to perform linear regression, the output included confidence intervals on the estimates -- how do the confidence intervals in the bootstrap compare with those from 'lm' (this will be a good sanity check)?
+
+#Nonlinear least squares
+
+##Example: Modeling a power law
+
+Power laws $y = x^n$ occur all throughout biology: see (Kleiber, 1932; Gillooly et al., 2001; White et al., 2003) for examples; they are also the primary mode of thinking about scaling in biology, which is currently very sexy! You can ask questions such as 'how does spindle size scale with cell volume?' and 'how does the energetic cost of the cell cycle scale with cell volume?', for example.
+Here we synthesize an example in which $n=0.55$, with added noise:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
+set.seed(100) #set your seed
+n <- 0.55 #define the exponent
+x <- seq( 0 , 1000 , by = 2) #independent variable x
+err <- rnorm( length(x) , mean = 0 , sd = 1) #normally distributed error
+y <- x**n + err #dependent variable y (power-law + noise)
+df1 <- as.data.frame( cbind( x , y )) #build relevant dataframe
+p <- ggplot( df1 , aes( x , y )) #inititiate plotting structure
+p + geom_point() #plot it!
+```
+
+If you have two variables related by a power law and plot the data on log-log axes, the result is linear:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , warning=FALSE}
+p + geom_point() + scale_x_log10() + scale_y_log10() #plot and log both axes
+```
+
+This is due to our basic log laws: (i) $\text{log}(ab) = \text{log}(a) + \text{log}(b)$ & (ii) $\text{log}(a^b) = b\text{log}(a)$. it follows from these that if two variable are related by a power law $y=ax^n$, then their log's are related linearly:
+$$\text{log}(y) = \text{log}(a) + n\text{log}(x).$$
+
+Now, in the literature, a lot of people fit power laws by transforming to log axes and then performing a linear fit.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE ,warning=FALSE}
+df2 <- df1
+df2$logx <- log(df2$x)
+df2$logy <- log(df2$y)
+df3 <- subset(df2 , !is.infinite(df2$logx) & !is.na(df2$logy))
+p <- ggplot( df3 , aes( logx , logy ))
+p + geom_point() + stat_smooth( method = "lm" )
+logfit <- lm( logy ~ logx , data = df3 )
+reslogfit <-ggplot( logfit , aes( .fitted , .resid)) +
+  geom_hline( yinctercept = 0 ) +
+  geom_point() +
+  geom_smooth( se = F)
+reslogfit
+```
+
+Looking at the residuals we that, in this case, the model wasn't great! Instead of fitting a line to the log-transformed data, we should then try to fit a nonlinear curve (power law) to the non-transformed data:
+
+To do so, we use a nonlinear least-squares curve-fitting method (we follow this example: http://www.walkingrandomly.com/?p=5254):
+
+```{r , fig.width = 4 , fig.height = 3 }
+# a starting value
+n1 <- 10
+#plot the fit
+ggplot(data=df1, aes( x , y)) + geom_point() + 
+    geom_smooth(method="nls", formula = y ~ x**n, start=list(n = n1) , se=F ,control = list(maxiter = 500),
+                size = 1) 
+```
+
+**Note** that we are now performing a nonlinear least square curve fit ('nls'). Once again, to get the actual parameters in the fit, we perform the fit in a slightly different manner:
+
+```{r , fig.width = 4 , fig.height = 3 }
+# do the fit
+fit = nls(y ~ x**n, start=list(n = n1) , control = list(maxiter = 500))
+# summarise
+summary(fit)
+```
+
+**Exercise 6 (~10 minutes)**:
+
+1. Using 'nls', fit a power law to the spindle size data introduced above -- report the exponent in the fit, along with error bars;
+2. Use the AIC to compare the linear model with the power law model. **Note**: in this case, even if the AIC reports the power law model to be better, we need to think hard about which we accept because the linear model is a mechanistic/physical model.
+
+
+**Solution**:
+```{r , fig.width = 4 , fig.height = 3 , eval = TRUE , warning = FALSE}
+df <- read.csv("spindle_size_MG.csv") #load data 
+df1 <- subset( df , Droplet_Diameter_.µm. <80) #subset data to relevant range
+##define variables of interest from your dataframe:
+y1 <- df1$Spindle_Length_.µm. 
+x1 <- df1$Droplet_Diameter_.µm.
+#perform power law fit:
+fitg = nls(y1 ~ a*x1**nn )
+summary(fitg)
+##perform linear fit:
+lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1)
+##compute IAC of both fits:
+AIC(fitg , lin_fit)
+```
+
+#References
+
+- Odde, D.J., Cassimeris, L., and Buettner, H.M. (1995). Kinetics of microtubule catastrophe assessed by probabilistic analysis. Biophys. J. 69, 796–802.
+
+- Odde, D.J., Buettner, H.M., and Cassimeris, L. (1996). Spectral analysis of microtubule assembly dynamics. AIChE J. 42, 1434–1442.
+
+- Stepanova, T., Smal, I., van Haren, J., Akinci, U., Liu, Z., Miedema, M., Limpens, R., van Ham, M., van der Reijden, M., Poot, R., et al. (2010). History-dependent catastrophes regulate axonal microtubule behavior. Curr. Biol. 20, 1023–1028.
+
+- M. Kleiber, “Body size and metabolism,” Hilgardia, vol. 6, pp. 315–351, 1932.
+
+- J. F. Gillooly, J. H. Brown, G. B. West, V. M. Savage, and E. L. Charnov, “Effects of size and temperature on metabolic rate,” Science, vol. 293, pp. 2248–51, Sep 2001.
+
+- C. R. White and R. S. Seymour, “Mammalian basal metabolic rate is pro- portional to body mass2/3,” Proceedings of the National Academy of Sci- ences, vol. 100, no. 7, pp. 4046–4049, 2003.
+
+- G. B. West, J. H. Brown, and B. J. Enquist, “A general model for the origin of allometric scaling laws in biology,” Science, vol. 276, pp. 122–6, Apr 1997.
+
+- Good, M.C., Vahey, M.D., Skandarajah, A., Fletcher, D.A., and Heald, R. Cytoplasmic Volume Modulates Spindle Size During Embryogenesis. Science  342, 856-860 (2013).
+
+- Sieg, A. E. et al. Mammalian metabolic allometry: do intraspecific variation, phylogeny, and regression models matter? Am. Nat. 174, 720–733 (2009)
+
+- *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
+
+- *Mathematical Statistics and Data Analysis* by John A. Rice (1988), *Duxbury Press*;
