@@ -1,5 +1,5 @@
 ---
-title: "Practical Statistics III: Maximum Likelihood Estimation, Linear Regression & Nonlinear least squares"
+title: "Practical Statistics III: maximum likelihood estimation, linear regression & nonlinear least squares"
 output:
   html_document:
     toc: true
@@ -9,7 +9,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
 ---
 
-#Maximum Likelihood Estimation.
+#Maximum likelihood estimation.
 
 **Motivation**: Let's say that we have a mathematical model and some data that we wish to fit the model to: all we mean here by 'fitting' is finding *good estimates* for the parameters in the model. **Maximum likelihood estimation** is a common and widely applicable method of such parameter estimation. We will see, for example, that simple linear regression is a special case of maximum likelihood estimation, as is nonlinear least squares.
 
@@ -338,11 +338,11 @@ p +  geom_histogram(aes(y = ..density..) , binwidth = 75) +
 **To the eye**, the gamma fits look better than the exponential fits: but are they? Let's direct our attention now to quantitative methods for model selection:
 
 
-#Model Selection
+#Model selection
 
 There are many ways to select the best model: we want one that rewards models that fit well BUT that also penalizes models with many free parameters (in the spirit of Occam's razor & due to over-fitting). The Akaike information criterion is an example of such a measure.
 
-##The Akaike Information criterion
+##The Akaike information criterion
 
 The Akaike information criterion
 
@@ -371,7 +371,7 @@ help(AIC)
 **Online resources**: see [here](http://brianomeara.info/tutorials/aic/) and [here](http://www.r-bloggers.com/fitting-a-model-by-maximum-likelihood/) for some more information on AIC, BIC & MLE.
 
 
-#(simple) Linear Regression basics
+#Linear regression basics (simple)
 
 The challenge: we have some data $D=\{x_i,y_i\}$ that looks like it could be linear, with some noise:
 
@@ -602,7 +602,7 @@ boot.ci(results, type="bca", index=2) # slope
 
 #Nonlinear least squares
 
-##Example: Modeling a power law
+##Example: modeling a power law
 
 Power laws $y = x^n$ occur all throughout biology: see (Kleiber, 1932; Gillooly et al., 2001; White et al., 2003) for examples; they are also the primary mode of thinking about scaling in biology, which is currently very sexy! You can ask questions such as 'how does spindle size scale with cell volume?' and 'how does the energetic cost of the cell cycle scale with cell volume?', for example.
 Here we synthesize an example in which $n=0.55$, with added noise:
