@@ -5,6 +5,8 @@ output:
     toc: true
     fig_caption: true
     number_sections: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
 ---
 
 #Maximum Likelihood Estimation.
