@@ -1,0 +1,267 @@
+---
+title: "A Brief Appendix on Practical Statistics"
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+    number_sections: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
+---
+
+This appendix contains assorted supporting material for the 'Practical Statistics for Experimentalists' Workshop.
+
+#A Compendium of Distributions
+
+This section contains a variety of distributions that were discussed in the Workshop.
+
+##Normal (Gaussian) Distribution
+
+**Motivation**:
+
+- The Central Limit Theorem: see Workshop I for details.
+- Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
+- Measurement error (e.g. using a ruler) is often normally distributed.
+
+**Equation**: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2})$
+
+**Examples**:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+setwd("~/repos/statistical_inference/practical_statistics/") #set your working directory here
+library( ggplot2 )
+x <- seq(-5,5 , by = 0.1)
+y1 <- dnorm(x , mean = 0 , sd = 1)
+y2 <- dnorm(x , mean = 0 , sd = 2)
+y3 <- dnorm(x , mean = 0 , sd = 4)
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'mean = 0 , SD = 1' #create a new column called 'type'
+df2$type <- 'mean = 0 , SD = 2' #create a new column called 'type'
+df3$type <- 'mean = 0 , SD = 4' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_line() + scale_fill_discrete()
+```
+
+##Binomial Distribution
+
+**Motivation**:
+
+- Flipping coins: see Workshop III for details.
+- Situations with a binary outcome, e.g. survival or death of a mutant.
+
+**Equation**: $P(k|n) = {n\choose k}p^k(1 - p)^{n-k}$, where $p$ is the binomial probability (the probability of flipping heads).
+
+**Example**:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+setwd("~/repos/statistical_inference/practical_statistics/") #set your working directory here
+library( ggplot2 )
+x <- seq(0,50)
+y1 <- dbinom(x , size = 20 ,prob = 0.7 )
+y2 <- dbinom(x , size = 20 ,prob = 0.5 )
+y3 <- dbinom(x , size = 40 ,prob = 0.5 )
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'size = 20, p = 0.7' #create a new column called 'type'
+df2$type <- 'size = 20, p = 0.5' #create a new column called 'type'
+df3$type <- 'size = 40, p = 0.5' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_point() + scale_fill_discrete()
+```
+
+##Poisson Distribution
+
+**Motivation**:
+
+- Poisson distributions are commonly used when counting discrete events, such as counting photons in optical devices. A Poisson distribution describes the probability of a given number of events occurring in a fixed interval of time, in the case that these events occur with a known average rate $\lambda$ and are independent of one another.
+
+**Example**: 'The classic Poisson example is the data set of von Bortkiewicz (1898), for the chance of a Prussian cavalryman being killed by the kick of a horse.' See [here](https://www.umass.edu/wsp/resources/poisson/) for more.
+
+**Equation**: $P(k) = \frac{\lambda^k}{k!}e^{-\lambda}$, for $k \in \{0,1,2,3,\ldots\}$.
+
+**Example**:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+x <- seq(0,20)
+y1 <- dpois(x , lambda = 1 )
+y2 <- dpois(x , lambda = 5 )
+y3 <- dpois(x , lambda = 10 )
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'rate = 1' #create a new column called 'type'
+df2$type <- 'rate = 5' #create a new column called 'type'
+df3$type <- 'rate = 10' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_point() + scale_fill_discrete()
+```
+
+
+##Exponential Distribution
+
+**Motivation**:
+
+- Radioactive decay;
+- Any [Poisson Process](https://en.wikipedia.org/wiki/Poisson_process) has exponentially distributed waiting times.
+
+**Equation**: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$.
+
+**Property of memorylessness**: An exponentially distributed random variable $X$ satisfies $P(X>s+t|X>s) = P(X>t),$ for all $s,t\geq 0$.  If the random variable $X$ can be interpreted in terms of waiting times, for example, the time until microtubule catastrophe, then this equation can be interpreted as *memorylessness* in the following sense: if an event has not happened after 10 seconds, the conditional probability that the event will take at least 5 seconds more equals the (unconditional) probability of observing the event more than 10 seconds relative to the initial time.
+
+**Example**:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+x <- seq(0,4 , by = 0.1)
+y1 <- dexp(x , rate = 1 )
+y2 <- dexp(x , rate = 2 )
+y3 <- dexp(x , rate = 5 )
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'rate = 1' #create a new column called 'type'
+df2$type <- 'rate = 2' #create a new column called 'type'
+df3$type <- 'rate = 5' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_line() + scale_fill_discrete()
+```
+
+##Gamma Distribution
+
+**Motivation**:
+
+- Results from multistep processes (and thus generalizes the exponential distribution).
+
+**Note**: For multistep processes, also see the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution) & [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution) distributions.
+
+**Equation**: $P(x) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha - 1}e^{-\beta x}$.
+
+**Example**:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+x <- seq(0,8 , by = 0.01)
+y1 <- dgamma(x , shape = 2 , rate = 1 )
+y2 <- dgamma(x , shape = 5 , rate = 10 )
+y3 <- dgamma(x , shape = 7 , rate = 3 )
+df1 <- as.data.frame( y1 ) #turn vector into dataframe
+colnames(df1) = 'probability' #change column names
+df2 <- as.data.frame( y2 ) #turn vector into dataframe
+colnames(df2) = 'probability' #change column names
+df3 <- as.data.frame( y3 ) #turn vector into dataframe
+colnames(df3) = 'probability' #change column names
+df1$type <- 'shape = 2 , rate = 1' #create a new column called 'type'
+df2$type <- 'shape = 5 , rate = 1' #create a new column called 'type'
+df3$type <- 'shape = 7 , rate = 3' #create a new column called 'type'
+df <- rbind(df1,df2,df3) #build dataframe from these data
+df$x <- x
+p <- ggplot( df , aes( x = x , y = probability, color = type))
+p + geom_line() + scale_fill_discrete()
+```
+
+
+#Statistical Hypothesis Testing
+  
+##Definition of the F-statistic
+
+The following is primarily from Rice, Ch. 12 (see references below): let's say that we have $I$ groups, each with $J$ samples, and let $Y_{ij}=$ the $j$ observation in the $i$th group. The statistical model is
+
+$$Y_{ij} = \mu + \alpha_{i} + \varepsilon_{ij}.$$
+Assumption: $\varepsilon_{ij}$ are i.i.d Gaussian; we also normalize such that $\sum\alpha_i = 0$.
+Then
+$$SS_{TOT} = SS_{W} + SS_{B},$$
+
+where $SS_{TOT} = \sum\limits_{ij}(Y_{ij}-\bar{Y}_{..})^2$ is the total sum of squares of the data, $SS_{W}=\sum\limits_{ij}(Y_{ij}-\bar{Y}_{i.})^2$ is the sum of squares within groups (unexplained variance) & $SS_{B}=\sum\limits_{i}(\bar{Y}_{i.}-\bar{Y}_{..})^2$ is the sum of squares between groups (explained variance). We look at the F-statistic
+
+$$F = \frac{SS_{B}/(I-1)}{SS_{W}/I(J-1)}$$
+
+and use it to test the null hypothesis $H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_I = 0,$ which will be distributed with $(I-1)$ and $I(J-1)$ degrees of freedom. The **p-value** is defined as the probability of seeing an F-statistic $\geq$ the one encountered, under the assumption of the null hypothesis.
+
+**Problem**: if the null hypothesis is rejected, we do not know which $\alpha_i$'s are different from each other. There are *post hoc* methods to deal with this that we shall not delve into here. Suffice to say, this is an interesting & important field of statistics & experimental design known as [*post hoc analysis*](https://en.wikipedia.org/wiki/Post_hoc_analysis).
+
+
+#Maximum likelihood estimation
+
+##For the binomial probability (details of calculation)
+
+Assume that we flip a (possibly biased) coin $n$ times and see $k$ heads. The likelihood function of seeing this data $D$ is given by
+
+$$\mathcal{L}(p | k \text{ heads}) := P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
+
+The **maximum likelihood estimate** is the value $\hat{p}$ of $p$ that *maximizes* this *likelihood* function. As the log function is monotonically increasing, $\hat{p}$ also maximizes the log likelihood, denoted $\mathcal{LL}$. Remembering our log laws, we see that
+
+$$\mathcal{LL} = \text{log}{n\choose k} + k\text{log}p + (n-k)\text{log}(1-p).$$
+
+To find the maximum, we solve for $\frac{d\mathcal{LL}}{dp}\bigg|_{\hat{p}} = 0$:
+
+$$\frac{k}{\hat{p}} - \frac{n-k}{1-\hat{p}} = 0,$$
+
+and it follows that $k(1-\hat{p}) = (n-k)\hat{p}$. Then $\hat{p}=k/n$ is a stationary point. To show that it is actually a maximum (as opposed to a minimum or a point of inflection), you also need to prove that $\frac{d^2\mathcal{LL}}{dp^2}\bigg|_{\hat{p}} < 0$ (exercise for the reader!).
+
+##Ordinary least squares as MLE
+
+We have data $D=\{x_i , y_i\}_i$. Make the assumption that each $y_i = ax_i + b + \varepsilon_i$ where $a$ and $b$ are real numbers and the $\varepsilon_i$ are  drawn independently from $N(0,\sigma^2)$, the Gaussian distribution with mean $0$ and variance $\sigma^2$:
+
+$$P(\varepsilon_i) = \frac{1}{\sigma\sqrt{(2\pi)}}\text{exp}(-\frac{\varepsilon_i}{2\sigma^2}).$$
+
+
+**What are the maximum likelihood estimates $\hat{a},\hat{b}$?**
+
+The likelihood function is 
+
+$$\mathcal{L}(a,b|D) = \prod_i P(x_i,y_i|a,b \propto \prod_i\text{exp}\bigg(\frac{(f(x_i)-y_i)^2}{2\sigma^2}\bigg)$$
+
+Recall that to maximize the *likelihood*, we can *minimize* the *negative log likelihood*:
+
+$$-\mathcal{LL}=-\text{log}\bigg(\prod_i\text{exp}\bigg(\frac{(f(x_i)-y_i)^2}{2\sigma^2}\bigg)\bigg)=\frac{1}{2\sigma^2}\sum_i(f(x_i)-y_i)^2.$$
+
+
+This is precisely what we minimize to perform linear regression using ordinary least squares!
+
+<!---
+
+#Model fitting and model selection
+
+##A slight digression on *estimators* & *estimation theory*;
+
+Suppose there is a fixed parameter $\theta$ that we cannot know directly, for example, the population mean. Then an *estimator* is a function that maps a sample drawn from the population to an estimate of $\theta$. An estimator of $\theta$ is commonly denoted by $\hat{\theta}$. You already know examples of estimators, such as
+
+- Sample mean, which is an *estimator* of the population mean;
+- Sample variance, which is an *estimator* of the population variance;
+
+These two estimators are quite different however, in that the sample mean is an *unbiased estimator*, while the sample variance is a *biased estimator*. Let me explain: assume that we're sampling a distribution $P_\theta(x)=P(x|\theta)$ (where $\theta$ is some real number) and we have an estimator $\hat{\theta}$ of $\theta$. Then, recalling that $\text{E}_\theta[\hat{\theta}]$ is the *expected value* (or *mean*) of $\hat{\theta}$ over all possible samples drawn from $P_\theta(x)$, we define the *bias* of the estimator $\hat{\theta}$ to be
+$$\text{Bias}_\theta[\hat{\theta}] = \text{E}_\theta[\hat{\theta}] - \theta.$$
+If the bias of an estimator is zero, we call it *unbiased*. Otherwise, we call it *biased*.
+Examples:
+
+- The sample mean $\bar{x} =\sum x_i/n$ is an unbiased estimator;
+- The (uncorrected) sample variance $=\sum(x_i - \bar{x})^2/n$ is a biased estimator: the usual definition of sample variance $=\sum(x_i - \bar{x})^2/(n-1)$ is, however, an unbiased estimator of sample variance.
+
+-->
+
+#References
+
+- *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
+
+- *Mathematical Statistics and Data Analysis* by John A. Rice (1988), *Duxbury Press*;
