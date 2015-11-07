@@ -5,7 +5,7 @@ output:
     toc: true
     fig_caption: true
     number_sections: true
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "03 November 2015"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
 ---
 
@@ -43,7 +43,7 @@ In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)
 
 **Key concept**: We only need to know the posterior distribution $P(\lambda | D)$ up to multiplication by a constant at the moment: this is because we really only care about the values of $P(\lambda | D)$ *relative* to each other -- for example, what is the most likely value of $\lambda$? To answer such questions, we only need to know what $P(\lambda | D)$ is proportional to, as a function of $\lambda$. Thus we don't currently need to worry about the term $P(D)$.
 
-**Note**: What is the prior? Really, what do we know about $\lambda$ before we see any data? Well, as it is a probability, we know that $0 \leq \lambda \leq 1$. If we haven't flipped any coins yet, we don't know much else: so it seems logical that all values of $\lambda$ are equally like, i.e., $P(\lambda) = 1,$ for $0 \leq \lambda \leq 1$. This is known as an *uninformative prior* because it contains little information (there are other uninformative priors we may use in this situation, such as the *Jeffreys prior*, to be discussed later). People who like to hate on Bayesian inference tend to claim that the need to choose a prior makes Bayesian methods somewhat arbitrary, but as we'll now see, if you have enough data, the likelihood dominates over the prior and the latter doesn't matter so much.
+**Note**: What is the prior? Really, what do we know about $\lambda$ before we see any data? Well, as it is a probability, we know that $0 \leq \lambda \leq 1$. If we haven't flipped any coins yet, we don't know much else: so it seems logical that all values of $\lambda$ within this interval are equally likely, i.e., $P(\lambda) = 1,$ for $0 \leq \lambda \leq 1$. This is known as an *uninformative prior* because it contains little information (there are other uninformative priors we may use in this situation, such as the *Jeffreys prior*, to be discussed later). People who like to hate on Bayesian inference tend to claim that the need to choose a prior makes Bayesian methods somewhat arbitrary, but as we'll now see, if you have enough data, the likelihood dominates over the prior and the latter doesn't matter so much.
 
 **Example**: Binomial: i) given data $D$ consisting of $n$ coin tosses & $k$ heads, the likelihood function is given by $L \propto \lambda^k(1-\lambda)^{n-k}$; ii) given a uniform prior, the posterior is proportional to the likelihood -- below we plot two posteriors: for $n=100,k=40$ & $n=1000,k=450$, respectively. These posteriors are *normalized* so that $P(\text{mode})=1$, that is, their peak occurs at $1$ on the y-axis.
 
@@ -75,9 +75,9 @@ Compute and plot the posterior for two priors (uniform & 'crazy coin') for a var
 
 1. The priors are as follows:
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-p <- seq(0,1 , by =0.001)
-prior1 <- dunif(p) #uniform prior
-prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior -- this prior is NOT normalized but that's OK
+lambda <- seq(0,1 , by =0.001)
+prior1 <- dunif(lambda) #uniform prior
+prior2 <- (lambda - 0.5)^2 + 0.01 #crazy coin prior -- this prior is NOT normalized but that's OK
 #as we're using it to calculate the unnormalized posterior.
 ```
 2. The likelihood function is given by $L \propto \lambda^k(1-\lambda)^{n-k}$ -- fill in the function in the code below (multiplication in R is $*$  and 'to the power' $**$):
@@ -89,13 +89,13 @@ likelihood <- function( n , k ){
 3. Below, we'll compute & plot the posterior for $n=0,k=0$ (no data):
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE, eval = FALSE}
 ##here is a function that will plot your posteriors nicely:
-plot_posteriors <- function( p , post1 , post2){
+plot_posteriors <- function( lambda , post1 , post2){
   post1 <- post1/max(post1) #normalize posterior 1
   post2 <- post2/max(post2)#normalize posterior 2
   #create necessary dataframe:
-  df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
+  df <- data.frame( "lambda" = lambda ,"post1" = post1 , "post2" = post2)
   #initiate plotting structure:
-  pl <- ggplot( df , aes( x = p , y = post1 , colour = "Uniform"))
+  pl <- ggplot( df , aes( x = lambda , y = post1 , colour = "Uniform"))
   #make plot:
   pl + geom_line() + geom_line( aes(y = post2 , colour = "Crazy Coin")) +
     scale_colour_manual(name = 'Prior', values = c("red", "blue") ) +
@@ -108,7 +108,7 @@ LL <- likelihood(n,k) #compute likelihood
 #YOUR JOB: compute the posteriors here
 post1 <- 
 post2 <- 
-plot_posteriors(p , post1 , post2) #this will plot the posteriors
+plot_posteriors(lambda , post1 , post2) #this will plot the posteriors
 ```
 4. Try $(n,k) = (1,1) , (40,20) , (80,40)$.
 
@@ -116,58 +116,58 @@ Notice how the effect of the prior becomes less apparent in the posterior as the
 
 Your plots should look something along the lines of these:
 ```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=FALSE}
-plot_posteriors <- function( p , post1 , post2){
-  df <- data.frame( "p" = p ,"post1" = post1 , "post2" = post2)
-  pl <- ggplot( df , aes( x = p , y = post1 , colour = "Uniform"))
+plot_posteriors <- function( lambda , post1 , post2){
+  df <- data.frame( "lambda" = lambda ,"post1" = post1 , "post2" = post2)
+  pl <- ggplot( df , aes( x = lambda , y = post1 , colour = "Uniform"))
   pl + geom_line() + geom_line( aes(y = post2 , colour = "Crazy Coin")) +
     scale_colour_manual(name = 'Prior', values = c("red", "blue") ) +
     ylab("posterior")
 }
 
-p <- seq(0,1 , by =0.001)
-prior1 <- dunif(p) #uniform prior
-prior2 <- (p - 0.5)^2 + 0.01 #crazy coin prior
+lambda <- seq(0,1 , by =0.001)
+prior1 <- dunif(lambda) #uniform prior
+prior2 <- (lambda - 0.5)^2 + 0.01 #crazy coin prior
 
 n <- 0
 #k <- rbinom(1 , n , p = 0.75)
 k <- 0
-likelihood <- p**k*(1-p)**(n-k)
+likelihood <- lambda**k*(1-lambda)**(n-k)
 post1 <- likelihood*prior1
 post2 <- likelihood*prior2
 post1 <- post1/max(post1)
 post2 <- post2/max(post2)
-pp1 <- plot_posteriors( p , post1 , post2)
+pp1 <- plot_posteriors( lambda , post1 , post2)
 
 n <- 1
 #k <- rbinom(1 , n , p = 0.75)
 k <- 1
-likelihood <- p**k*(1-p)**(n-k)
+likelihood <- lambda**k*(1-lambda)**(n-k)
 post1 <- likelihood*prior1
 post2 <- likelihood*prior2
 post1 <- post1/max(post1)
 post2 <- post2/max(post2)
-pp2 <- plot_posteriors( p , post1 , post2)
+pp2 <- plot_posteriors( lambda , post1 , post2)
 
 n <- 40
 #k <- rbinom(1 , n , p = 0.75)
 k <- n/2
-likelihood <- p**k*(1-p)**(n-k)
+likelihood <- lambda**k*(1-lambda)**(n-k)
 post1 <- likelihood*prior1
 post2 <- likelihood*prior2
 post1 <- post1/max(post1)
 post2 <- post2/max(post2)
-pp3 <- plot_posteriors( p , post1 , post2)
+pp3 <- plot_posteriors( lambda , post1 , post2)
 
 
 n <- 80
 #k <- rbinom(1 , n , p = 0.75)
 k <- n/2
-likelihood <- p**k*(1-p)**(n-k)
+likelihood <- lambda**k*(1-lambda)**(n-k)
 post1 <- likelihood*prior1
 post2 <- likelihood*prior2
 post1 <- post1/max(post1)
 post2 <- post2/max(post2)
-pp4 <- plot_posteriors( p , post1 , post2)
+pp4 <- plot_posteriors( lambda , post1 , post2)
 
 grid.arrange(pp1, pp2, pp3 , pp4, ncol=2)
 ```
@@ -245,9 +245,9 @@ bin_data <- rbinom(1024, 1  , 0.75) #sample 1024 points from a binomial with p(H
 Lp <- function( p ){
   #note that we defined by the data OUTSIDE this function
   R <- dbinom( bin_data , 1, p ) #binomial function w/ probability p
-  -sum(log(R)) + 0 #-ve log likelihood + zero prior
+  -sum(log(R)) + 0 #-ve log likelihood + zero term (as uniform prior --> log prior = zero)
 }
- #minimize -LL with boundary = 0:
+ #minimize -Lp with boundary = 0:
 res <- optim(c(0.5) , Lp , method = "L-BFGS-B" , lower = 0.0001 , upper = 0.999 )
 res$par #print parameters
 ```
@@ -258,7 +258,7 @@ bin_data <- rbinom(1024, 1  , 0.25) #sample 1024 points from a binomial with p(H
 #now we define the -log posterior:
 Lp <- function( p ){
   R <- dbinom( bin_data , 1, p ) #binomial function w/ probability p
-  -sum(log(R)) -log(1/sqrt(p*(1-p)))#-ve log likelihood
+  -sum(log(R)) -log(1/sqrt(p*(1-p)))#-ve log posterior
 }
 #minimize -Lp with boundary = 0
 res <- optim(c(0.5) , Lp , method = "L-BFGS-B" , lower = 0.0001 , upper = 0.999 )
@@ -563,7 +563,7 @@ LLgam <- - Lp_gamma(res_gam$par) #gamma
 bt <- 15 #bounds term
 #calculate Bayes Factor:
 bf <- LLex - LLgam + log(std_dev_exp) - log(sqrt(det(cvm))) + log(bt)
-print( bf/log(10))
+print( bf/log(10)) #change the base of the log to 10
 ```
 
 Thus the Bayes factor is $\approx 10^{-70.5}$, with a very large preference for the gamma distribution.

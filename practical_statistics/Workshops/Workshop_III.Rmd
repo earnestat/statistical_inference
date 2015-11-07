@@ -5,7 +5,7 @@ output:
     toc: true
     fig_caption: true
     number_sections: true
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "02 November 2015"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
 ---
 
@@ -35,7 +35,7 @@ Recall that, if the probability of heads $P(H)=p$, then the probability of getti
 
 $$P(k \text{ heads }| n \text{ tosses }, p) = {n\choose k}p^k(1 - p)^{n-k}.$$
 
-In the above $p^k$ is the probability of getting $k$ heads, $(1-p)^{n-k}$ that of getting $n-k$ tosses and ${n \choose k}=\frac{n!}{k!(n-k)!}$ the number of ways to arrange $k$ heads and $(n-k)$ tails.
+In the above $p^k$ is the probability of getting $k$ heads, $(1-p)^{n-k}$ that of getting $n-k$ tails and ${n \choose k}=\frac{n!}{k!(n-k)!}$ the number of ways to arrange $k$ heads and $(n-k)$ tails.
 
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
@@ -127,7 +127,7 @@ pl + geom_point(size = 3 , alpha = 1) +
 
 <h4> Computation example: performing MLE in R.</h4>
 
-In order the use R to compute the MLE, we just need to give it i) the data & ii) the function we wish to minimize. As a sanity check, we now generate some binomial data and use R to compute the the MLE.
+In order to use R to compute the MLE, we just need to give it i) the data & ii) the function we wish to minimize. As a sanity check, we now generate some binomial data and use R to compute the the MLE.
 
 **Essential knowledge**: if there are $n$ parameters $p_1,\ldots,p_n$ in a model and the data $D = \{D_i\}$ are independent, then the negative log-likelihood
 
@@ -140,9 +140,8 @@ and this is the function that we minimize in R as below, after this note.
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
 library(stats4) #load library
 p <- 0.4 #set the binomial probability
-n <- 1 #number of samples for each trial
-m <- 5000 #number of coin flips
-x <- rbinom( m , 1 , p ) # results of m coin flips
+n <- 5000 #number of coin flips
+x <- rbinom( n , 1 , p ) # results of m coin flips
 #define log likelihood function below:
 LL <- function( p ){
   R <- dbinom( x , 1, p , log = TRUE) #binomial function w/ probability p
@@ -302,7 +301,7 @@ p + geom_line() + geom_line(aes(y=exp_fit, colour = "Exponential")  , label = "1
 How do you know to fit an exponential distribution and then to try a gamma distribution? What are the rules of thumb for modeling this type of data? Unfortunately, this Workshop is NOT about mathematical modeling, an incredibly rich super-field of its own. However, do let me say a few things:
 
 1. If you are modeling times, such as microtubule lifetimes, exponential distributions are a good place to start as they are used to model single-step processes, just as gamma distributions are used to model multi-step processes. There are a number of others you could try, such as [Weibull distributions](https://en.wikipedia.org/wiki/Weibull_distribution);
-2. It is essential to remember that some models have mechanistic/physical motivations/interepretations and that others do not;
+2. It is essential to remember that some models have mechanistic/physical motivations/interpretations and that others do not;
 3. Models that make testable predictions are essential: if you can't do an experiment to disprove a model, then what is it worth?
 4. In the end, collaborate with a theorist/modeler/statistician: I need to stay in business!
 

@@ -5,6 +5,8 @@ output:
     toc: true
     fig_caption: false
     number_sections: true
+date: "26 October 2015"
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
 ---
 
 #Plotting data
