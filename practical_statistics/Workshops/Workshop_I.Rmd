@@ -9,7 +9,7 @@ date: "26 October 2015"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
 ---
 
-**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end.
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
 
 **Workshop I** is concerned with i) plotting data, ii) summary statistics and iii) the Central Limit Theorem. Before even attempting to summarize your data or perform any sort of robust statistical analyses on it, it is important to get a feel for what your data looks like. There are many ways to plot data to do this, a number of which we shall delve into in this Workshop, while weighing up the pros and cons of each type of approach to plotting. We shall then look at how we can use summary statistics to summarize data, with particular reference to *measures of central tendency* and *measures of variability*. We close with the statement and examples of the Central Limit Theorem, a powerful result that will influence much of what we do when practicing the art of statistics (for example, statistical hypothesis testing).
 
@@ -229,11 +229,11 @@ help(breast)
 - Beeswarm plots are a great way to visualize all of your data if there is too much of it for a scatter plot;
 - You can have too much data for a beeswarm, in which case you'll want to use a box plot.
 
-#Summary Statistics
+#Summary statistics
 
 How can we numerically describe & summarize data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure' (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variability*, also called *dispersion*. We shall explore these now.
 
-##Measures of Central Tendency
+##Measures of central tendency
 
 <h4>Mean</h4>
   
@@ -370,7 +370,7 @@ p2
 
 Also see [here](http://mathworld.wolfram.com/Mode.html) for some interesting notes on relation between mode, median, mean & something called the Pearson mode skewness.
 
-##Measures of Variability/Dispersion
+##Measures of variability/dispersion
 
 <h4>Range</h4>
 The **range** of a dataset $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the size of the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
@@ -391,7 +391,7 @@ and $\sigma$, the square root of the variance, is called the **standard deviatio
 
 - Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
 - Measurement error (e.g., from using a ruler) is often normally distributed.
-- The Central Limit Theorem! See below.
+- The Central limit theorem! See below.
 
 **Equation**: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2}),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the distribution.
 
@@ -450,7 +450,7 @@ Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
 
-where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central Limit Theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respect to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points!
+where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central limit theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respect to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points!
 
 **Example of computation**:
 ```{r,  message = FALSE ,  echo = TRUE}
@@ -468,9 +468,9 @@ print(sem)
 **When do I report the standard deviation and when do I report the standard error?** A general rule is as follows: if you are interested in seeing and/or reporting how spread out your data is, state or visualize the *standard deviation*; if, on the other hand, you are interested in making inferences about the data, such as the value of the population mean or the statistical significance of an effect, report the *standard error of the mean*. See (Cumming et al., 2007) for further reading. Also see [this paper](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1255808/) and [this paper](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148365/).
 
 
-#Central Limit Theorem
+#Central limit theorem
 
-The Central Limit Theorem, in essence, tells about how the *sample mean*, as an *estimator*, is itself distributed, in the limit of large samples:
+The Central limit theorem, in essence, tells about how the *sample mean*, as an *estimator*, is itself distributed, in the limit of large samples:
 
 Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribution $P$ (with mean $\mu$ and variance $\sigma^2$). The sample average is defined as
 
@@ -527,9 +527,8 @@ qplot( x , binwidth = 0.01) #plot distribution of estimates
 
 #References
 
+- Cumming, G., F. Fidler, D.L. Vaux. 2007. *Error bars in experimental biology*. J. Cell Biol. 177:7–11.
 - Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. *Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe.* Cell 147: 1092– 103.
 - Gregory, P. 2010. *Bayesian Logical Data Analysis for the Physical Sciences.* *Cambridge University Press*.
 -  Scott, David W. 1992. *Multivariate Density Estimation: Theory, Practice, and Visualization.* *New York: John Wiley*.
-- Cumming, G., F. Fidler, D.L. Vaux. 2007. *Error bars in experimental biology*. J. Cell Biol. 177:7–11.
 - R cheat sheets: see [here](https://www.rstudio.com/resources/cheatsheets).
-

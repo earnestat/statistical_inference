@@ -5,11 +5,12 @@ output:
     toc: true
     fig_caption: true
     number_sections: true
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "26 October 2015"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
+
 ---
 
-This appendix contains assorted supporting material for the 'Practical Statistics for Experimentalists' Workshop.
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
 
 #A Compendium of Distributions
 
@@ -262,6 +263,5 @@ Examples:
 
 #References
 
-- *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
-
-- *Mathematical Statistics and Data Analysis* by John A. Rice (1988), *Duxbury Press*;
+- Bevington, P. & Robinson, D. K. 2002. *Data Reduction and Error Analysis for the Physical Sciences.* *McGraw-Hill Education*.
+- Rice, J. A. 1988 *Mathematical Statistics and Data Analysis.* *Duxbury Press*.

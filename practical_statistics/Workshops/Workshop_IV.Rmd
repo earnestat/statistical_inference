@@ -6,12 +6,14 @@ output:
     fig_caption: true
     number_sections: true
 date: "03 November 2015"
-author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
 ---
 
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
 
+**Workshop IV** is concerned with Bayesian inference, a methodology providing a robust, unified framework for many of our statistical and data analytic interests, such as parameter estimation & model selection. Bayesian inference allows us, for example, to retrieve not only mean estimates and confidence intervals of these estimates, when fitting mathematical models, but also the distributions of how likely these estimates are, in light of experimental data. We first introduce Bayes' Theorem and then show how it can be utilized to estimate parameters in mathematical models. We introduce the prior distribution, the likelihood function and the posterior distribution and provide intuitive examples for each of these. We then demonstrate how to retrieve confidence intervals on these estimates and how to perform model selection in the Bayesian setting. We deep dive into the microtubule lifetime data from (Gardner et al., 2011) in order to demonstrate all of the principles at play. It becomes apparent that linear regression, nonlinear least squares and maximum likelihood estimation (as encountered in Workshop III) can all be viewed as special cases of Bayesian inference so that we have a nested sequence of statistical techniques, as follows:
 
-We have seen, when fitting models and estimating parameters, that we can retrieve mean estimates and confidence intervals on these estimates. But can we get the distributions of where these estimates may lie? We can and one method to do so occurs in Bayesian inference, which also provides a robust framework for many of our interests, such as parameter estimation & model selection.
+$$\text{linear regression} \subset \text{nonlinear least squares} \subset \text{maximum likelihood estimation} \subset \text{Bayesian inference}.$$
 
 #Bayes' Theorem
 
@@ -39,7 +41,7 @@ $$P(A|B) = \frac{P(B|A)P(A)}{P(B)}.$$
 
 $$P(\lambda | D) = \frac{P(D | \lambda)P(\lambda)}{P(D)} \propto P( D | \lambda)P(\lambda).$$
 
-In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)$ the *likelihood* (we've seen this before in MLE) and $P(\lambda | D)$ the *posterior* (distribution). The intuition behind the nomenclature is as follows: the *prior* is the distribution containing our knowledge about $\lambda$ prior to the introduction $D$ & the *posterior* is the distribution containing our knowledge about $\lambda$ after considering the data $D$.
+In this equation, we call $P(\lambda)$ the *prior* (distribution), $P(D|\lambda)$ the *likelihood* (we've seen this before in MLE -- Workshop III) and $P(\lambda | D)$ the *posterior* (distribution). The intuition behind the nomenclature is as follows: the *prior* is the distribution containing our knowledge about $\lambda$ prior to the introduction of the data $D$ & the *posterior* is the distribution containing our knowledge about $\lambda$ after considering the data $D$.
 
 **Key concept**: We only need to know the posterior distribution $P(\lambda | D)$ up to multiplication by a constant at the moment: this is because we really only care about the values of $P(\lambda | D)$ *relative* to each other -- for example, what is the most likely value of $\lambda$? To answer such questions, we only need to know what $P(\lambda | D)$ is proportional to, as a function of $\lambda$. Thus we don't currently need to worry about the term $P(D)$.
 
@@ -112,7 +114,7 @@ plot_posteriors(lambda , post1 , post2) #this will plot the posteriors
 ```
 4. Try $(n,k) = (1,1) , (40,20) , (80,40)$.
 
-Notice how the effect of the prior becomes less apparent in the posterior as the amount of data increases!
+**Notice** how the effect of the prior becomes less apparent in the posterior as the amount of data increases!
 
 Your plots should look something along the lines of these:
 ```{r , fig.width = 12 , fig.height = 6 , message = FALSE , echo=FALSE}
@@ -175,13 +177,13 @@ grid.arrange(pp1, pp2, pp3 , pp4, ncol=2)
 **What to report once you have the posterior distribution**:
 
 - The **posterior mode** (note that, in the case of a uniform prior, this is precisely the **maximum likelihood estimate**, which we met in great detail in Workshop III);
-- The **standard deviation of the posterior** if it is approximately Gaussian around the mode;
+- The **standard deviation of the posterior**, if the posterior is approximately Gaussian around the mode;
 - **$95\%$ confidence intervals** otherwise;
 - Report **the distribution**!
 
 **Slight tangent**: Now we see that the MLE is a special case of Bayesian inference, we can view a number of our established techniques as a nested sequence:
 
-$$\text{linear regression} \subset \text{nonlinear least squares} \subset \text{maximum likelihood estimation} \subset \text{Bayesian inference}$$
+$$\text{linear regression} \subset \text{nonlinear least squares} \subset \text{maximum likelihood estimation} \subset \text{Bayesian inference}.$$
 
 ##Alternative priors
 
@@ -204,7 +206,7 @@ For the one-parameter case, the **Jeffreys prior** is defined to be
 
 $$p(\theta) = \sqrt{I(\theta)},$$
 
-where $I$ is the Fisher Information. See [here](https://eventuallyalmosteverywhere.wordpress.com/2013/05/10/bayesian-inference-and-the-jeffreys-prior/) & the Gelman book for further details.
+where $I$ is the Fisher Information. See [here](https://eventuallyalmosteverywhere.wordpress.com/2013/05/10/bayesian-inference-and-the-jeffreys-prior/) & (Gelman et al., 2013) for further details.
 
 **Example**:
 
@@ -276,8 +278,8 @@ We're now going to check back in with our microtubule lifetime data from (Gardne
 Below find the code to compute the *posterior mode* of the rate parameter of an exponential distribution, given the microtubule lifetime data & a uniform prior. Hack the code in the required line to use the Jeffreys prior.
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column of data
+data <- read.csv("data/lifetimes_tubulin.csv" ) #load data from #.csv
+x <- data$X12_uM #choose column of data
 Lp_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE) #exponential probability with log already taken
   -sum(R) #add term here for Jeffrey's prior
@@ -287,10 +289,10 @@ res_exp <- optim(c(1.5) , Lp_exp, method = "L-BFGS-B" , lower = 0.000001 )
 res_exp$par
 ```
 
-**Solution**:
-```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column of data
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE , eval=FALSE}
+data <- read.csv("data/lifetimes_tubulin.csv" ) #load data from #.csv
+x <- data$X12_uM #choose column of data
 #now we define the -log posterior:
 Lp_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE)  #exponential probability with log already taken
@@ -340,8 +342,8 @@ print(res$par)# print rate
 
 **We now fit a gamma distribution to the microtubule lifetime data, using a Jeffreys prior**:
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column of data
+data <- read.csv("data/lifetimes_tubulin.csv" ) #load data from #.csv
+x <- data$X12_uM #choose column of data
 #now we define the -log posterior of m, which will be a vector consisting of \alpha & \beta
 Lp_gamma <- function( m ){
   shape = m[1]
@@ -410,15 +412,15 @@ $$\sigma = (-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0})^{-1/2},$$
 where $L$ is the log posterior.
 
 **Intuition & sanity check**: Recall that ${\lambda_0}$ is mode of the **posterior distribution**: because $\lambda_0$ is the mode, $L$ is maximized at $\lambda_0$ and the 2nd derivative is negative. Moreover,
-the 2nd derivative tells us how quickly the posterior drops off from this maximum so that the larger the absolute value $\bigg|-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0}\bigg|$ is, the smaller $\sigma$ should be. This accords with the equation above.
+the 2nd derivative tells us how quickly the posterior drops off from this maximum so that the larger the absolute value $\bigg|-\frac{dL^2}{d\lambda^2}\bigg|_{\lambda_0}\bigg|$ is, the smaller $\sigma$ should be. This intuition accords with the equation above.
 
 **Example**:
 
 We calculate the standard deviation of the posterior distribution when fitting an exponential distribution to the microtubule lifetime data.
 
 ```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column of data
+data <- read.csv("data/lifetimes_tubulin.csv") #load data from #.csv
+x <- data$X12_uM #choose column of data
 #define -ve log posterior:
 Lp_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE)
@@ -482,7 +484,7 @@ cat('beta = ' , res_gam$par[2] , '+-'  , std_dev[2,2])
 ```
 
 
-Now that we have two models (exponential & gamma) and parameters estimated in a Bayesian setting, how do we decide which is better??
+Now that we have two models (exponential & gamma) and parameters estimated in a Bayesian setting, how do we decide which is better?
 
 #Bayesian Model Selection
 
@@ -497,7 +499,7 @@ Then, given two models $M_1, M_2$, we can look at the ratio
 
 $$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(M_1)}{P(M_2)}\frac{P(D|M_1)}{P(D|M_2)}$$
 
-of the probabilities of the models $M_1$ & $M_2$, respectively. But what is $\frac{P(M_1)}{P(M_2)}$?? If we initially have no reason to prefer one model over another, we assume that this ratio $=1$ (Sivia, 2006 jokes that the only reason to initially prefer one model over the other is if we know something about the people that constructed them!). Then  
+of the probabilities of the models $M_1$ & $M_2$, respectively. But what is $\frac{P(M_1)}{P(M_2)}$? If we initially have no reason to prefer one model over another, we assume that this ratio $=1$ (Sivia, 2006 jokes that the only reason to initially prefer one model over the other is if we know something about the people that constructed them!). Then  
 
 $$\frac{P(M_1|D)}{P(M_2|D)} = \frac{P(D|M_1)}{P(D|M_2)}$$
 
@@ -533,8 +535,8 @@ $$\frac{(\alpha_{max}-\alpha_{min})(\beta_{max}-\beta_{min})}{(\mu_{max}-\mu_{mi
 Now we calculate the log Bayes factor:
 
 ```{r , fig.width = 4 , fig.height = 3 , echo=TRUE , eval=TRUE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column of data
+data <- read.csv("data/lifetimes_tubulin.csv" ) #load data from #.csv
+x <- data$X12_uM #choose column of data
 #define exponential -ve log posterior:
 Lp_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE)
@@ -612,7 +614,7 @@ Then look at specifics of exponential vs gamma microtubule catastrophe.
 
 #References
 
-- Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe. Cell 147: 1092– 103.
-- Data Analysis: A Bayesian Tutorial by Sivia & Skilling (2006) Oxford University Press.
-- Bayesian Data Analysis, Third Edition, Gelman et al. (2013), Chapman & Hall/CRC Texts in Statistical Science
-- And thanks to [Justin Bois](http://bois.caltech.edu/) for a number of inspiring notes on Bayesian Inference from his BE/Bi 103 course at Caltech.
+- Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. *Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe.* Cell 147: 1092– 103.
+- Gelman et al. 2013. *Bayesian Data Analysis, Third Edition.* *Chapman & Hall/CRC Texts in Statistical Science*.
+- Sivia, D.S., Skilling, J. 2006. *Data Analysis: A Bayesian Tutorial.* *Oxford University Press*.
+- And many thanks to [Justin Bois](http://bois.caltech.edu/) for a number of inspiring notes on Bayesian Inference from his BE/Bi 103 course at Caltech and helpful correspondence.

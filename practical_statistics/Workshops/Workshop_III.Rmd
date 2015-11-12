@@ -6,10 +6,17 @@ output:
     fig_caption: true
     number_sections: true
 date: "02 November 2015"
-author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
 ---
 
-#Maximum likelihood estimation.
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
+
+**Workshop III** is concerned primarily with *model parameter estimation* (*model fitting*) and *model selection*. We first introduce maximum likelihood estimation (MLE), as this is a default estimation method for many working scientists and softwares. We provide worked theoretical example and worked experimental examples from the recent cell biological literature. We provide an intuition towards model selection and an example of a model selection criterion, the Akaike Information Criterion. Although this is NOT a Workshop on mathematical modeling, but rather one on parameter fitting and model selection, we provide a discussion of how to think about such modeling. We then turn our attention towards simple linear regression, which is fact a special form of MLE! We provide examples, along with an in depth discussion of what assumptions underlie linear regression and when you should and should not use it. We discuss bootstrapping to obtain confidence intervals on parameter estimates. We generalize this discussion to modeling nonlinear relationships utilizing nonlinear least squares. We promote viewing this landscape of data analytic techniques as a nested sequence as follows:
+
+$$\text{linear regression} \subset \text{nonlinear least squares} \subset \text{maximum likelihood estimation}.$$
+
+
+#Maximum likelihood estimation
 
 **Motivation**: Let's say that we have a mathematical model and some data that we wish to fit the model to: all we mean here by 'fitting' is finding *good estimates* for the parameters in the model. **Maximum likelihood estimation** is a common and widely applicable method of such parameter estimation. We will see, for example, that simple linear regression is a special case of maximum likelihood estimation, as is nonlinear least squares.
 
@@ -72,9 +79,7 @@ $$\hat{p} = \frac{n}{k},$$
 
 precisely as our intuition told us.
 
-**Computational Note**: Because the likelihood is usually very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood, denoted by $-\mathcal{LL}$ (more on this below).
-
-
+**Computational Note**: Because the likelihood is usually very large, instead of maximizing the likelihood, we usually minimize the negative log-likelihood, denoted by $-\mathcal{LL}$ (more on this below). We will need to recall our basic log laws for this purpose:
 
 **A couple of important log laws:**
 
@@ -135,7 +140,7 @@ $$-\mathcal{LL}(p_1,\ldots,p_n|D) = -\sum_i \text{log}P(D_i|p_1,\ldots,p_n)$$
 
 and this is the function that we minimize in R as below, after this note.
 
-**Note**: Independence of data is required so that $P(D|p_1,\ldots,p_n) = \prod_i P(D_i|p_1,\ldots,p_n)$.
+**Note**: *Independence of data is required so that* $P(D|p_1,\ldots,p_n) = \prod_i P(D_i|p_1,\ldots,p_n)$.
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
 library(stats4) #load library
@@ -219,8 +224,8 @@ LL_exp <- function( rate ){
 
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE, eval=TRUE , warning=FALSE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column
+data <- read.csv("data/lifetimes_tubulin.csv") #load data from #.csv
+x <- data$X12_uM #choose column
 LL_exp <- function( rate ){
   R <- dexp( x , rate , log = TRUE) #exponential distribution --note log = TRUE computes the log
   -sum(R) #-ve log likelihood
@@ -231,7 +236,7 @@ fit_exp <- mle( LL_exp , start = list( rate = 1) ) #perform the fit
 
 Let's now plot the probability density of the data with the exponential fit for an eye-test of how good the fit is:
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
-x <- data$`12_uM` #lifetime data at 12uM
+x <- data$X12_uM #lifetime data at 12uM
 df <- as.data.frame( x = x) #turn it into dataframe to plot
 ###in these 3 lines, we build a dataframe of the fit:
 xx <- seq(0,max(x)) #x-axis
@@ -250,8 +255,8 @@ p +  geom_histogram(aes(y = ..density..)) + geom_line( data = df1 , aes(x=x , y=
 We now fit a gamma distribution to the data in an analogous manner:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
-data <- read.csv("data/lifetimes_tubulin.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`12_uM` #choose column
+data <- read.csv("data/lifetimes_tubulin.csv" ) #load data from #.csv
+x <- data$X12_uM #choose column
 LL_gamma <- function( shape , rate ){
   R <- dgamma( x , shape , rate , log = TRUE)#gamma distribution --note log = TRUE computes the log
   -sum(R) #-ve log likelihood
@@ -266,7 +271,7 @@ summary(fit_gamma) #summarize the fit
 Now we plot the gamma fit:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
-x <- data$`12_uM` #lifetime data at 12uM
+x <- data$X12_uM #lifetime data at 12uM
 df <- as.data.frame( x = x) #turn it into dataframe to plot
 ###in these 3 lines, we build a dataframe of the fit:
 xx <- seq(0,max(x)) #x-axis
@@ -279,7 +284,7 @@ p +  geom_histogram(aes(y = ..density..) , binwidth = 75) +
   xlab("lifetime")
 ```
 
-We can also plot the CDFs:
+Plotting the CDFs (cumulative distribution functions) of empirical & modeled distributed variables can help us visualize differences, similarities and how good fits are (in a qualitative sense), for example:
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
 P <- ecdf(x) #this is the ECDF (of the data) as a function
@@ -296,6 +301,8 @@ p + geom_line() + geom_line(aes(y=exp_fit, colour = "Exponential")  , label = "1
     scale_colour_manual(name = 'Distribution', values = c("black", "red", "blue") )
 ```
 
+**Discussion**: What does the above CDF plot tell you about the goodness-of-fit for the exponential and gamma models, respectively?
+
 ###A key note on mathematical modeling
 
 How do you know to fit an exponential distribution and then to try a gamma distribution? What are the rules of thumb for modeling this type of data? Unfortunately, this Workshop is NOT about mathematical modeling, an incredibly rich super-field of its own. However, do let me say a few things:
@@ -310,8 +317,8 @@ How do you know to fit an exponential distribution and then to try a gamma distr
 We now fit a gamma distribution for microtubules grown in the presence of MCAK:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
-data <- read.csv("data/lifetimes_mcak.csv" , check.names=FALSE) #load data from #.csv
-x <- data$`9_nM_MCAK` #choose column
+data <- read.csv("data/lifetimes_mcak.csv") #load data from #.csv
+x <- data$X9_nM_MCAK #choose column
 x <- x[!is.na(x)] #remove NAs
 LL_gamma <- function( shape , rate ){
   R <- dgamma( x , shape , rate , log = TRUE) #gamma distribution -- log = TRUE already logs it
@@ -369,6 +376,7 @@ help(AIC)
 
 **Online resources**: see [here](http://brianomeara.info/tutorials/aic/) and [here](http://www.r-bloggers.com/fitting-a-model-by-maximum-likelihood/) for some more information on AIC, BIC & MLE.
 
+Now that we have explored both MLE & model selection, we move onto the basics of linear regression, which will turn out to be a special case of MLE.
 
 #Linear regression basics (simple)
 
@@ -397,14 +405,14 @@ p + geom_point() + stat_smooth( method = "lm" ) #plot data w/ linear fit & 95% c
 
 **What have we done here?**
 
-We form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*. More details will follow after you perform a simple regression.
+We form a (linear) model $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means. The method that most people know (if they know any) and the method that most computing software will implement, if not told to do otherwise, is *ordinary least squares*. More details will follow after you perform a simple regression.
 
 ##Your turn: spindle size as a function of droplet diameter
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
 df <- read.csv("data/spindle_size_MG.csv") #load data
 #initialize plotting structure
-p <- ggplot( df , aes(x = Droplet_Diameter_.µm. , y = Spindle_Length_.µm.)) 
+p <- ggplot( df , aes(x = Droplet_Diameter_um , y = Spindle_Length_um)) 
 p + geom_point(alpha = 0.5) #plot with an \alpha (= transparency)
 ```
 
@@ -415,24 +423,24 @@ p + geom_point(alpha = 0.5) #plot with an \alpha (= transparency)
 1. Load the data as above;
 2. Use the 'subset' function to select the data such that the droplet diameter is $<80\mu$m;
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
-df1 <- subset( df , Droplet_Diameter_.µm. <80) #subset the data
+df1 <- subset( df , Droplet_Diameter_um <80) #subset the data
 ```
 3. Plot the data with a linear fit;
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE , warning = FALSE , eval=FALSE}
-p <- ggplot( df1 , aes(x = Droplet_Diameter_.µm. , y = Spindle_Length_.µm.)) #initiate plot
+p <- ggplot( df1 , aes(x = Droplet_Diameter_um , y = Spindle_Length_um)) #initiate plot
 p + geom_point(alpha = 0.5) + stat_smooth( method = "lm") + xlim(20 , 80) + ylim( 20 , 50) #plot it
 ```
 
 **Key note**: Calling 'stat_smooth' will visualize the linear fit but will NOT output the parameters fit (slope & intercept); to achieve this, you will need to do the following:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
-lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1) #perform fit
+lin_fit <- lm( Spindle_Length_um ~ Droplet_Diameter_um , df1) #perform fit
 summary(lin_fit) #summarize fit
 ```
 
 ##How linear regression works: ordinary least squares (OLS)
 
-Recall that we form a (linear) model that $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best, whatever that means.
+Recall that we form a (linear) model $y=ax+b$ and we want to find the coefficients $a,b$ in the model that fit the data best.
 
 For any $a,b$ we can compute $\varepsilon_i^2$, the square of distance between the y-coordinate of the data $y_i$ and the prediction of the model $ax_i+b$: this distance $\varepsilon_i$ is called the $i$th *residual* and $\varepsilon_i^2=(y_i-ax_i+b)^2$. The sum of the squares of the residuals is given by
 
@@ -440,7 +448,7 @@ $$SS_{red} = \sum\limits_i\varepsilon_i^2 = \sum\limits_i(y_i-ax_i+b)^2$$
 
 and the OLS method for estimating $a,b$ is to find the parameters $\hat{a},\hat{b}$ that minimize $SS_{red}$. Notes: (i) in this case of simple (one independent variable) linear regression, there is an analytic solution for the estimates: $\hat{b} = r_{xy}\times\frac{\text{SD}_y}{\text{SD}_x}$ and $\hat{a} = \bar{y} - \hat{b}\bar{x}$, where $r_{xy}$ is the sample correlation coefficient between the $x_i$ and $y_i$; (ii) In more complex situations of *least-squares curve-fitting*, minimization is performed via an algorithm called *gradient descent*: if you're interested, check it out.
 
-**Key question**: can we get error bars on these estimates? The answer is yes and wait to see how. R will readily plot the OLS estimate for you, along with $95\%$ confidence intervals:
+**Key question**: can we get error bars on these estimates? The answer is yes and wait to see how. R will readily plot the OLS estimate for you, along with $95\%$ confidence intervals.
 
 **How good is your linear fit?**
 
@@ -555,7 +563,7 @@ grid.arrange(res1, res2, res3, res4 , ncol=2)
 Here we plot the residuals for the linear fit of Good et al.'s spindle size data:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
-lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1) #perform fit
+lin_fit <- lm( Spindle_Length_um ~ Droplet_Diameter_um , df1) #perform fit
 pres <- ggplot( lin_fit , aes( .fitted , .resid) ) #initiate residuals plotting structure
 pres + geom_point() #plot it
 ```
@@ -585,7 +593,7 @@ bs <- function(formula, data, indices) {
 } 
 # bootstrapping with 1000 replications 
 results <- boot(data=df1, statistic=bs, 
-  	R=1000, formula=Spindle_Length_.µm. ~ Droplet_Diameter_.µm. )
+  	R=1000, formula=Spindle_Length_um ~ Droplet_Diameter_um )
 
 # view results
 results
@@ -604,7 +612,7 @@ boot.ci(results, type="bca", index=2) # slope
 ##Example: modeling a power law
 
 Power laws $y = x^n$ occur all throughout biology: see (Kleiber, 1932; Gillooly et al., 2001; White et al., 2003) for examples; they are also the primary mode of thinking about scaling in biology, which is currently very sexy! You can ask questions such as 'how does spindle size scale with cell volume?' and 'how does the energetic cost of the cell cycle scale with cell volume?', for example.
-Here we synthesize an example in which $n=0.55$, with added noise:
+Here, for pedagogical purposes, we synthesize an example in which $n=0.55$, with added noise:
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=TRUE}
 set.seed(100) #set your seed
@@ -622,7 +630,7 @@ If you have two variables related by a power law and plot the data on log-log ax
 p + geom_point() + scale_x_log10() + scale_y_log10() #plot and log both axes
 ```
 
-This is due to our basic log laws: (i) $\text{log}(ab) = \text{log}(a) + \text{log}(b)$ & (ii) $\text{log}(a^b) = b\text{log}(a)$. it follows from these that if two variable are related by a power law $y=ax^n$, then their log's are related linearly:
+This is due to our basic log laws: (i) $\text{log}(ab) = \text{log}(a) + \text{log}(b)$ & (ii) $\text{log}(a^b) = b\text{log}(a)$. it follows from these that if two variable are related by a power law $y=ax^n$, then their logs are related linearly:
 $$\text{log}(y) = \text{log}(a) + n\text{log}(x).$$
 
 Now, in the literature, a lot of people fit power laws by transforming to log axes and then performing a linear fit.
@@ -667,13 +675,13 @@ summary(fit)
 **Exercise 6 (~10 minutes)**:
 
 1. Using 'nls', fit a power law to the spindle size data introduced above -- report the exponent in the fit, along with error bars;
-2. Use the AIC to compare the linear model with the power law model. **Note**: in this case, even if the AIC reports the power law model to be better, we need to think hard about which we accept because the linear model is a mechanistic/physical model.
+2. Use the AIC to compare the linear model with the power law model. **Note**: in this case, even if the AIC reports the power law model to be better, we need to think hard about which we accept because the linear model is a mechanistic/physical model. See (Good et al., 2013) for further details.
 
 
 **Template for solution**:
 ```{r , fig.width = 4 , fig.height = 3 , eval = FALSE , warning = FALSE}
 df <- read.csv("data/spindle_size_MG.csv") #load data 
-df1 <- subset( df , Droplet_Diameter_.µm. <80) #subset data to relevant range
+df1 <- subset( df , Droplet_Diameter_um <80) #subset data to relevant range
 ##define variables of interest from your dataframe:
 y1 <- df1$...
 x1 <- df1$...
@@ -681,7 +689,7 @@ x1 <- df1$...
 fitg <- nls(...) #<- fill in arguments to 'nls'
 summary(fitg)
 ##perform linear fit:
-lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1)
+lin_fit <- lm( Spindle_Length_um ~ Droplet_Diameter_um , df1)
 ##compute AIC of both fits:
 ##WRITE CODE HERE
 ```
@@ -689,24 +697,14 @@ lin_fit <- lm( Spindle_Length_.µm. ~ Droplet_Diameter_.µm. , df1)
 
 #References
 
-- Odde, D.J., Cassimeris, L., and Buettner, H.M. (1995). Kinetics of microtubule catastrophe assessed by probabilistic analysis. Biophys. J. 69, 796–802.
-
-- Odde, D.J., Buettner, H.M., and Cassimeris, L. (1996). Spectral analysis of microtubule assembly dynamics. AIChE J. 42, 1434–1442.
-
-- Stepanova, T., Smal, I., van Haren, J., Akinci, U., Liu, Z., Miedema, M., Limpens, R., van Ham, M., van der Reijden, M., Poot, R., et al. (2010). History-dependent catastrophes regulate axonal microtubule behavior. Curr. Biol. 20, 1023–1028.
-
-- M. Kleiber, “Body size and metabolism,” Hilgardia, vol. 6, pp. 315–351, 1932.
-
-- J. F. Gillooly, J. H. Brown, G. B. West, V. M. Savage, and E. L. Charnov, “Effects of size and temperature on metabolic rate,” Science, vol. 293, pp. 2248–51, Sep 2001.
-
-- C. R. White and R. S. Seymour, “Mammalian basal metabolic rate is pro- portional to body mass2/3,” Proceedings of the National Academy of Sci- ences, vol. 100, no. 7, pp. 4046–4049, 2003.
-
-- G. B. West, J. H. Brown, and B. J. Enquist, “A general model for the origin of allometric scaling laws in biology,” Science, vol. 276, pp. 122–6, Apr 1997.
-
-- Good, M.C., Vahey, M.D., Skandarajah, A., Fletcher, D.A., and Heald, R. Cytoplasmic Volume Modulates Spindle Size During Embryogenesis. Science  342, 856-860 (2013).
-
-- Sieg, A. E. et al. Mammalian metabolic allometry: do intraspecific variation, phylogeny, and regression models matter? Am. Nat. 174, 720–733 (2009)
-
-- *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
-
-- *Mathematical Statistics and Data Analysis* by John A. Rice (1988), *Duxbury Press*;
+- Bevington, P. & Robinson, D. K. 2002. *Data Reduction and Error Analysis for the Physical Sciences.* *McGraw-Hill Education*.
+- Good, M.C., Vahey, M.D., Skandarajah, A., Fletcher, D.A., and Heald, R. 2013. *Cytoplasmic Volume Modulates Spindle Size During Embryogenesis.* Science  342, 856-860.
+- Gillooly, J. F., Brown, J. H., West, G. B., Savage, V. M., Charnov, E. L. 2001. *Effects of size and temperature on metabolic rate.* Science, vol. 293, pp. 2248–51.
+- Kleiber, M. 1932. *Body size and metabolism* Hilgardia, vol. 6, pp. 315–351.
+- Odde, D.J., Cassimeris, L., and Buettner, H.M. 1995. *Kinetics of microtubule catastrophe assessed by probabilistic analysis.* Biophys. J. 69, 796–802.
+- Odde, D.J., Buettner, H.M., and Cassimeris, L. 1996. *Spectral analysis of microtubule assembly dynamics.* AIChE J. 42, 1434–1442.
+- Rice, J. A. 1988 *Mathematical Statistics and Data Analysis.* *Duxbury Press*.
+- Sieg, A. E. et al. 2009. *Mammalian metabolic allometry: do intraspecific variation, phylogeny, and regression models matter?* Am. Nat. 174, 720–733.
+- Stepanova, T., Smal, I., van Haren, J., Akinci, U., Liu, Z., Miedema, M., Limpens, R., van Ham, M., van der Reijden, M., Poot, R., et al. 2010. *History-dependent catastrophes regulate axonal microtubule behavior.* Curr. Biol. 20, 1023–1028.
+- West, G. B., Brown, J. H., Enquist, B. J. 1997. *A general model for the origin of allometric scaling laws in biology.* Science, vol. 276, pp. 122–6.
+- White, C. R., Seymour, R. S. 2003. *Mammalian basal metabolic rate is pro- portional to body mass2/3.* Proceedings of the National Academy of Sci- ences, vol. 100, no. 7, pp. 4046–4049.

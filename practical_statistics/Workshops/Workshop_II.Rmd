@@ -1,23 +1,27 @@
 ---
-title: "Practical Statistics II: statistical hypothesis testing"
+title: "Practical Statistics Workshop II: statistical hypothesis testing"
 output:
   html_document:
     toc: true
     fig_caption: false
     number_sections: true
 date: "27 October 2015"
-author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
 ---
+
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
+
+**Workshop II** is concerned primarily with *statisical hypothesis testing*, as it figures in testing data sets for normality, the all-pervasive t-test, F-tests and ANOVA, with a deep dive into an example from the literature of *bioinformatics*. Special attention herein is paid to *correction methods* for multiple comparisons, an essential and too often forgotten aspect of the practice of statistical hypothesis testing. The emphasis is on developing an intuition for how these tests work and how they can help you think about i) how much data you will need to collect in order to validate anticipated results, along with ii) the required signal-to-noise ratio of your experimental setup. To develop this type of intuition, we first discuss some general *rules of thumb for experimental data*.
 
 #Rules of Thumb for Experimental Data
 
-It is very difficult, in general, to say anything about the amount of data you will need to be able to say something about the mean of a particular quantity, for example. We can, however, give some general rules of thumb, which will be handy:
+It is very difficult, in general, to say anything about the amount of data you will need to be able to say something about the mean of a particular quantity, for example. We can, however, give some general rules of thumb. To utilize these rules, I strongly recommend the **iterative approach** -- first use them, then re-evaluate them in the light of the data you collect and re-apply:
 
-- **To say *anything* about the mean**, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of having a fair coin and getting a false positive, meaning a result that appears to contradict reality';
+- **To say *anything* about the mean**, make at least $n = 6$ measurements and preferably $n=10$: the reason for 6 is that this is the minimum number of observations necessary to determine whether something is statistically significant using non-parametric analysis. Joe Howard (*Statistical Inference and Models* notes) gives the following example: 'If one tosses a (fair) coin 6 times, then there is a 1/64 chance that it is heads each time and a 1/64 chance that it is tails each time. Therefore, if you toss a coin 6 times there is only a 1/32 chance (~3%) that it will always be heads or always tails. In other words, if you toss a coin 6 times and it is always heads or tails then you can conclude at the 95% confidence level (actually 97%) that the coin is not fair. Note that the 3% (1/32) is the chance of having a fair coin and getting a false positive, meaning a result that appears to contradict reality';
 - **To say something about the variance**, have at least $n = 30$ data points: this is because, for a normal distribution, the **standard error of the standard deviation** is $\approx\frac{\sigma}{\sqrt{2(n-1)}}$ (see [Ahn et al, 2003](http://web.eecs.umich.edu/~fessler/papers/files/tr/stderr.pdf)) so that, if you have 30 data points, then your **standard error of the standard deviation** is $\approx 13$% of $\sigma$, or nearly an order of magnitude less than it;
 - **To say anything about the actual distribution**, have at least $n = 100$ data points. This is really motivatable by considering the **standard error of skewness** and **standard error of kurtosis**, about which you can find more [here](http://estatistics.eu/what-is-statistics-standard-error-of-skewness-standard-error-of-kurtosis/).
 
-These are incredibly generic rules.  Keep them in mind and re-evaluate them again & again when you get your data!
+These are incredibly generic rules.  Keep them in mind and re-evaluate them again & again when you get some data!
 
 
 #Statistical Hypothesis Testing: An Intuition
@@ -27,9 +31,9 @@ Two key aspects of practical statistics are:
 - statistical hypothesis testing;
 - model fitting (parameter estimation) & model selection.
 
-In this Workshop, we will deal with the first aspect, statistical hypothesis testing.
+In this Workshop II, we will deal with the first aspect, statistical hypothesis testing. In Workshops III & IV, we will direct our attention towards model fitting and model selection.
 
-First: what is an hypothesis? Five examples are:
+**First**: what is an hypothesis? Five examples are:
 
 - The speed of light in a vacuum is 299,792,458 m/s;
 - The mean height of adult men in Australia is 175cm;
@@ -37,9 +41,9 @@ First: what is an hypothesis? Five examples are:
 - Drug A improves the sleep quality of people who suffer from insomnia;
 - An advertisement at the top of my website generates more clicks than one at the bottom of my website.
 
-Definition (Oxford Dictionary, online): an hypothesis "[a] supposition or proposed explanation made on the basis of limited evidence as a starting point for further investigation."
+**Definition** (Oxford Dictionary, online): an hypothesis is "[a] supposition or proposed explanation made on the basis of limited evidence as a starting point for further investigation."
 
-Now: what is statistical hypothesis testing? It is merely testing how likely an hypothesis is, given the data at hand.
+**Now**: what is statistical hypothesis testing? It is merely testing how likely an hypothesis is, given the data at hand.
 
 #Essential question: is my data normally distributed?
 
@@ -53,7 +57,7 @@ In order to define a Q-Q (quantile-quantile) plot, we first need to define a *qu
 
 **Definition**: a *quantile* of a data set is the value below which a given percent (or fraction) of the data are: for example, the 10% quantile (also known as the *first decile*) is the value below which 10% of the data are; similarly, the 25% quantile (or the *first quartile* $Q_1$), the 50% quantile (the *second quartile* $Q_2$ or the *median*) and the 75% quantile (or the *third quartile* $Q_3$) are the values below which 1/4, 1/2 and 3/4 of the data are, respectively.
 
-Now all that a Q-Q plot is is a plot of the quantiles of one set of data against the quantiles of another. Below are two examples. The first is the (quantiles of) data generated from a normal distribution plotted against (quantiles of) a theoretic normal distribution. In the second, the data is from a Caunchy distribution (symmetric and with a *heavier tail* than a Gaussian) plotted against a theoretic normal distribution.
+Now all that a Q-Q plot is is a plot of the quantiles of one set of data against the quantiles of another. Below are two examples (below the code chunk). The first is the (quantiles of) data generated from a normal distribution plotted against (quantiles of) a theoretic normal distribution. In the second, the data is from a Caunchy distribution (symmetric and with a *heavier tail* than a Gaussian) plotted against a theoretic normal distribution.
 
 First we plot the probability distribution functions of a Gaussian ($\mu = 0 , \sigma = 1$) and a [Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution) (location $= 0$, scale $=1$) distribution to get a sense of what *heavier tail* means:
 
@@ -106,7 +110,7 @@ To test the **null hypothesis**,
 
 1. We compare the cumulative distribution functions of $D$ and the normal distribution with mean $\mu_X$ & variance $\sigma_X^2$. To do so we calculate the largest distance $D_{max}$ between them;
 2. If the null hypothesis is true, then $D_{max}$ will be drawn from a **Lilliefors distribution** (the distribution itself will depend on the sample size $n$; there are tables, along with more recent analytic approximations, for those interested: http://www.jstor.org/stable/2684607);
-3. Using this Lilliefors distribution, we calculate $p$, the probability of seeing a distance $\geq D_{max}$, given the null hypothesis $H_0$, *(that is, the assumption of normality). Classically, $p$ has been called the $p$-value.
+3. Using this Lilliefors distribution, we calculate $p$, the probability of seeing a distance $\geq D_{max}$, given the null hypothesis $H_0$ (that is, the assumption of normality). Classically, $p$ has been called the $p$-value.
 4. If $p<\alpha,$ we can conclude with $(1-\alpha)$ confidence that $D$ was not drawn from a normal distribution. Classically, it is required that $\alpha = 0.05$, in which case we can conclude with 95% confidence that $D$ was not drawn from a normal distribution.
 
 Here we plot the empirical CDFs of a Cauchy and a Gaussian distribution: can you tell which is which? Once could also plot each separately against a theoretical Gaussian in order to visually make sense of the distance $D_{max}$.
@@ -162,6 +166,8 @@ The Student's t-tests pervades biology, in particular, and the statistical scien
 
 ##One sample t-test
 
+*Note: you will most commonly use the two-sample t-test, but the one-sample provides a simpler introduction pedagogically.*
+
 I am measuring a quantity in an experiment (e.g., a mutant) for which there is a control. This quantity has a specific value $\mu$ and my measurement process has a normal error (e.g., amount of protein using a fluorospectrometer). Let $x_1,x_2,\ldots,x_n$ be $n$ independent samples: this means that they will be drawn from the distribution $N( \mu , \sigma^2)$. We want to answer the question: is the amount $\mu$ in the (mutant) experiment different from the amount $\mu_0$ in the control? To answer this, the null hypothesis is
 $$H_0: \mu = \mu_0.$$
 Then the alternative hypothesis is
@@ -189,14 +195,41 @@ To test the null hypothesis, we consider the t-statistic
 $$T = \frac{\bar{x}-\mu_0}{\text{SEM}}.$$
 **Intuition**: this t-statistic measures how many "standard errors" the sample mean is away from the (null) hypothesized mean.
 
-**Formalism**: this statistic has the Student t-distribution $\text{Pr}(t)$ with $n-1$ **degrees of freedom**. The **p-value** is defined as the area under the curve where $|t|>|T|$.
+**Defintion**: The **effect size** is defined to be $|\bar{x} - \mu_0|$: this is how far the sample mean is away from the (null) hypothesized mean (in the units of your measurement, for example). The effect size provides the *biological signficance* of the result, whereas the p-value provides the *statistical significance* (see Cumming, 2013; Quinn & Keough, 2002, Chapter 3 for further details).
+
+**Formalism**: the t-statistic defined above has the Student t-distribution $\text{Pr}(t)$ with $n-1$ **degrees of freedom**. The **p-value** is defined as the area under the curve where $|t|>|T|$. See an example t-distribution below -- the area of the region shaded in red is the p-value given $T=2$. Note that if $T$ is large, then the p-value will be small. Intuitively, we interpret this as meaning that, given the null hypothesis, it is unlikely to have seen such a large $T$.
+
+```{r , fig.width = 4 , fig.height = 3 , message=FALSE , echo=FALSE , warning=FALSE}
+n <- 20
+t <- seq(-4,4, by = 0.01)
+y <- dt(t , df = n-1)
+df <- as.data.frame(cbind(t,y) )
+colnames( df) <- c("t" , "y")
+#alpp <- 0.95
+#alpha <- 0.5
+#interval <- 1 - (1 - alpp)/2
+#interval <- 0.1
+#lo1 <- -qt(interval , df = n-1 )/sqrt(n)
+#up1 <-  qt(interval , df = n-1 )/sqrt(n)
+yo  <- ifelse( t < 2 & t > -2, t , 0 )
+#yo  <- ifelse( t < -1 , t , 0 )
+df$yo <- yo
+ggplot( df , aes( x=t , y=y )) + 
+  geom_line()+
+  geom_area(mapping = aes( y=y ) , fill = "red") +
+  geom_area(mapping = aes( yo ) , fill = "white") +
+  scale_y_continuous(limits = c(0, 0.4)) +
+  #scale_x_continuous(limits = c(-2, 2))  +
+  xlab("t") +
+  ylab("Probability (t-distribution)")
+```
 
 **Note**: A common question is "*what exactly are degrees of freedom?*" The **number of degrees of freedom** is simply the number of values in the calculation of a statistic that are free to vary: for example, when calculating the t-statistic with $n$ data points, there are $n-1$ values that we can vary (and not $n$ values, as we have already calculated the mean from the sample).
 
 
 **Example**: if the p-value $<0.05$, we conclude with $95\%$ confidence that $\mu \neq \mu_0$. In general, if the p-value $<\alpha$, then we can conclude with $100(1-\alpha)\%$ confidence that $\mu\neq\mu_0$.
 Below we plot the probability of seeing any given **effect size** ($=\bar{x}-\mu_0$), measured in standard deviations away from the (null) hypothesized mean, given $n=16$.
-I have also shaded in red the effect sizes that are not statistically significant at the $95$% confidence level.
+I have also shaded in blue the effect sizes that are not statistically significant at the $95$% confidence level.
 
 ```{r , fig.width = 5 , fig.height = 4 , message=FALSE , echo=FALSE , warning=FALSE}
 n <- 16
@@ -214,25 +247,29 @@ yo  <- ifelse( t < up1 & t > lo1, t , 0 )
 df$yo <- yo
 ggplot( df , aes( x=t , y=y )) + 
   geom_line()+
-  geom_area(mapping = aes( yo ) , fill = "red") +
+  geom_area(mapping = aes( yo ) , fill = "blue") +
   scale_y_continuous(limits = c(0, 0.4)) +
   scale_x_continuous(limits = c(-2, 2))  +
-  xlab("Estimated effect size (measured in standard deviations away from the 
+  xlab("Effect size (measured in standard deviations away from the 
        (null) hypothesized mean)") +
-  ylab("Probability")
+  ylab("Probability (t-distribution)")
 ```
 
-**Note**: This is a two-tailed t-test. A one-tailed t-test would, for example, have as the alternative hypothesis $H_1 : \mu > \mu_0$ and it is relatively rare. They are usually used when you have strong prior knowledge that $\mu \geq \mu_0$.
+**Note**: This is a two-tailed t-test. A one-tailed t-test would, for example, have as the alternative hypothesis $H_1 : \mu > \mu_0$ and it is relatively rare. One-tailed t-tests are usually used when you have strong prior knowledge that $\mu \geq \mu_0$.
 
 **To keep in mind**: For a t-test, the magic number is 2: for a large number of degrees of freedom, the t-distribution is the same as a normal distribution and for a normal distribution 5% of the outcomes are more than 1.96 ≈ 2 standard deviations away from the mean.
 
 **Question**: Given $n=16$ data points, what is the minimum effect size $|\bar{x} - \mu_0|$ that you can detect at the $95\%$ confidence level (hint: look at the figure above)? 
 
 
-**Answer**: at the $95\%$ confidence level, we require that $|T|>2$ (actually a bit more); but 
+**Answer**: at the $95\%$ confidence level, we require that $|T|>2$ (actually a bit more as $n=16$ and the t-distribution is not quite a normal distribution); but 
 $T =\frac{\bar{x}-\mu_0\sqrt{n}}{\sigma}$. Combining these and plugging in $n = 16$, we see that $|x - \mu_0| > \sigma/2$. In other words, with 16 data points, we can only detect effect sizes greater than half the standard deviation of the measurement error at the $95\%$ confidence level! 
 
-**Essential Note:** Due the Central Limit Theorem, the t-test does NOT require your data to be normally distributed. A general rule of thumb is that if your sample size $n>30$, then a t-test is appropriate (unless your data is highly skewed; for more, see [here](https://onlinecourses.science.psu.edu/stat414/node/261)).
+**ESSENTIAL POINTS TO ALWAYS KEEP IN MIND:** 
+
+1. Due the Central Limit Theorem, the t-test does NOT require your data to be normally distributed. A general rule of thumb is that if your sample size $n>30$, then a t-test is appropriate (unless your data is highly skewed; for more, see [here](https://onlinecourses.science.psu.edu/stat414/node/261)).
+2. *Statistical significance* does NOT mean *biological significance*.  Most of the time you will want to first look at the *effect size* $|\bar{x} - \mu_0|$, then show that it is statistically significant, and then state the scientific interpretation of the *effect size*, NOT that of the p-value. 
+3. If you anticipate a biologically significant *effect size* and your data does not yet show it to be statistically significant, you can either i) *collect more data* to increase $n$ or ii) *increase the signal-to-noise ratio in your experiment* to decrease $\sigma$. Both of these will result in decreasing the standard error of the mean $\text{SEM}=\sigma/\sqrt{n}$, thus increasing $T$ and decreasing p. We are now entering the territories of **statistical power analysis**, in which power is defined to be the probability of correctly rejecting a false null hypothesis $H_0$. This is an essential field to the experimental sciences: see (Quinn & Keough, 2002, Chapter 7) for further details, particularly with respect to how *power analysis* can help us all in experimental design and experimental planning.
 
 **Exercise 2 (~20 minutes):**
 
@@ -293,9 +330,9 @@ For further details, see
 The two-sample t-test assumes that the number of measurements are the same (i.e., $n=m$) and that the two distributions have the same variance  (i.e., $\text{SD}_x = \text{SD}_y$). In this case, we can use all the measurements to estimate the underlying population variance such that $\text{SEM} = \sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}/2$ and thus
 $$T = \frac{2|\bar{x} - \bar{y}|}{\sqrt{\text{SEM}_x^2 + \text{SEM}_y^2}}.$$
 
-To quote Joe Howard's *Statistical Inference and Models* notes for MB&B 435/635/ENAS518 - MATHEMATICAL METHODS IN BIOPHYSICS at Yale University, Fall 2013:
+To quote (Joe Howard, *Statistical Inference and Models* notes):
 
-<blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred. Also, there are many cases where the variances of the two experiments are different - e.g. if you are measuring something using two different techniques.</p></blockquote>
+<blockquote><p style="font-size: 75%">Importantly, it could happen that the difference is significant by the unpaired t-test but not significant by the Welch test. This illustrates the general principle that the more assumption you make the more significant your results will be! The choice as to which one to use depends on how confident we are that the SDs are the same (i.e. how strong your expectation is). But generally it is better to make the minimum number of assumptions, and this is why the Welch test is preferred.</p></blockquote>
 
 
 ##Paired t-tests and Blocking
@@ -310,17 +347,17 @@ Well, a two-sample paired t-test is a regular two-sample t-test in which each $x
 
 There is not enough time in this Workshop to cover Blocking & Randomized Block Design BUT it is important that you know of its existence so I want to say a couple of words.
 
-The intuition behind blocking is as follows: Let's say that you do a bunch of controls and experiments under slightly different conditions (e.g. different days, labs, etc...) -- then you want to 'block' together those done under similar conditions. There is a robust, statistical methodology set up for this. *Statistics for Experimenters* by Box, Hunter & Hunter (1978) is one particularly good reference for this material.
+The intuition behind blocking is as follows: Let's say that you do a bunch of controls and experiments under slightly different conditions (e.g. different days, labs, etc...) -- then you want to 'block' together those done under similar conditions. There is a robust, statistical methodology set up for this. You can find more details in (Box et al., 1978). A more recent reference that's worth checking out is (Quinn & Keough, 2002, Chapter 10). If you're really interested, you can also get in touch with me: I love chatting about this kind of stuff!
 
 
 
-#Correction Methods (E.g. the Bonferroni Correction)
+#Correction Methods (E.g. the Bonferroni correction)
 
-**Problem**: When you are performing and comparing many experiments, there is a problem. For example, let's take the case in which you have a control and then you perform an experiment that has no effect (a placebo) and you do it 20 times. We know that 5% of the time you will **randomly** get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments giving you a *false positive* (also called a *type I error*)! We then need a stricter criterion for statistical significance: enter the **Bonferroni Correction**.
+**Problem**: When you are performing and comparing many experiments, there is a problem. For example, let's take the case in which you have a control and then you perform an experiment that has no effect (a placebo) and you do it 20 times. We know that 5% of the time you will **randomly** get a statistically significant difference at the 95% confidence level (due to statistical fluctuations): this is one in 20 of your experiments giving you a *false positive* (also called a *type I error*)! When performing multiple comparisons, we then need a stricter criterion for statistical significance: enter the **Bonferroni Correction**.
 
 The **Bonferroni Correction**: let's say that you are performing $N$ t-tests (with $N$ null hypotheses) and, for each, you require a confidence level of $1-\alpha$ ( 95% confidence means $\alpha = 0.05$). With the **Bonferroni correction**, we reject the null hypothesis at the $1-\alpha$ confidence level if $p<\alpha/N$ (as opposed to if $p<\alpha$, the uncorrected version of the t-test).
 
-**Note**: this is a conservative test, in the sense that it is prone to rejecting the alternative hypothesis when the alternative hypothesis is true (that is, it can produce *false negatives*, also called *type II errors*). There are other, less conservative correction methods that you should check out if you need this in your research.
+**Note**: this is a conservative test, in the sense that it is prone to rejecting the alternative hypothesis when the alternative hypothesis is true (that is, it can produce *false negatives*, also called *type II errors*). There are other, less conservative correction methods that you should check out if you need this in your research. The [**Holm-Bonferroni correction**](https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method) is a popular one as it corrects the Bonferroni correction so that it doesn't produce as many *type II errors* (it is also the default correction used by the R function "pairwise.t.test", which you are about to use).
 
 **Exercise 4 (~10 minutes)**:
 Perform t-tests on all 10 pairs of the microtubule datasets (i) without the Bonferroni correction & (ii) with the Bonferroni correction. Compare the results.
@@ -343,7 +380,7 @@ p + geom_boxplot() + geom_jitter( alpha = 0.1 )
 
 **Question**: The sample means of the groups are different but *is this difference statistically significant*? In other could the *between-group* variance arise statistically from the variance *within groups*? ANOVA provides a powerful method to answer such questions.
 
-##Example 1: ANOVA (analysis of variance).
+##Example 1: ANOVA (analysis of variance)
 
 <h4>Distinguishing multiple groups of numerical data with distinct means.</h4>
 
@@ -417,7 +454,7 @@ beeswarm.plot + geom_point(size = 2 , aes(colour = col))
 ##Example 2: basic two-way ANOVA for gene expression levels (bioinoformatics)
 
 We will consider the example from (Pavladis, 2003),
-*Using ANOVA for gene selection from microarray studies of the nervous system.*
+*Using ANOVA for gene selection from microarray studies of the nervous system* (a great paper to read when thinking about experimental design and statistical interpretations of results).
 
 In such a two-way ANOVA, the expression level of a gene is given by
 
@@ -434,7 +471,7 @@ To quote (Pavladis, 2003) at some length,
 
 **Exercise 6 (~20 minutes)**:
 
-1. Import "sandberg-sampledata.txt" as a dataframe called 'data'-- to do so, check out the function 'read.table' and look specifically at the arguments 'header' and 'row.names' -- you may also like to look at the file in a text editor and see whether there are column names (header) and/or row names.
+1. Import "sandberg-sampledata.txt" as a data frame called 'data'-- to do so, check out the function 'read.table' and look specifically at the arguments 'header' and 'row.names' -- you may also like to look at the file in a text editor and see whether there are column names (header) and/or row names.
 ```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
 help(read.table)
 ```
@@ -454,14 +491,16 @@ df <- apply(data , 1 , add_factors)
 ```
 4. Perform ANOVA on a single gene and output/summarize the result;
 5. Use 'apply' OR a 'for loop' to perform ANOVA on all genes! Save as 'anovaresults';
-6. Write all the p-values to a .txt and save it for later use; in the code chunk here I have saved the p-values to a dataframe: all you need to do is write it to a .txt;
+6. Write all the p-values to a .txt and save it for later use; in the code chunk here I have saved the p-values to a data frame: all you need to do is write it to a .txt;
 ```{r, fig.width = 8 , fig.height = 6 , message = FALSE , echo=TRUE , eval = FALSE}
 anova_res <- lapply( anovaresults , anova) #this will compute the ANOVA table from 'anovaresults'
 pvalues<-data.frame( lapply(anova_res, function(x) { x["Pr(>F)"][1:3,] }) ) #save p-values to  a dataframe
 ```
 7. A common question in bioinformatics is to see which genes' expression levels are most effected by, for example, the region in the brain we are looking at: to this end, rank the genes in order of strength of effect of the main effect term $T$.
 
-##Example 4: testing for multimodality.
+##Example 4: testing for multimodality
+
+*Note: This is not ANOVA at all, but another application of the F-test.*
 
 ```{r , fig.width = 4 , fig.height = 3 , message = FALSE , echo=FALSE}
 ##Galton height data: http://personality-project.org/r/html/heights.html
@@ -489,12 +528,15 @@ For more, see Larkin R. P. (1979). An algorithm for assessing bimodality vs. uni
 
 #References
 
-- Welch, B. L. (1947), "The generalization of student's problem when several different population variances are involved.", Biometrika 34: 28–35;
-- *Mathematical Statistics and Data Analysis* by John A. Rice (1988), *Duxbury Press*;
-- *Statistics for Experimenters* by Box, Hunter & Hunter (1978), *Wiley & Sons*;
-- *Using ANOVA for gene selection from microarray studies of the nervous system*, P. Pavladis, Methods. 2003  31(4):282-9;
-- *Think Stats* by Allen Downey (2011), *O'Reilly Media* ([.pdf here](http://greenteapress.com/thinkstats/));
-- *Understanding The New Statistics: Effect Sizes, Confidence Intervals, and Meta-Analysis* by Geoff Cumming (2011), *Routledge*;
-- *Data Reduction and Error Analysis for the Physical Sciences* by Philip Bevington & D. Keith Robinson (2002), *McGraw-Hill Education*.
-- Larkin R. P. (1979). An algorithm for assessing bimodality vs. unimodality in a univariate distribution. Behav. Res. Methods Instrum. 11, 467–468.
-- Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe. Cell 147: 1092– 103.
+- Bevington, P. & Robinson, D. K. 2002. *Data Reduction and Error Analysis for the Physical Sciences.* *McGraw-Hill Education*.
+- Box, Hunter & Hunter. 1978. *Statistics for Experimenters.* *Wiley & Sons*.
+- Cumming, G. 2011. *Understanding The New Statistics: Effect Sizes, Confidence Intervals, and Meta-Analysis* *Routledge*.
+- Cumming, G., 2013. *The New Statistics: Why & How.* Psychological Science.
+- Downey, A. 2011. *Think Stats.* *O'Reilly Media* ([.pdf here](http://greenteapress.com/thinkstats/)).
+- Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. *Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe.* Cell 147: 1092– 103.
+- Howard, Joe. *Statistical Inference and Models* notes for MB&B 435/635/ENAS518 - MATHEMATICAL METHODS IN BIOPHYSICS at Yale University, Fall 2013 (not publicly available).
+- Larkin R. P. 1979. *An algorithm for assessing bimodality vs. unimodality in a univariate distribution.* Behav. Res. Methods Instrum. 11, 467–468.
+- Pavladis, P. 2003 *Using ANOVA for gene selection from microarray studies of the nervous system.* Methods 31(4):282-9.
+- Quinn, G. P. & Keough, M. J. 2002. *Experimental Design and Data Analysis for Biologists.* *Cambridge University Press*.
+- Rice, J. A. 1988 *Mathematical Statistics and Data Analysis.* *Duxbury Press*.
+- Welch, B. L. 1947. *The generalization of student's problem when several different population variances are involved.* Biometrika 34: 28–35.
