@@ -10,7 +10,7 @@ author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistr
 ---
 
 *Instructor*: Hugo Bowne-Anderson (hugo dot bowne-anderson at yale dot edu).
-*Teaching Assistant*: Neal Ravindra.
+*Teaching Assistant*: Neal Ravindra, Olivier Trottier (alphabetical order).
 *Host*: Jonathon Howard.
 *Location*: Science Hill (specifics TBA).
 
