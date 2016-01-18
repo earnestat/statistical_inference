@@ -1,0 +1,200 @@
+---
+title: "Practical statistics IV: Time Series Analysis"
+output:
+  html_document:
+    toc: true
+    fig_caption: false
+    number_sections: true
+date: "15 January 2016"
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
+---
+
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
+
+**Warning**: The R code in this .pdf may not execute properly if you copy & paste it. You will need to either type it in directly OR copy and paste from the .html document corresponding to this Workshop.
+
+
+**Workshop IV** is concerned with time series analysis.
+
+#Exploratory Time Series Analysis
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+require(astsa)
+plot(speech)
+require(ggfortify)
+autoplot(speech) + xlab("time (sec.)") + ylab("speech")
+```
+
+The analysis of experimental data that have been observed at different points in time leads to new and unique problems in statistical modeling and inference. The obvi- ous correlation introduced by the sampling of adjacent points in time can severely restrict the applicability of the many conventional statistical methods traditionally dependent on the assumption that these adjacent observations are independent and identically distributed. The systematic approach by which one goes about answer- ing the mathematical and statistical questions posed by these time correlations is commonly referred to as time series analysis. -- p.1
+
+The primary objective of time series analysis is to develop mathematical models that provide plausible descriptions for sample data, like that encountered in the previous section. -- p.5
+
+**Exercise 1 (~15 minutes)**:
+
+
+##White noise
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+#require(stats)
+w = rnorm(500,0,1) # 500 N(0,1) variates 
+v = filter(w, sides=2, rep(1/3,3)) # moving average 
+#par(mfrow=c(2,1))
+plot.ts(w, main="white noise")
+plot.ts(v, ylim=c(-3,3), main="moving average")
+```
+
+If the stochastic behavior of all time series could be explained in terms of the white noise model, classical statistical methods would suffice. Two ways of intro- ducing serial correlation and more smoothness into time series models are given in Example 1.7 and Example 1.8. -- p.6
+
+##Autoregression (introducing serial correlation)
+
+The autoregressive model above and its generalizations can be used as an underlying model for many observed series and will be studied in detail in Chapter 3. -- p.7
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+w = rnorm(550,0,1) # 50 extra to avoid startup problems
+x = filter(w, filter=c(1,-.9), method="recursive")[-(1:50)] 
+plot.ts(x, main="autoregression")
+```
+
+##Random walk with drift
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+set.seed(154) # so you can reproduce the results
+w = rnorm(200,0,1); x = cumsum(w) # two commands in one line
+wd = w +.2;   xd = cumsum(wd)
+plot.ts(xd, ylim=c(-5,55), main="random walk")
+lines(x); lines(.2*(1:200), lty="dashed")
+```
+
+##Signals in noise
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+cs = 2*cos(2*pi*1:500/50 + .6*pi)
+w = rnorm(500,0,1)
+par(mfrow=c(3,1), mar=c(3,2,2,1), cex.main=1.5)
+plot.ts(cs, main=expression(2*cos(2*pi*t/50+.6*pi)))
+plot.ts(cs+w, main=expression(2*cos(2*pi*t/50+.6*pi) + N(0,1)))
+plot.ts(cs+5*w, main=expression(2*cos(2*pi*t/50+.6*pi) + N(0,25)))
+```
+
+#Doing some statistics on time series
+
+##Mean function
+
+##Autocovariance function
+
+The autocovariance function is the second moment product
+
+$$\gamma(s,t) = cov(x_s , x_t) = E[(x_s - \mu_s)(x_t - \mu_t)]$$
+
+##Stationary time series
+
+OK!
+
+#Filtering
+
+Noie reduction. Smoothing. Faster oscillations taken out, slower ones remain.
+
+##Moving averages & median filters
+
+
+p. 48 !
+
+
+##(First) difference operators ? p. 41
+
+##Kernel smoothing
+
+
+##Lowess filters
+
+
+#Autocorrelation
+
+p. 13
+
+The autocorrelation function (ACF) is
+
+$$\rho(s,t) = \frac{\gamma(s,t)}{\sqrt{\gamma(s,s)\gamma(t,t)}}$$
+
+The ACF is a special case of the cross-correlation function (CCF).
+
+The autocorrelation function (ACF) of a stationary time series is
+
+$$\rho(h) = \frac{\gamma(h)}{\gamma(0)},$$
+
+where $\gamma(h) = cov(x_{t+h} , x_t) = E[(x_{t+h} - \mu)(x_t - \mu)]$ is the autocovariance function of a stationary time series.
+
+##Examples of autocorrelation etc...
+
+Autocorrelation plots & scatterplots!
+
+**White noise**
+
+
+**Moving average**
+
+**Trend Stationarity**
+
+p. 17
+
+##Dealing with real data
+
+###Sample autocovariance & sample ACF
+
+pp. 19-20
+
+give examples: 
+
+some genetic oscillator --
+
+would be great to have 2 oscillators with interesting cross correlation!
+
+zebrafish energetics
+
+aaaaaand....
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+#par(mfrow=c(3,1))
+#p. 24
+acf(soi, 48, main="Southern Oscillation Index")
+acf(rec, 48, main="Recruitment")
+ccf(soi, rec, 48, main="SOI vs Recruitment", ylab="CCF")
+```
+
+THen PrewhiteningandCrossCorrelationAnalysis -- p. 24
+
+
+#Time Series Regression and EDA
+
+p. 29
+
+Do a linear regression for data that has trend + some periodicity: global temp.; zf energetics!
+
+##F-statistic/test to compare models
+
+p. 32
+
+##Akaike's Information Criterion (AIC)
+
+##Regression w/ lagged variables
+
+
+##Detrending time series data
+
+
+In general, it is necessary for time series data to be stationary so averaging lagged products over time, as in the previous section, will be a sensible thing to do. With time series data, it is the dependence between the values of the series that is important to measure; we must, at least, be able to estimate autocorrelations with precision. It would be difficult to measure that dependence if the dependence structure is not
+regular or is changing at every time point. Hence, to achieve any meaningful sta- tistical analysis of time series data, it will be crucial that, if nothing else, the mean and the autocovariance functions satisfy the conditions of stationarity (for at least some reasonable stretch of time) stated in Definition 1.7. 
+
+pp. 37-38
+
+aaaaaaaaand differencing!
+
+THEN: transforms : p. 42
+
+#Fourier Analysis
+
+
+
+
+#References
+
