@@ -11,28 +11,211 @@ author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistr
 
 **These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
 
-**Warning**: The R code in this .pdf may not execute properly if you copy & paste it. You will need to either type it in directly OR copy and paste from the .html document corresponding to this Workshop.
 
 
 **Workshop IV** is concerned with time series analysis.
 
 #Exploratory Time Series Analysis
 
+##Example 1: The energetics of zebrafish embryogenesis 
+
+**Biological set-up (collaboration with Jonathan Rodenfels):** We used an isothermal calorimeter (ITC) to measure the heat dissipated by zebrafish embryos during the early stages of embryogenesis [JR will write a bit more for here]. The heat dissipation of such a system is commonly used as a definition for metabolic rate. Here I plot the average metabolic rate of ~30 zebrafish embryos in an ITC:
+
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-require(astsa)
-plot(speech)
-require(ggfortify)
-autoplot(speech) + xlab("time (sec.)") + ylab("speech")
+setwd("~/repos/statistical_inference/prac_stats_2016/")
+require(ggplot2)
+data = read.csv("data/zf_heat_JR.csv")
+df = data[1:10000,]
+ggplot( df , aes( time , heat )) + geom_line() #+ ylim(0,0.75)
+#qplot(data$time..sec..[1:10000] , data$heat..ncal.min..[1:10000]) + geom_line()
+#exponential.model <- lm(log(df$heat) ~ df$time)
+#df$m <- exp(predict(exponential.model,list(df$time)))
+#ggplot( df , aes( time , heat )) + geom_line() + geom_line(aes(time,m) , col = 2)
 ```
+
+**Exercise 1 (~5 minutes)**: Discuss with your neighbours what you see in this time series. Come up with 3 qualities of the data.
+
+#Filtering
+
+As we saw above, to a first order approximation, we can think of a time series as having 3 components: i) a trend, ii) a periodic component & iii) noise/fluctuations. All 3 of us these may be of interest, however the fluctuations are generally of less concern & we would like to more readily see both the trend & the periodic compenent, which together make up the signal. To do so, we'll need to perform some noise reduction, the first essential examples of which fall under the banner of filtering techniques.
+
+##Moving averages & median filters
+
+**Moving average**
+
+Intuitively speaking, a *moving average* reduces the noise in a time series by replacing each point in the series with the (possibly weighted) average of $n$ of its neighbours, for some $n$. The larger theis $n$, the smoother the resulting time series.
+
+**Definition**: [Provide the precise mathematical definition of the moving average].
+
+**Example**:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+# require(ggplot2)
+w = 11
+df$ma <- filter(df$heat, sides=2, rep(1/w,w)) # moving average 
+ggplot( df , aes( time , ma )) + geom_line()
+#qplot(data$time..sec..[1:10000] , data$heat..ncal.min..[1:10000]) + geom_line()
+```
+
+**Question**: What is the significance of the Warning that R threw us? Why did it occur?
+
+**Exercise 2 (~15 minutes)**: 
+
+1. In the above code, the function *filter* has an argument *sides*. What is this argument? *Hint*: Execute help(filter) in the console. 
+
+2. Apply moving averages to the zebrafish data for a variety of window sizes w. What happens as w gets large?
+
+3. Is it possible to use a moving average to remove the oscillatory component as well as the noise? If so, what window size is required to achieve this? Is there a general rule that would provide a window to remove oscillatory components?
+
+from https://onlinecourses.science.psu.edu/stat510/node/70
+'For non-seasonal series, you aren’t bound to smooth over any particular span.  For smoothing you should experiment with moving averages of different spans.  Those spans of time could be relatively short.  The objective is to knock off the rough edges to see what trend or pattern might be there.'
+
+**Median filter**
+
+When there are some serious outliers in the data, you may want to use a *median* filter instead as it is more robust to outliers:
+
+**Definition**: [Include definition]
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+w <- 51 #window size
+df$med11 <- runmed(df$heat , w)
+ggplot( df , aes( time , med11 )) + geom_line()
+```
+
+*Exercise*: Play around with the window size $w$: what happens as $w$ gets large? How does this compare to the *moving average*?
+
+See pp. 48-50 of Shumway & Stoffer for further details & examples.
+
+
+
+##(First) difference operators ? p. 41
+
+The difference operator is one way to remove trends:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+plot.ts(diff(df$heat[0:2500]))
+```
+
+##Kernel smoothing
+
+
+
+##Lowess filters
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+plot.ts(df$heat)
+lines(lowess(df$heat, f=.05), lwd=2, col=4) # El Nino cycle
+lines(lowess(df$heat), lty=2, lwd=2, col=2) # trend (using default span)
+```
+
 
 The analysis of experimental data that have been observed at different points in time leads to new and unique problems in statistical modeling and inference. The obvi- ous correlation introduced by the sampling of adjacent points in time can severely restrict the applicability of the many conventional statistical methods traditionally dependent on the assumption that these adjacent observations are independent and identically distributed. The systematic approach by which one goes about answer- ing the mathematical and statistical questions posed by these time correlations is commonly referred to as time series analysis. -- p.1
 
 The primary objective of time series analysis is to develop mathematical models that provide plausible descriptions for sample data, like that encountered in the previous section. -- p.5
 
-**Exercise 1 (~15 minutes)**:
+#Subtracting the trend
+
+##Subtract the moving average:
+
+Do it with ZF:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+df$osc1 <- df$heat - df$ma
+ggplot( df , aes( time , osc1 )) + geom_line()
+```
 
 
-##White noise
+NOT SO GOOD!
+
+Maybe we need to fit a model?
+
+##Fitting polynomials
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+require(pracma)
+p <- polyfit( df$time , df$heat , 5)
+df$p <- polyval(p, df$time)
+#ggplot( df , aes( time , p )) + geom_line() #+ ylim(0,0.75)
+df$osc <- df$heat - df$p
+ggplot( df , aes( time , osc )) + geom_line() #+ ylim(0,0.75)
+p
+df$osc_lowess <- lowess(df$osc, f=.05)[[2]]
+ggplot( df , aes( time , osc)) + geom_line() + geom_line( aes( time , osc_lowess ) , col =2)
+```
+
+##Fitting models (splines)
+
+Spline = locally polynomial.
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+df$spline <-spline(df$time , df$heat)
+#ggplot( df , aes( time , spline )) + geom_line()
+```
+
+Now we have a somewhat periodic signal, that is, one that approximately repeats itself.
+
+Autocorrelation helps us to think about such signals.
+
+#Autocorrelation of time series
+
+##Correlation
+
+**Example 1:** scatterplot.
+
+**Example 2:** mRNA + protein (simulated)?
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+dd <- read.csv("data/genetic_osc_sim.csv")
+ggplot( dd[1:500,] , aes(time , mRNA)) + geom_line() + geom_line(aes(time,protein) , col = 2)
+```
+
+##Correlation of time series
+
+**Example 1:** genetic oscillators?
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+CYratioCyt <- read.csv('CYratioCyt.csv')
+rfpCyt <- read.csv('rfpCyt.csv')
+rfpNuc <- read.csv('rfpNuc.csv')
+ampk=-CYratioCyt
+akt=rfpCyt/rfpNuc
+ampk$t <- 1:137
+akt$t <- 1:137
+df1 <- data.frame( 1:137 , ampk$V25 , akt$V25)
+colnames(df1) <- c('time' , 'ampk' , 'akt')
+df1$akt[1] <- 0
+ggplot(df1[27:137,] , aes(time , ampk + 2.5)) + geom_line() + geom_line( aes( time , akt) , col = 2)
+ccf(df1$ampk + 2.5, df1$akt)
+```
+
+##Autocorrelation of time series
+
+The autocorrelation function (ACF) is
+
+$$\rho(s,t) = \frac{\gamma(s,t)}{\sqrt{\gamma(s,s)\gamma(t,t)}}$$
+  
+  The ACF is a special case of the cross-correlation function (CCF).
+
+The autocorrelation function (ACF) of a stationary time series is
+
+$$\rho(h) = \frac{\gamma(h)}{\gamma(0)},$$
+  
+  where $\gamma(h) = cov(x_{t+h} , x_t) = E[(x_{t+h} - \mu)(x_t - \mu)]$ is the autocovariance function of a stationary time series.
+
+
+**Example:** ZF.
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+acf(df$osc , lag.max = 1500)
+acf(df$osc_lowess , lag.max = 1500)
+```
+
+
+Anything else?
+
+##Other examples of autocorrelation of time series
+
+###White noise
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 #require(stats)
@@ -45,17 +228,10 @@ plot.ts(v, ylim=c(-3,3), main="moving average")
 
 If the stochastic behavior of all time series could be explained in terms of the white noise model, classical statistical methods would suffice. Two ways of intro- ducing serial correlation and more smoothness into time series models are given in Example 1.7 and Example 1.8. -- p.6
 
-##Autoregression (introducing serial correlation)
 
-The autoregressive model above and its generalizations can be used as an underlying model for many observed series and will be studied in detail in Chapter 3. -- p.7
+###Brownian motion
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-w = rnorm(550,0,1) # 50 extra to avoid startup problems
-x = filter(w, filter=c(1,-.9), method="recursive")[-(1:50)] 
-plot.ts(x, main="autoregression")
-```
-
-##Random walk with drift
+###Random walk with drift
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 set.seed(154) # so you can reproduce the results
@@ -65,136 +241,91 @@ plot.ts(xd, ylim=c(-5,55), main="random walk")
 lines(x); lines(.2*(1:200), lty="dashed")
 ```
 
-##Signals in noise
+#Fourier analaysis
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-cs = 2*cos(2*pi*1:500/50 + .6*pi)
-w = rnorm(500,0,1)
-par(mfrow=c(3,1), mar=c(3,2,2,1), cex.main=1.5)
-plot.ts(cs, main=expression(2*cos(2*pi*t/50+.6*pi)))
-plot.ts(cs+w, main=expression(2*cos(2*pi*t/50+.6*pi) + N(0,1)))
-plot.ts(cs+5*w, main=expression(2*cos(2*pi*t/50+.6*pi) + N(0,25)))
+##Introduction
+
+Check out this sinusoid:
+
+Check out this sum of sinusoids:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+x1 = 2*cos(2*pi*1:100*6/100) + 3*sin(2*pi*1:100*6/100)
+acf(x1)
+x2 = 4*cos(2*pi*1:100*10/100) + 5*sin(2*pi*1:100*10/100)
+x3 = 6*cos(2*pi*1:100*40/100) + 7*sin(2*pi*1:100*40/100)
+x = x1 + x2 + x3
+#par(mfrow=c(2,2))
+plot.ts(x1, ylim=c(-10,10), main=expression(omega==6/100~~~A^2==13))
+plot.ts(x2, ylim=c(-10,10), main=expression(omega==10/100~~~A^2==41))
+plot.ts(x3, ylim=c(-10,10), main=expression(omega==40/100~~~A^2==85))
+plot.ts(x,  ylim=c(-16,16), main="sum")
 ```
 
-#Doing some statistics on time series
+Look at autocorrelation of these sinusoids :-)
 
-##Mean function
-
-##Autocovariance function
-
-The autocovariance function is the second moment product
-
-$$\gamma(s,t) = cov(x_s , x_t) = E[(x_s - \mu_s)(x_t - \mu_t)]$$
-
-##Stationary time series
-
-OK!
-
-#Filtering
-
-Noie reduction. Smoothing. Faster oscillations taken out, slower ones remain.
-
-##Moving averages & median filters
+**Essential:** Fourier Theorem.
 
 
-p. 48 !
+##Fourier analysis
 
-
-##(First) difference operators ? p. 41
-
-##Kernel smoothing
-
-
-##Lowess filters
-
-
-#Autocorrelation
-
-p. 13
-
-The autocorrelation function (ACF) is
-
-$$\rho(s,t) = \frac{\gamma(s,t)}{\sqrt{\gamma(s,s)\gamma(t,t)}}$$
-
-The ACF is a special case of the cross-correlation function (CCF).
-
-The autocorrelation function (ACF) of a stationary time series is
-
-$$\rho(h) = \frac{\gamma(h)}{\gamma(0)},$$
-
-where $\gamma(h) = cov(x_{t+h} , x_t) = E[(x_{t+h} - \mu)(x_t - \mu)]$ is the autocovariance function of a stationary time series.
-
-##Examples of autocorrelation etc...
-
-Autocorrelation plots & scatterplots!
-
-**White noise**
-
-
-**Moving average**
-
-**Trend Stationarity**
-
-p. 17
-
-##Dealing with real data
-
-###Sample autocovariance & sample ACF
-
-pp. 19-20
-
-give examples: 
-
-some genetic oscillator --
-
-would be great to have 2 oscillators with interesting cross correlation!
-
-zebrafish energetics
-
-aaaaaand....
+###Description & set up
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-#par(mfrow=c(3,1))
-#p. 24
-acf(soi, 48, main="Southern Oscillation Index")
-acf(rec, 48, main="Recruitment")
-ccf(soi, rec, 48, main="SOI vs Recruitment", ylab="CCF")
+#require(signal)
+PSD <- function(d){
+  n = length(d)
+  Per = Mod(fft(d-mean(d)))^2/n
+  #Freq = (1:n -1)/n*30000
+  return(Per)
+}
 ```
 
-THen PrewhiteningandCrossCorrelationAnalysis -- p. 24
+###Examples
+
+**Example 1:**
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+x1 = 2*cos(2*pi*1:100*6/100) + 3*sin(2*pi*1:100*6/100)
+spec.pgram(x1) -> xx
+dff2 <- data.frame( xx$spec , xx$freq )
+colnames(dff2) <- c("PSD", "Freq")
+ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10()
+i <- which.max(dff2$PSD)
+dom_freq <- dff2$Freq[i]
+print(paste('dominant frequency =' , toString(dom_freq)))
+```
+
+**Example 2**: White noise
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+w = rnorm(800,0,1); x = cumsum(w) # two commands in one line
+spec.pgram(w) -> xx
+dff2 <- data.frame( xx$spec , xx$freq )
+colnames(dff2) <- c("PSD", "Freq")
+ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10() + scale_y_log10()
+i <- which.max(dff2$PSD)
+dom_freq <- dff2$Freq[i]
+print(paste('dominant frequency =' , toString(dom_freq)))
+```
 
 
-#Time Series Regression and EDA
+**Example 3:** Zebrafish energetics
 
-p. 29
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
+n = length(df$osc)
+Freq = (1:n -1)/n
+psd <- PSD(df$osc)
+dff <- data.frame( psd , Freq )
+colnames(dff) <- c("PSD", "Freq")
+ggplot( dff , aes(Freq , PSD)) + geom_line()+ scale_x_log10(limits = c(1e-5 , 1e-1))
+i <- which.max(dff$PSD)
+dom_freq <- dff$Freq[i]
+print(paste('dominant frequency =' , toString(dom_freq)))
 
-Do a linear regression for data that has trend + some periodicity: global temp.; zf energetics!
+spec.pgram(df$osc) -> xx
+dff2 <- data.frame( xx$spec , xx$freq )
+colnames(dff2) <- c("PSD", "Freq")
+ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10()
+```
 
-##F-statistic/test to compare models
-
-p. 32
-
-##Akaike's Information Criterion (AIC)
-
-##Regression w/ lagged variables
-
-
-##Detrending time series data
-
-
-In general, it is necessary for time series data to be stationary so averaging lagged products over time, as in the previous section, will be a sensible thing to do. With time series data, it is the dependence between the values of the series that is important to measure; we must, at least, be able to estimate autocorrelations with precision. It would be difficult to measure that dependence if the dependence structure is not
-regular or is changing at every time point. Hence, to achieve any meaningful sta- tistical analysis of time series data, it will be crucial that, if nothing else, the mean and the autocovariance functions satisfy the conditions of stationarity (for at least some reasonable stretch of time) stated in Definition 1.7. 
-
-pp. 37-38
-
-aaaaaaaaand differencing!
-
-THEN: transforms : p. 42
-
-#Fourier Analysis
-
-
-
-
-#References
 
