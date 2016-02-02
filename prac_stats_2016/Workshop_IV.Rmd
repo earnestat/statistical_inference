@@ -1,331 +1,656 @@
 ---
-title: "Practical statistics IV: Time Series Analysis"
+title: "Practical Statistics IV: Time series analysis"
 output:
-  html_document:
+  pdf_document:
     toc: true
     fig_caption: false
     number_sections: true
-date: "15 January 2016"
+date: "31 January 2016"
 author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
 ---
 
-**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in the Fall of 2015, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in January, 2016, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
 
-
-
-**Workshop IV** is concerned with time series analysis.
+**Workshop IV** is concerned with time series analysis. First, we will look at exploratory time series analysis. Then we will look into filtering and smoothing time series data by using methods to remove both noise and trends. In this workshop, I will also introduce correlation, cross-correlation, autocorrelation, & Fourier analysis.
 
 #Exploratory Time Series Analysis
 
-##Example 1: The energetics of zebrafish embryogenesis 
+We delve into exploratory time series analysis with 3 examples & an exercise:
 
-**Biological set-up (collaboration with Jonathan Rodenfels):** We used an isothermal calorimeter (ITC) to measure the heat dissipated by zebrafish embryos during the early stages of embryogenesis [JR will write a bit more for here]. The heat dissipation of such a system is commonly used as a definition for metabolic rate. Here I plot the average metabolic rate of ~30 zebrafish embryos in an ITC:
+
+**Exercise 1 (~5 minutes)**: Discuss with your neighbours what you see in these time series. What are the similarities? What are the differences? Come up with 3 qualities of time series data.
+
+
+**Example 1: The energetics of zebrafish embryogenesis**
+
+**Biological set-up (collaboration with Jonathan Rodenfels):** We used an isothermal calorimeter (ITC) to measure the heat dissipated by zebrafish embryos during the early stages of embryogenesis. The heat dissipation of such a system is commonly used as a definition for metabolic rate. Here I plot the average metabolic rate of ~30 zebrafish embryos in an ITC:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-setwd("~/repos/statistical_inference/prac_stats_2016/")
+path <- file.path("~" , "Documents" , "Prac_Stats_2016_material_HBA")#path for working directory
+setwd(path) #set path
 require(ggplot2)
-data = read.csv("data/zf_heat_JR.csv")
-df = data[1:10000,]
-ggplot( df , aes( time , heat )) + geom_line() #+ ylim(0,0.75)
-#qplot(data$time..sec..[1:10000] , data$heat..ncal.min..[1:10000]) + geom_line()
-#exponential.model <- lm(log(df$heat) ~ df$time)
-#df$m <- exp(predict(exponential.model,list(df$time)))
-#ggplot( df , aes( time , heat )) + geom_line() + geom_line(aes(time,m) , col = 2)
+file <- file.path("data" , "zf_heat_JR.csv") 
+data = read.csv(file) #load data
+df = data[1:10000,] #look at start of data
+#plot data:
+ggplot( df , aes( time  , heat )) + xlab("time (sec.)") + ylab("heat (ncal/sec.)")+ geom_line() #+ ylim(0,0.75)
+
+file <- file.path("data" , "trapped bead.dat")
+data <- read.table( file ) #load data
 ```
 
-**Exercise 1 (~5 minutes)**: Discuss with your neighbours what you see in this time series. Come up with 3 qualities of the data.
+**Example 2: A bead in a trap**
+
+**Experimental set-up:** We have a bead in an optical trap (Tolić-Nørrelykke et al., 2006; Jannasch et al., 2011). The data consists of a time series of the bead position in 3 dimensions. We will only be concerned with 1 horizontal dimension here:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE, warning=FALSE}
+file <- file.path("data" , "trapped bead.dat")
+data <- read.table( file ) #load data
+d <- data$V1 #look at 1st variable
+plot.ts(d[1:10000] , ylab = "position from centre (uM)" , xlab = "time (sec.)")
+```
+
+**Example 3: Synthetic data**
+
+Here we have synthesized data:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
+t = 1:100 #define time points
+x1 = 3*sin(2*pi*0.06*t)
+x2 = 5*sin(2*pi*0.1*t)
+x3 = 7*sin(2*pi*0.4*t)
+x = x1 + x2 + x3
+plot.ts(x,  ylim=c(-16,16) , ylab = "position (dimensionless)" , xlab = "time (dimensionless)")
+```
+
+**Summary:** we can think of time series data as having 3 components...
+
+1. a trend,
+2. a periodic component, and
+3. noise or fluctuations.
+
+When collecting time series data, it is a good idea to visualize the data in a number of ways so that you can get a sense of the data's components, which can highlight pertinent, subsequent analyses, which we now discuss. 
 
 #Filtering
 
-As we saw above, to a first order approximation, we can think of a time series as having 3 components: i) a trend, ii) a periodic component & iii) noise/fluctuations. All 3 of us these may be of interest, however the fluctuations are generally of less concern & we would like to more readily see both the trend & the periodic compenent, which together make up the signal. To do so, we'll need to perform some noise reduction, the first essential examples of which fall under the banner of filtering techniques.
+As we saw above, to a first order approximation, we can think of a time series as having 3 components: i) a trend, ii) a periodic component & iii) noise/fluctuations. All 3 of these may be of interest; however, the fluctuations are generally of less concern & we would like to more readily see both the trend & the periodic component, which together make up the signal. To do so, we'll need to perform some noise reduction, the first essential examples of which fall under the banner of filtering techniques.
 
 ##Moving averages & median filters
 
 **Moving average**
 
-Intuitively speaking, a *moving average* reduces the noise in a time series by replacing each point in the series with the (possibly weighted) average of $n$ of its neighbours, for some $n$. The larger theis $n$, the smoother the resulting time series.
+Intuitively speaking, a *moving average* reduces the noise in a time series by replacing each point in the series with the (possibly weighted) average of $w$ of its neighbours, for some $w \in \mathbb{Z}$. The larger the window size $w$, the smoother the resulting time series.
 
-**Definition**: [Provide the precise mathematical definition of the moving average].
 
-**Example**:
+**Definition:** Given a time series $X(t)$ and $\tau = \frac{1}{s}$ (the amount of time between data points = the inverse sampling rate), the moving average at time $t$, called $Y(t)$, is given by the following formula:
+
+$$ Y(t) = \frac{1}{w}\sum_{j=0}^{w-1} X(t-j*\tau). $$
+
+In other words, $Y(t)$ corresponds to the average of the $w-1$ data points that precede $X(t)$ and $X(t)$ itself. The moving average can also be centered at $X(t)$, in which case, the formula for $X(t)$ is given by:
+
+$$ Y(t) = \frac{1}{w}\sum_{j=-\frac{w-1}{2}}^{\frac{w-1}{2}} X(t+j*\tau),$$
+
+where we have assumed that $w$ is odd in this definition.
+
+
+**Example**: We apply a moving average filter to the zebrafish data:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-# require(ggplot2)
-w = 11
-df$ma <- filter(df$heat, sides=2, rep(1/w,w)) # moving average 
-ggplot( df , aes( time , ma )) + geom_line()
-#qplot(data$time..sec..[1:10000] , data$heat..ncal.min..[1:10000]) + geom_line()
+w = 11 #set window size
+df$ma <- filter(df$heat, sides=2, rep(1/w,w)) # perform moving average 
+ggplot( df , aes( time , ma )) + geom_line() + xlab("time (sec.)") + ylab("mov. av. of heat (ncal/sec.)")
 ```
 
-**Question**: What is the significance of the Warning that R threw us? Why did it occur?
+**Question**: Why did R throw us a *Warning* above?
 
 **Exercise 2 (~15 minutes)**: 
 
 1. In the above code, the function *filter* has an argument *sides*. What is this argument? *Hint*: Execute help(filter) in the console. 
 
-2. Apply moving averages to the zebrafish data for a variety of window sizes w. What happens as w gets large?
+2. Apply moving averages to the zebrafish data for a variety of window sizes $w$. What happens as $w$ gets large? How about as $w$ gets small?
 
-3. Is it possible to use a moving average to remove the oscillatory component as well as the noise? If so, what window size is required to achieve this? Is there a general rule that would provide a window to remove oscillatory components?
+3. Is it possible to use a moving average to remove the oscillatory component as well as the noise? If so, what window size is required to achieve this? Is there a general rule that would provide a window size to remove oscillatory components?
 
-from https://onlinecourses.science.psu.edu/stat510/node/70
-'For non-seasonal series, you aren’t bound to smooth over any particular span.  For smoothing you should experiment with moving averages of different spans.  Those spans of time could be relatively short.  The objective is to knock off the rough edges to see what trend or pattern might be there.'
+**Rule of thumb for moving average window size**:
 
-**Median filter**
+For smoothing you should experiment with moving averages of different window sizes $w$.  Those window sizes could be relatively short.  The objective is to remove the roughness in the time series to see what trend or pattern might be there. See [here](https://urldefense.proofpoint.com/v2/url?u=https-3A__onlinecourses.science.psu.edu_stat510_node_70&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=zqnCgWRZIQeNrP5_DHUn7RdRI7HYLEFrBaYT4fBu6uM&e= ) for more.
 
-When there are some serious outliers in the data, you may want to use a *median* filter instead as it is more robust to outliers:
+**Median filter (or moving median)**
 
-**Definition**: [Include definition]
+
+When there are  outliers in the data (due to noise), you may want to use a *median* filter instead as it is more robust to outliers (we saw this in Workshop I):
+
+**Definition:** Given a time series $X(t)$ and $\tau = \frac{1}{s}$ (the inverse sampling rate), the moving median at time $t$, called $Y(t)$, is given by the following formula:
+
+
+$$ Y(t) = \text{Median}(\{X(t-j*\tau):j \in \{0,\ldots, w-1\}\}). $$
+
+In other words, $Y(t)$ corresponds to the median of the $w-1$ data points that precede $Y(t)$ and $X(t)$ itself. Similar to the moving average, the moving median can also centered at $x(t)$, in which case, the formula for $Y(t)$ is given by:
+
+$$ Y(t) = \text{Median}(\{X(t+j*\tau):j \in \{-\frac{w-1}{2},\ldots, \frac{w-1}{2}\}\}),$$
+
+where we have assumed that $w$ is odd in this definition.
+
+**Example:** We apply a median filter to the zebrafish data:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
 w <- 51 #window size
-df$med11 <- runmed(df$heat , w)
-ggplot( df , aes( time , med11 )) + geom_line()
+df$med <- runmed(df$heat , w) #perform median filter
+ggplot( df , aes( time , med )) + geom_line() + xlab("time (sec.)") + ylab("med. filter of heat (ncal/sec.)")
 ```
 
-*Exercise*: Play around with the window size $w$: what happens as $w$ gets large? How does this compare to the *moving average*?
+**Exercise 3 (~5 minutes)**: Play around with the window size $w$: what happens as $w$ gets large? How does this compare to the *moving average*?
 
-See pp. 48-50 of Shumway & Stoffer for further details & examples.
+See pp. 48-50 of (Shumway & Stoffer, 2011) for further details & examples.
 
-
-
-##(First) difference operators ? p. 41
-
-The difference operator is one way to remove trends:
-
-```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-plot.ts(diff(df$heat[0:2500]))
-```
-
-##Kernel smoothing
-
-
+**What type of filter is appropriate for my data & my question?** There is no free lunch here. Play around with different kinds of filters while keeping the following in mind: 'The objective is to remove the roughness in the time series to see what trend or pattern might be there.'
 
 ##Lowess filters
 
+I will mention one other filter here, the Lowess (locally weighted scatterplot smoothing) filter. I will NOT define it formally but I will give an intuition towards it.
+
+**Intuition:** the Lowess filter performs a local regression on each data point's nearest neighbours and uses the predicted value from this regression as the value for that data point. 
+
+**Note:** the Lowess filter differs from the moving average & the median filter because it doesn't use a summary statistic (mean & median, respectively) to make a prediction of the value for each data point in a time series curve; instead, the Lowess filter uses local regression to predict each data point's value.
+
+**Example**: Lowess filters of 2 distinct window sizes applied to the zebrafish ITC data:
+
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-plot.ts(df$heat)
-lines(lowess(df$heat, f=.05), lwd=2, col=4) # El Nino cycle
-lines(lowess(df$heat), lty=2, lwd=2, col=2) # trend (using default span)
+plot.ts(df$heat , xlab = "time (sec.)" , ylab ="heat (ncal/sec.)")
+lines(lowess(df$heat, f=.05), lwd=2, col=2) #with small(ish) window size
+lines(lowess(df$heat), lty=2, lwd=2, col=4) # produce trend (using default span: large) 
 ```
 
+**Pros:**
 
-The analysis of experimental data that have been observed at different points in time leads to new and unique problems in statistical modeling and inference. The obvi- ous correlation introduced by the sampling of adjacent points in time can severely restrict the applicability of the many conventional statistical methods traditionally dependent on the assumption that these adjacent observations are independent and identically distributed. The systematic approach by which one goes about answer- ing the mathematical and statistical questions posed by these time correlations is commonly referred to as time series analysis. -- p.1
+* The Lowess filter does not require you to specify a function. You only have to provide a smoothing parameter value and the degree of the local polynomial;
+* Lowess is very flexible due to possible specifications of particular polynomial models & weights. This makes it ideal for modeling complex processes for which no theoretical models exist.
 
-The primary objective of time series analysis is to develop mathematical models that provide plausible descriptions for sample data, like that encountered in the previous section. -- p.5
+**Cons:**
 
-#Subtracting the trend
+* Lowess is less efficient in its use of data than other least squares methods. It also requires densely sampled data & hence results in less complex data analysis in exchange for greater experimental costs.
+* Lowess does not produce a regression function that is easily represented by a mathematical formula. This means the models cannot be interpreted mechanistically.
 
-##Subtract the moving average:
+**Note:** Given the pros listed above, along with how simple the method is to implement, Lowess is one of the more popular modern regression methods for situations that fit the general framework of least squares regression but which have complexly structured data, such as time series. If you want to use Lowess, I would also suggest consulting a statistician.
 
-Do it with ZF:
-
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-df$osc1 <- df$heat - df$ma
-ggplot( df , aes( time , osc1 )) + geom_line()
-```
-
-
-NOT SO GOOD!
-
-Maybe we need to fit a model?
+To yield a smooth signal, we could also think about fitting models instead of filtering.
 
 ##Fitting polynomials
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 require(pracma)
-p <- polyfit( df$time , df$heat , 5)
-df$p <- polyval(p, df$time)
-#ggplot( df , aes( time , p )) + geom_line() #+ ylim(0,0.75)
-df$osc <- df$heat - df$p
-ggplot( df , aes( time , osc )) + geom_line() #+ ylim(0,0.75)
-p
-df$osc_lowess <- lowess(df$osc, f=.05)[[2]]
-ggplot( df , aes( time , osc)) + geom_line() + geom_line( aes( time , osc_lowess ) , col =2)
+p <- polyfit( df$time , df$heat , 5) #fit a polynomial of degree 5.
+df$p <- polyval(p, df$time) #evaluate poly fit at time points & put in new column of df
+ggplot( df , aes( time , heat )) + geom_line() + geom_line(aes( time , p ) , col = 2) +
+  xlab("time (sec.)") + ylab("heat (ncal/sec.)")
 ```
 
-##Fitting models (splines)
-
-Spline = locally polynomial.
-
+Let's check out the coefficients of the fitted polynomial:
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-df$spline <-spline(df$time , df$heat)
-#ggplot( df , aes( time , spline )) + geom_line()
+print(p) #print coefficients of the fit polynomial
 ```
 
-Now we have a somewhat periodic signal, that is, one that approximately repeats itself.
 
-Autocorrelation helps us to think about such signals.
+**Exercise 4 (~10 minutes):** Play around with fitting polynomials of different degrees. Why did I settle on a polynomial of degree 5? How would you robustly & mathematically formalize the validity of my choice?
+
+**Pro:** If your model is mechanistic, that is, the parameters of the model have physical/biological interpretations (fitting the polynomial above does not), then this can aid in explaining the time series in terms of the biology. It could also be useful for making experimental predictions.
+
+**Con:** In fitting a model, as opposed to filtering, it will not always be obvious whether you are removing noise, oscillation or trends.
+
+**Note:** Another common method of smoothing time series data is fitting what are known as *splines*, which are local polynomials. Cubic splines are used a great deal in time series analysis and we will not cover them here. See [here](https://urldefense.proofpoint.com/v2/url?u=http-3A__codeplea.com_introduction-2Dto-2Dsplines&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=5O_jQopTotgkGh5q2-w4eKNfkDzXOHy7qbNu0CETo-8&e= ) for a web-based introduction to splines and [here](https://urldefense.proofpoint.com/v2/url?u=https-3A__stat.ethz.ch_R-2Dmanual_R-2Ddevel_library_stats_html_smooth.spline.html&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=N4tmveZuHGpfM_FJVx5-PJM6RXYjiyMXUYVe2wW8uBc&e= ) for how to implement splines in R.
+
+
+
+##Application of filtering: Subtracting the trend
+
+We have seen that filtering provides a way of finding the trend. What if we desire to study the oscillations? Well, one way to go about it is to subtract the trend from the original time series. 
+
+###Subtract the moving average.
+
+As a proof of principle, we subtract the moving average from the zebrafish data to retrieve the oscillatory component (+ noise):
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning = FALSE}
+w <- 900 #window size to remove the oscillations
+df$osc <- df$heat - filter(df$heat, sides=2, rep(1/w,w)) # moving average 
+ggplot( df , aes( time , osc )) + geom_line() +
+  xlab("time (sec.)") + ylab("osc. comp. of heat (ncal/sec.)")
+```
+
+**Exercise 5 (~5 minutes):** Apply a lowess filter to the oscillatory component of the signal that we have just found & produce a figure that resembles the following:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE, warning = FALSE}
+df$osc_lowess <- lowess(df$osc, f=.05)[[2]] #lowess filter on oscillations
+ggplot( df , aes( time , osc)) + geom_line() + geom_line( aes( time , osc_lowess ) , col =2)+
+  xlab("time (sec.)") + ylab("osc. comp. of heat (ncal/sec.)")
+```
+
+
+
 
 #Autocorrelation of time series
 
+We now look at autocorrelation. This may seem a change of pace, however whenever we have a periodic signal, autocorrelation will tell us about its period, that is, how often it repeats itself. Essentially, autocorrelation indicates how a signal is correlated with a lagged copy of itself. If that doesn't make sense, it will soon. Before rigorously defining autocorrelation, we'll need to define correlation. We do so not merely for time series, but for two variables $X$ and $Y$. 
+
 ##Correlation
 
-**Example 1:** scatterplot.
+*Correlation* measures to what extent two variables $X$ and $Y$ are **linearly** correlated. 
 
-**Example 2:** mRNA + protein (simulated)?
+The correlation between two variables $X$ and $Y$ (with expected values, $\mu_X$ and $\mu_Y$ and standard deviations $\sigma_X$ and $\sigma_Y$) is given by the correlation coefficient:
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-dd <- read.csv("data/genetic_osc_sim.csv")
-ggplot( dd[1:500,] , aes(time , mRNA)) + geom_line() + geom_line(aes(time,protein) , col = 2)
-```
+$$ \rho(X,Y) = \frac{covariance(X,Y)}{\sigma_X \sigma_Y} = \frac{\sum_i(X_i - \mu_X)(Y_i - \mu_Y)}{\sigma_X \sigma_Y} $$
 
-##Correlation of time series
 
-**Example 1:** genetic oscillators?
+**Example 1:** 
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-CYratioCyt <- read.csv('CYratioCyt.csv')
-rfpCyt <- read.csv('rfpCyt.csv')
-rfpNuc <- read.csv('rfpNuc.csv')
-ampk=-CYratioCyt
-akt=rfpCyt/rfpNuc
-ampk$t <- 1:137
-akt$t <- 1:137
-df1 <- data.frame( 1:137 , ampk$V25 , akt$V25)
-colnames(df1) <- c('time' , 'ampk' , 'akt')
-df1$akt[1] <- 0
-ggplot(df1[27:137,] , aes(time , ampk + 2.5)) + geom_line() + geom_line( aes( time , akt) , col = 2)
-ccf(df1$ampk + 2.5, df1$akt)
+cars <- mtcars
+p2 <- ggplot( data = cars , aes( x = mpg , y = wt)) #initialize plot to look at the relationship
+#between variables (bivariate) miles /gallon & weight (lb/1000)
+#plot scatter of mpg vs weight; plot linear fit + 95% confidence bands:
+p2 + geom_point() + stat_smooth( method = "lm") + xlab("miles per gallon") + ylab("weight (lb/1000)")
 ```
+
+In R, we compute the correlation coefficient $\rho(X,Y)$ as follows:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+cor( cars$mpg , cars$wt ) #correlation coefficient
+```
+
+**Rules of thumb for interpreting the correlation coefficient**:
+
+* A correlation coefficient of 1 means a perfect +ve linear correlation;
+* A correlation coefficient of 0.7 means a strong +ve linear correlation;
+* A correlation coefficient of 0.5 means a moderate +ve linear correlation;
+* A correlation coefficient of 0.3 means a weak +ve linear correlation;
+
+**Question**: What do correlation coefficients of 0, -0.3, -0.5, -0.7 & -1 mean?
+
+Also see [here](https://urldefense.proofpoint.com/v2/url?u=http-3A__www.ncbi.nlm.nih.gov_pmc_articles_PMC3576830_&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=ebb-1ylwAAl_Jp1tDIP7lOFJ2qKTAnMfmkihyaBIqww&e= ).
+
+
+**Word of warning**: Two variables may be correlated, but not linearly correlated!!
+
+**Example 2: mRNA + protein expression dynamics.**
+
+Gene regulatory networks are known to produce oscillatory dynamics of protein expression levels. The 2 simplest models that produce such periodic expression patterns are i) networks of 3 genes (see the *repressilator*, Elowitz & Leibler, 2002) & ii) a single auto-inhibitory gene with a transcriptional delay (see Lewis, 2003). We shall currently focus on the latter: the gist is that a protein represses the transcription of its own mRNA; this would usually result in a steady state concentration of both mRNA & protein; however, if we include a transcriptional delay, this allows enough mRNA to generate oscillations to be transcribed before the protein that is expressed can suppress it. See (Lewis, 2003) for more details: it's a great paper! I have simulated this system (in MATLAB; code available upon request) and the data is loaded & plotted below.
+
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+file <- file.path(path,"data" , "genetic_osc_sim.csv")
+dd <- read.csv( file )[1:500,] #load beginning of data
+#plot (+ labels etc...):
+ggplot( dd[1:500,] , aes(time , mRNA) ) + geom_line(aes(col = "mRNA")) + 
+  geom_line(aes(time,protein, col = "protein") ) +
+  xlab("time (dimensionless)") + ylab("number of molecules") + theme(legend.title=element_blank())
+```
+
+**Exercise 6 (~5 minutes)**: Write one line of code to compute the correlation coefficient of mRNA & protein over time. Interpret this correlation coefficient. How does this accord with how correlated the mRNA & protein levels look in the plot?
+
+
+##Cross correlation of time series
+
+**Intuition:** Two given time series $X(t) , Y(t)$ may be correlated, however with a lag $\tau$. This means that $X(t)$ is correlated with $Y(t+\tau)$, rather than being correlated with $Y(t)$.
+
+**Definition:** Given two time series $X(t) , Y(t)$ & $|\tau| <L$ ($L$ = length of time series), the cross-correlation at a lag $\tau$, $cc(\tau)$, is given by:
+
+$$cc(\tau) = \rho(X(t) , Y(t+\tau) ),$$
+
+where $\rho$ is the correlation function defined above.
+
+**Technical Note:** The lag $\tau$ can only be defined for integer multiples of the inverse sampling rate $1/s$.
+
+**Example: Cross correlation of mRNA & protein.** 
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+ccf_mp <- ccf( dd$mRNA , dd$protein , main = "" ) #computes cross correlation
+```
+
+**Note:** The dotted blue lines indicate 95% statistical significance, that is, cross correlations above the dotted line are statistically significant at the 95% confidence level. if you do not wish to plot them, include the argument 'ci = 0'. See (Shumway & Stoffer, 2011) for further details, along with a discussion of cross correlation in reference to the important concept of *stationarity*, which we have omitted from this Workshop due to time constraints.
+
+We see that the times series are most positively correlated with a lag $\tau_1$ slightly $<10$. The following code computes $\tau_1$:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+ccf_mp$lag[which.max(ccf_mp$acf)] 
+```
+
+**Question:** Why would there be such a lag (in terms of the biology of the set-up)?
+
+**Exercise 7 (~5 minutes):** Plot both time series, having subtracted the lag from one. Complete the code below to do so.
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , eval = FALSE}
+lag <- ccf_mp$lag[which.max(ccf_mp$acf)] # store the lag
+#We define a function that shifts the relevant vector by n:
+shift_it <- function(x,n){c(x[-seq(n)],rep(NA,n))}
+mRNA_shifted <- # YOUR JOB: apply shift function to dd$mRNA here
+dd_shifted <- #YOUR JOB: build dataframe with columns (time , protein, mRNA_shifted)
+#now we plot it
+ggplot( dd_shifted[1:500,] , aes(dd.time , mRNA_shifted)) + geom_line(aes(col = "mRNA")) + geom_line(aes(dd$time,dd$protein ,col = "protein") ) +
+  theme(legend.title=element_blank()) + xlab('time (dimensionless)') + ylab('number of molecules')
+```
+
+**Example: Phase-shifted genetic oscillators (Data from Albeck Lab, UC Davis).**
+
+This data set was obtained from cells expressing an AMPK FRET reporter and an mCherry translocation-based Akt reporter. AMPK is a kinase that senses when ATP is low is in the cell, and Akt is a kinase that stimulates glucose uptake.
+ See [here](https://urldefense.proofpoint.com/v2/url?u=https-3A__www.mcb.ucdavis.edu_faculty-2Dlabs_albeck_workshop.htm&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=07aRdi8_DWV8QcGK9N-KV8sPz5dT78AVUnzve13M7aY&e= ) for more details.
+
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=FALSE}
+# CYratioCyt <- read.csv('CYratioCyt.csv')
+# rfpCyt <- read.csv('rfpCyt.csv')
+# rfpNuc <- read.csv('rfpNuc.csv')
+# ampk=-CYratioCyt + 2.3
+# akt=rfpCyt/rfpNuc
+# ampk$t <- 1:137 
+# akt$t <- 1:137
+# df1 <- data.frame( 1:137 , ampk$V25 , akt$V25)
+# colnames(df1) <- c('time' , 'ampk' , 'akt')
+# df1$akt[1] <- 0
+#ggplot(df1[27:137,] , aes(time , ampk  )) + geom_line() + geom_line( aes( time , akt) , col = 2)
+#ccf(df1$ampk  , df1$akt)
+#write.csv( df1 , "albeck.csv" , row.names  = FALSE)
+```
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+file <- file.path(path,"data" , "albeck.csv")
+df_op <- read.csv( file ) #load data
+#plot it
+ggplot(df_op[27:137,] , aes(time , ampk  )) + geom_line(aes(col = "ampk")) + 
+  geom_line( aes( time , akt, col = "akt") ) +
+  xlab("time (minutes)") + ylab("proxy for number of molecules") + theme(legend.title=element_blank())
+```
+
+**Exercise 8 (~10 minutes):**
+
+
+1. Why did I plot the data frame df_op[27:137,] instead of df ?
+2. Plot the time series over a smaller window and guesstimate the lag $\tau$ that gives the largest correlation.
+3. Write one line of R code to compute the cross correlation: how good was your guess in part 2?
+
+**Word of Warning:** You may want to remove any trends in your data ('detrend it') before computing cross correlations. This will allow you to see correlations in the cyclical components. See (Shumway & Stoffer, 2011) for further details.
+
 
 ##Autocorrelation of time series
 
-The autocorrelation function (ACF) is
+The autocorrelation of a time series $X(t)$ is merely the cross correlation of $X(t)$ with itself! It thus contains information about the periodicity (cyclical nature) of $X(t)$.
 
-$$\rho(s,t) = \frac{\gamma(s,t)}{\sqrt{\gamma(s,s)\gamma(t,t)}}$$
-  
-  The ACF is a special case of the cross-correlation function (CCF).
-
-The autocorrelation function (ACF) of a stationary time series is
-
-$$\rho(h) = \frac{\gamma(h)}{\gamma(0)},$$
-  
-  where $\gamma(h) = cov(x_{t+h} , x_t) = E[(x_{t+h} - \mu)(x_t - \mu)]$ is the autocovariance function of a stationary time series.
+**Definition:** The autocorrelation for time series data $X(t)$ with expected value $\mu_X$ and standard deviation $\sigma_X$ is given by the correlation coefficient:
+$$\rho(\tau) = \frac{\sum_t (X(t) - \mu_X) (X(t+\tau) - \mu_X)}{\sigma_X^2}$$
 
 
-**Example:** ZF.
+
+**Example:** Zebrafish embryo energetics.
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-acf(df$osc , lag.max = 1500)
-acf(df$osc_lowess , lag.max = 1500)
+acf(df$osc[!is.na(df$osc)] , lag.max = 1500 , main = "")
 ```
 
+**Exercise 9 (~5 minutes):** Calculate the lag which maximizes the autocorrelation (this should correspond the period of the dominant oscillations).
 
-Anything else?
 
 ##Other examples of autocorrelation of time series
 
 ###White noise
 
+**Definition:** We say that a time series $X(t)$ is *white noise* if, for all time $t$, $X(t)$ is identically and independently drawn from a distribution with zero mean & finite variance. In the particular case of *Gaussian* white noise, the distribution that $X(t)$ is drawn from will be a Gaussian distribution. Unless otherwise specified, from hereon in all Gaussian white noise will have mean $\mu$ = 0 and standard deviation $\sigma$ = 1.
+
+We now generate Gaussian white noise & plot it. We also plot a moving average of it to demonstrate that moving averages remove higher frequency oscillations.
+
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-#require(stats)
-w = rnorm(500,0,1) # 500 N(0,1) variates 
+w = rnorm(500,0,1) # 500 N(0,1) points
 v = filter(w, sides=2, rep(1/3,3)) # moving average 
-#par(mfrow=c(2,1))
 plot.ts(w, main="white noise")
 plot.ts(v, ylim=c(-3,3), main="moving average")
 ```
 
-If the stochastic behavior of all time series could be explained in terms of the white noise model, classical statistical methods would suffice. Two ways of intro- ducing serial correlation and more smoothness into time series models are given in Example 1.7 and Example 1.8. -- p.6
+**Question:** What would you expect the autocorrelation function (ACF) of white noise to look like? How about the ACF of the moving average?
+
+**Answer:**
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+acf(w , main = "") #computes ACF of white noise
+acf(v[!is.na(v)] , main = "") #computes ACF of moving averaged white noise
+```
+
+###Random walk (Brownian motion) 
+
+Random walks (with & without drift) pervade biology, from the locomotion of *E. Coli* to the passage of motor proteins along microtubules.
+
+**Intuition:** Brownian motion occurs, for example, when a particle moves with equal probability in any given direction (in 1D, 2D, ... or nD). You are most likely familiar with Brownian motion with discrete time steps in discrete space (i.e. in each time step $\delta t$, the particle can move $\delta d$ units in any given direction). Here we consider 1D Brownian motion in discrete time and continuous space, i.e., in each time step $\delta t$, the particle can move in any direction (in 1D this is +ve or -ve) with a distance drawn from a Gaussian distribution (the step distance is drawn identically and independently from a Gaussian distribution with mean $0$ & standard deviation $1$ for each step). Therefore, this *random walk* is the cumulative sum of *white noise*! 
+
+See *Random Walk in Biology* (Berg, 1983) & *A Guide to First-Passage Processes* (Redner, 2011) for detailed expositions (these two books are great FYI). 
+ 
 
 
-###Brownian motion
-
-###Random walk with drift
+Now we'll plot a trace of such a random walk:
 
 ```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
 set.seed(154) # so you can reproduce the results
 w = rnorm(200,0,1); x = cumsum(w) # two commands in one line
-wd = w +.2;   xd = cumsum(wd)
-plot.ts(xd, ylim=c(-5,55), main="random walk")
-lines(x); lines(.2*(1:200), lty="dashed")
+plot.ts(x, ylim=c(-5,15), main="random walk")
 ```
 
-#Fourier analaysis
+**Question:** What would you expect the autocorrelation function of Brownian motion to look like?
 
-##Introduction
+**Answer:**
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+acf(x , lag.max = 50 , main = "") #computes ACF of Brownian motion
+```
 
-Check out this sinusoid:
+**Summary**
 
-Check out this sum of sinusoids:
+* White noise is uncorrelated, i.e., its autocorrelation function decays extremely fast;
+* Taking the moving average of white noise introduces correlation into it;
+* Brown noise, or random walks, can be constructed by integrating white noise. Brown noise is correlated, i.e., its autocorrelation function decays more slowly than white noise.
+
+
+#Fourier analysis
+
+##Motivation: The Fundamental Theorem of Fourier Analysis
+
+**Definition**: A sinusoid is a curve of the form $X(t) = A\text{sin}(\omega t + \varphi)$. Here $A$ is the amplitude, $\omega$ is the angular frequency & $\varphi$ is the phase.
+
+**Examples**:
+
+$$ f(t) = 3\text{sin}(2\pi\times 0.06t) $$
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-x1 = 2*cos(2*pi*1:100*6/100) + 3*sin(2*pi*1:100*6/100)
-acf(x1)
-x2 = 4*cos(2*pi*1:100*10/100) + 5*sin(2*pi*1:100*10/100)
-x3 = 6*cos(2*pi*1:100*40/100) + 7*sin(2*pi*1:100*40/100)
-x = x1 + x2 + x3
-#par(mfrow=c(2,2))
-plot.ts(x1, ylim=c(-10,10), main=expression(omega==6/100~~~A^2==13))
-plot.ts(x2, ylim=c(-10,10), main=expression(omega==10/100~~~A^2==41))
-plot.ts(x3, ylim=c(-10,10), main=expression(omega==40/100~~~A^2==85))
-plot.ts(x,  ylim=c(-16,16), main="sum")
+t = 1:100 # time vector
+x1 = 3*sin(2*pi*6/100*t) #sinusoid time series
+plot.ts(x1, ylim=c(-10,10) , ylab = "f(t)")
 ```
 
-Look at autocorrelation of these sinusoids :-)
-
-**Essential:** Fourier Theorem.
 
 
-##Fourier analysis
+**The Fundamental Theorem of Fourier Analysis:** Every periodic signal can be written as a sum (possibly infinite sum!) of sinusoids.
 
-###Description & set up
+**In mathematics:** A periodic function can be represented as an infinite sum of sines, i.e., a Fourier series:
+$$ f(t) = \sum\limits_{i}^\infty A_i \text{sin}(k_i t + \phi_i) $$
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
-#require(signal)
+
+**Example:** Here we plot a function that is the sum of a few sine functions with various sinusoidal frequencies, *f* and amplitudes, *A*:
+$$ f(t) = 3\text{sin}(2\pi\times 0.06t) + 5\text{sin}(2\pi\times 0.1t) + 7\text{sin}(2\pi\times 0.4t)$$
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+x2 = 5*sin(2*pi*0.1*t) #another sinuoid
+x3 = 7*sin(2*pi*0.4*t) #another sinusoid
+x = x1 + x2 + x3 #adding sinusoids
+plot.ts(x,  ylim=c(-16,16) , ylab = "f(t)")
+```
+
+**Question**: Given a periodic signal, what are its sinusoidal components?
+
+**Answer**: Fourier analysis to the rescue!
+
+##Fourier analysis and the power spectral density
+
+One of the most powerful tools of Fourier analysis is the power spectrum: it tells us which sinusoids are present in any given periodic signal & the power contained in each sinusoid (the power is related to the amplitude of the given signal by $P \propto A^2$). A full treatment is given in the Appendix. Here we instruct via example, first plotting a sinusoidal time series, followed by the power spectrum (also commonly referred to as a periodogram):
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+t = 1:0.001:100 # time vector
+x1 = 3*sin(2*pi*6/100*t) #sinusoid time series
+plot.ts(x1, ylim=c(-10,10) , ylab = "f(t)")
+```
+
+We now plot the periodogram:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+spec.pgram(x1 , plot = FALSE) -> xx #compute PSD but don't plot it
+dff2 <- data.frame( xx$spec , xx$freq ) #build data frame from PSD data 
+colnames(dff2) <- c("PSD", "Freq")
+#plot it:
+ggplot( dff2 , aes(Freq , PSD)) + geom_line() + ggtitle("Power spectrum (periodogram)")
+```
+
+We now calculate the frequency with the most power in the times series above:
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+dff2$Freq[which.max(dff2$PSD)] #compute frequency with the most power
+```
+
+**Interpretation**: The sharp peak corresponds to the sinusoid. In this case, it has a frequency of $0.06$, as we know by construction: sanity check!
+
+
+Now what about a combination of sinusoids?
+
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+plot.ts(x, ylim=c(-10,10))
+```
+
+We now plot the periodogram:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+spec.pgram(x , plot = FALSE) -> xx #compute PSD but don't plot it
+dff2 <- data.frame( xx$spec , xx$freq ) #build data frame from PSD data
+colnames(dff2) <- c("PSD", "Freq")
+ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10()
+```
+
+We now calculate the frequency with the most power in the times series above:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+dff2$Freq[which.max(dff2$PSD)] #compute frequency with the most power
+```
+
+**Question**: How do you interpret this power spectral density? Discuss with your neighbour.
+
+
+**Exercise 10 (~10 minutes):** Plot the periodogram & calculate the period (in minutes) of the dominant oscillation of the zebrafish data.
+
+
+**Relevance**: The period of oscillations in metabolic rate is $\approx 15$ minutes, which is the period of the cell cycle at this stage in zebrafish development.
+
+##Power spectra of different types of noise
+
+**White noise**
+
+**Exercise 11 (~10 minutes)**: In the code chunk below, I generate white noise. What do you expect the periodogram of white noise to look like? Discuss with a neighbour. Plot the periodogram.
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+w = rnorm(10000,0,1) #generating Gaussian white noise
+```
+
+**Note:** It is common to define white noise in terms of its power spectrum. For example the first sentence of the [Wikipedia page on white noise](https://urldefense.proofpoint.com/v2/url?u=https-3A__en.wikipedia.org_wiki_White-5Fnoise&d=AwIFaQ&c=-dg2m7zWuuDZ0MUcV7Sdqw&r=PQ6tL0xjXvlamGHA-fJddSwutYcjEhP84BTN9S2w5Wg&m=qtmoUc7dJ0-NHJCruD0_89-jMPZc07LGoLhERo0xv_s&s=0B-txh-E0gaO0BCsfhgyCRf6ffshyBDx4q52sIQB7ZE&e= ) is 'In signal processing, white noise is a random signal with a constant power spectral density.'
+
+**Brown noise**
+
+**Exercise 12 (~10 minutes)**: In the code chunk below, I generate brown noise. What do you expect the periodogram of brown noise to look like? Discuss with a neighbour. Plot the periodogram. Then plot it again on log-log axes. Why did I request that you plot it on a log-log scale?
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
+x = cumsum(w) #Brownian motion from white noise
+```
+
+##Example: bead in a trap
+
+###Part I: Just the bead
+
+**Experimental setup**:  Optical traps (also known as optical tweezers) are laser based force spectroscopy technique. They are used to measure forces in the range of pico-Newtons and nanometers. With optical traps, it is possible to capture dielectric microspheres (beads), cells and cell organelles and measure forces applied by/on them. The trap acts like a 3D spring. To make quantitative measurements, the spring constant (*stiffness*) of the trap is needed. This is done by a number of methods. Here we are interested in one method that is based on Power Spectral density (PSD) analysis of the time series of a trapped bead (Tolić-Nørrelykke et al., 2006; Jannasch et al., 2011). The data consists of a time series of the bead position in 3 dimensions. We will only be concerned with 1 horizontal dimension here:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE, warning=FALSE}
+file <- file.path(path,"data" , "trapped bead.dat")
+data <- read.table( file ) #load data
+d <- data$V1 #1st variable (dimension)
+plot.ts(d[1:1000] , ylab = "position from centre (uM)" , xlab = "Time (sec.)")
+```
+
+
+**The intuition behind this is as follows:** for small length scales, the bead is not affected by the trap and hence its motion will look like *brownian motion* (recall that small length scales = high frequencies); for large length scales (low frequencies), the bead is trapped and its motion will look like *white noise*. So when we plot the PSD on a log-log scale, we should see the power change from a horizontal line (the white noise) to a negatively sloping line (the brown noise). The frequency at which this transition occurs (commonly referred to as the corner frequency) will be essential in calculating the *trap stiffness*. See the papers (Tolić-Nørrelykke et al., 2006; Jannasch et al., 2011) for the technical aspects of how the corner frequency is used to calculate the stiffness. What we will do below is plot the PSD to see that the expected behaviour is indeed observed.
+
+First, I include a function that will calculate the PSD for you. You can use it as an alternative to spec.gram:
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
 PSD <- function(d){
   n = length(d)
   Per = Mod(fft(d-mean(d)))^2/n
-  #Freq = (1:n -1)/n*30000
   return(Per)
 }
 ```
+**Exercise 13 (~15 minutes):**
 
-###Examples
-
-**Example 1:**
-```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-x1 = 2*cos(2*pi*1:100*6/100) + 3*sin(2*pi*1:100*6/100)
-spec.pgram(x1) -> xx
-dff2 <- data.frame( xx$spec , xx$freq )
-colnames(dff2) <- c("PSD", "Freq")
-ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10()
-i <- which.max(dff2$PSD)
-dom_freq <- dff2$Freq[i]
-print(paste('dominant frequency =' , toString(dom_freq)))
-```
-
-**Example 2**: White noise
+1. The 'bead in a trap' data is 40 seconds long. Split it into 1 second segments using the *split* function as shown below:
 
 ```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE}
-w = rnorm(800,0,1); x = cumsum(w) # two commands in one line
-spec.pgram(w) -> xx
-dff2 <- data.frame( xx$spec , xx$freq )
-colnames(dff2) <- c("PSD", "Freq")
-ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10() + scale_y_log10()
-i <- which.max(dff2$PSD)
-dom_freq <- dff2$Freq[i]
-print(paste('dominant frequency =' , toString(dom_freq)))
+data <- read.table("data/trapped bead.dat")
+n = 30000 #sampling rate in Hz
+d <- data$V1
+stuff <- split(d, ceiling(seq_along(d)/n))
+```
+
+2. Run the code above to define the PSD function. Compute the PSD of each segment & then compute the average PSD (this procedure makes the PSD far less noisy & is fine as we are only interested in frequencies $>1$ Hz). Since *split* outputs a list, use *lapply* to do these computations.
+
+3. Plot the resulting PSD on a log-log axis with *ggplot* (hint:*scale_x_log10()*). It should look something like the figure below. Determine the approximate location of the corner frequency by eye.
+
+**Solution:**
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
+data <- read.table("data/trapped bead.dat")
+n = 30000 #sampling rate
+d <- data$V1
+stuff <- split(d, ceiling(seq_along(d)/n))
+x <- lapply(stuff, PSD)
+ux <- do.call("rbind", x)
+perm <- apply( ux , 2 , mean)
+Freq = (1:n -1)/n*30000
+df <- data.frame( perm , Freq )
+colnames(df) <- c("PSD", "Freq")
+ggplot( df , aes(Freq , PSD)) + geom_line() + scale_x_log10(limits = c(1e1 , 1e4)) + 
+  scale_y_log10(limits = c(1e-10 , 1e-0)) + annotation_logticks() + xlab("Freq (Hz)")
 ```
 
 
-**Example 3:** Zebrafish energetics
+**Technical note:** To determine the corner frequency, researchers generally fit a curve known as a *Lorentzian* to the averaged PSD.
 
-```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE , warning=FALSE}
-n = length(df$osc)
-Freq = (1:n -1)/n
-psd <- PSD(df$osc)
-dff <- data.frame( psd , Freq )
-colnames(dff) <- c("PSD", "Freq")
-ggplot( dff , aes(Freq , PSD)) + geom_line()+ scale_x_log10(limits = c(1e-5 , 1e-1))
-i <- which.max(dff$PSD)
-dom_freq <- dff$Freq[i]
-print(paste('dominant frequency =' , toString(dom_freq)))
+###Part II: driving the bead with oscillations
 
-spec.pgram(df$osc) -> xx
-dff2 <- data.frame( xx$spec , xx$freq )
-colnames(dff2) <- c("PSD", "Freq")
-ggplot( dff2 , aes(Freq , PSD)) + geom_line()+ scale_x_log10()
+**Challenge:** To determine the stiffness of the trap from the PSD, you actually need to make an assumption about the drag coefficient. The authors of (Tolić-Nørrelykke et al., 2006) cleverly circumvented this issue by driving the bead with a sinusoid, the peak of whose frequency (in the PSD) allowed them to calculate this drag coefficient. See the paper for the technical & computational details of the calculations.
+
+
+**Exercise 14 (~10 minutes):** Split the data into 1-second long segments (note that the sampling rate is 65536 Hz). Compute the PSD of each segment & then compute the average PSD. Plot the resulting PSD on a log-log axis. It should look resemble like the figure below. Determine the approximate location of the driving sinusoid by eye.
+
+**Solution:**
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=TRUE, warning=FALSE}
+file <- file.path(path,"data" , "b02y2400nm65536Hz.dat")
+data <- read.table( file )
+n = 65536
+d <- data$V1
+stuff <- split(d, ceiling(seq_along(d)/n))
+x <- lapply(stuff, PSD)
+ux <- do.call("rbind", x)
+perm <- apply( ux , 2 , mean)
+Freq = (1:n -1)
+df <- data.frame( perm , Freq )
+colnames(df) <- c("PSD", "Freq")
+# ggplot( df , aes(Freq , PSD)) + geom_line() + scale_x_log10() + 
+#   scale_y_log10()
+ggplot( df , aes(Freq , PSD)) + geom_line() + scale_x_log10(limits = c(1e1 , 1e4)) + 
+  scale_y_log10(limits = c(1e-7 , 1e-1)) + annotation_logticks() + xlab("Freq (Hz)")
 ```
 
 
+
+#References
+
+* Elowitz, M., Leibler, S. (2000) A Synthetic Oscillatory Network of Transcriptional Regulators, Nature. 2000 Jan 20;403(6767):335-8
+* Lewis, J. (2003) Autoinhibition with transcriptional delay: a simple mechanism for the zebrafish somitogenesis oscillator. Curr Biol. 2003 Aug 19;13(16):1398-408.
+* Jannasch, A., Mahamdeh, M. & Schäffer, E. (2011) Inertial effects of a small Brownian particle cause a colored power spectral density of thermal noise. Phys. Rev. Lett. 107, 228301
+* Tolić-Nørrelykke, S. F. et al. (2006) Calibration of optical tweezers with positional detection in the back focal plane. Rev. Sci. Instrum. 77, 103101
+* *Random Walks in Biology* by Howard Berg (1993) *Princeton University Press*
+* *A Guide to First-Passage Processes* by Sidney Redner *Cambridge University Press*
+* *Time Series Analysis and Its Applications: With R Examples* by Shumway, Robert H., Stoffer, David S. (2011) *Springer Texts in Statistics*
