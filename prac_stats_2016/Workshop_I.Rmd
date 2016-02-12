@@ -1,0 +1,554 @@
+---
+title: "Practical Statistics Workshop I: plotting data, summary statistics & the central limit theorem"
+output:
+  pdf_document:
+    toc: true
+    fig_caption: false
+    number_sections: true
+date: "30 January 2016"
+author: Hugo Bowne-Anderson, Yale University, Molecular Biophysics & Biochemistry Department
+---
+
+**These are accompanying notes** for a 4-part 'Practical Statistics for Experimentalists' Workshop taught at Yale University in January, 2016, the project of which was to introduce experimentalists to statistical and data analytic methodologies and intuitions that they can immediately use in their everyday work, along with methods to implement everything learned in the R programming language. Participants were Graduate students and Postdoctoral Fellows/Associates from the Molecular Biophysics & Biochemistry Department and Yale Medical School. These notes are not intended as stand-alone resources for 'Practical Statistics for Experimentalists', but as supporting material for the Workshop. Having said that, they are relatively complete and give a good indication of what was covered. You will not, however, be able to run all the R code embedded in these notes without the required data sets, many of which were kindly supplied by the relevant scientists/authors. All papers/texts referenced in the body of these notes are listed in the 'References' section at the end. Feel free to **contact** me at *hugobowne at gmail dot com* with any questions.
+
+**Warning**: The R code in this .pdf may not execute properly if you copy & paste it. You will need to either type it in directly OR copy and paste from the .html document corresponding to this Workshop. 
+
+**Workshop I** is concerned with i) plotting data, ii) summary statistics and iii) the Central Limit Theorem. Before even attempting to summarize your data or perform any sort of robust statistical analyses on it, it is important to get a feel for what your data looks like. There are many ways to plot data to do this, a number of which we shall delve into in this Workshop, while weighing up the pros and cons of each type of approach to plotting. We shall then look at how we can use summary statistics to summarize data, with particular reference to *measures of central tendency* and *measures of variability*. We close with the statement and examples of the Central Limit Theorem, a powerful result that will influence much of what we do when practicing the art of statistics (for example, statistical hypothesis testing).
+
+#Plotting data
+
+
+##First way to plot (univariate) data: histogram
+
+When we say *univariate data*, all we mean is that there is one variable. The 1st way to plot such data is in a histogram. But first we need some data. There are 3 ways to get data into R:
+
+1. Import data from a file external to R;
+2. Load pre-existing data from within R;
+3. Generate (synthesize) your own data using R's inbuilt random number generator.
+
+We will now go through each of these modes of getting data into R:
+
+**Importing data into R**
+
+The authors of (Gardner et al., 2011) have generously allowed us to use their data set for this Workshop:
+
+**A little bit of biological background:** Microtubules are cytoskeletal polymers that alternate between periods of slow growth and rapid shrinkage. The conversion from the *growing* state to the *shrinking* state is called microtubule *catastrophe* and the time it takes from nucleation to catastrophe is called the microtubule's *lifetime*. Gardner & co-authors used a TIRF assay (we won't go into details of what this is here) to measure microtubule lifetime *in vitro* under 3 conditions: i) in the presence of tubulin alone (well, with buffer + ATP), ii) in the presence of tubulin and the microtubule-associated protein (MAP) MCAK & iii) in the presence of tubulin and the MAP Kip3.  In i), the authors perform the assay at different tubulin concentrations and in ii) & iii) at different concentrations of the relevant MAP. The idea of the paper is to see how different MAPs affect the lifetime of microtubules. In today's Workshop, we will look at cases i) & ii) and not worry about Kip3, for the time being.
+
+We will first look at condition i), which we have as a .csv ("Comma Separated Values") file. The data in this file is the lifetime (defined as the time from nucleation to catastrophe) of microtubules grown *in vitro* under different tubulin concentrations and each column is a different [Tb].
+
+**How we will store & visualize the data in R**: We will use a visualization library called **ggplot2** -- there is a bit of a learning curve in figuring out how to use it but once you've got it going on, it can be used to create beautiful figures with ease. It is based around Leland Wilkinson's [*Grammar of Graphics*](https://www.springer.com/us/book/9780387245447) and many publications, such as the [New York Times](http://www.nytimes.com/interactive/sports/football/2013-fantasy-football-tier-charts-QB.html), use it. There is a [great cheat sheet for ggplot2](https://www.rstudio.com/wp-content/uploads/2015/08/ggplot2-cheatsheet.pdf) that you should check out. In order to use ggplot2 to its fullest capabilities, we will store our data as **data frame** objects -- we will play around with these a great deal in these Workshops -- all you need to know now is that '[a] data frame is a list of variables of the same number of rows with unique row names', according to R's documentation (if this definition leaves the concept still opaque, we'll figure out below what a data frame is by looking at one!).
+
+```{r qplot , fig.width = 4 , fig.height = 3 , message = FALSE}
+#path for working directory:
+library( ggplot2 ) #load ggplot2 library for handsome plotting structures
+path <- file.path("~" , "repos" , "statistical_inference" , "prac_stats_2016")
+setwd(path)#You need to set your working directory
+#in order to access the files/data necessary -- we'll discuss this.
+file <- file.path("data" , "lifetimes_tubulin.csv")
+data <- read.csv( file ) #load data from .csv
+#this is a data frame -- a very important structure in R
+colnames(data) #print the column names in the data frame 'data'
+x <- data$X12_uM #assign a single column of df to the variable 'x'
+qplot( x , xlab = "MT lifetime at 12uM") #plot a histogram of the data at 12uM
+```
+
+**Important Note**: The help() function in R will be one of your best friends; if, for example, you don't know what 'qplot' does, execute the following in your console:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+help(qplot)
+```
+
+**Note**: The column names of the data frame have been adjusted by R to begin with an 'X' so that they are syntactically valid (in this case, so as to not begin with a numeric value).
+
+
+**Exercise 1 (~15 minutes)**:
+
+1. Run the above code & figure out what each line does; notice that it throws a warning to the console: what does this warning mean? Play around with the binwidth parameter;
+2. Look at the variable 'data' (you can do this by executing the command 'View(data)' in the console): what does it look like? This is called a *data frame* and will be one of your best friends when performing data analysis in R; 
+3. Load the microtubule lifetime data for the assay in which microtubules were grown in the presence of the microtubule associated protein (MAP) MCAK; plot lifetime histograms at various concentrations of MCAK;
+4. How do these histograms look (qualitatively) different from those of the microtubules grown in tubulin alone?
+
+**Notes**:
+
+- Play around with bin size: a general rule-of thumb is # of bins $=\sqrt{n}$. If the bins are too small, you'll see a lot of sampling error noise; if the bins are too large you'll lose precision: for example, with large bins, gamma-distributed data can look exponentially distributed (see Appendix and Workshop III for what these distributions are and how they are related to each other);
+- There are many other potential rules of thumb for the number of bins, such as Sturges' formula, the Rice rule, Doane's formula, Scott's normal reference rule, Freedman-Diaconis' choice and so on (see Scott, David W. (1992). Multivariate Density Estimation: Theory, Practice, and Visualization. New York: John Wiley; also see [Wikipedia](https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width)).
+
+**Loading data from within R**
+
+When you install R, it ships with a plethora of data sets built into it. We will look at the *mtcars* data set. For a list of other available inbuilt data sets, execute the following command in your console:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE, eval=FALSE}
+data()
+```
+We will now look at the *mtcars* data set:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+cars <- mtcars #pre-existing data set in R
+p1 <- ggplot(data = cars , aes(x=mpg)) #initialize plot to look at miles per gallon
+p1 + geom_histogram( binwidth = 1 ) #plot histogram & play around with binwidth if desired
+```
+
+I know that this section is supposed to focus on plotting histograms of univariate data BUT ggplot2 makes plotting bivariate data so easy that I couldn't help including a little bit here:
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+#initialize plot to look at the relationship 
+#between variables (bivariate) miles /gallon & weight (lb/1000):
+p2 <- ggplot( data = cars , aes( x = mpg , y = wt))  
+p2 + geom_point() #plot a scatterplot
+#plot scatter of mpg vs weight; plot linear fit + 95% confidence bands:
+p2 + geom_point() + stat_smooth( method = "lm") + 
+  xlab("miles per gallon") + ylab("weight (lb/1000)") 
+```
+
+
+**Generating your own data**
+
+R contains inbuilt random number generators that we can use to draw random numbers from, for example, uniform and Gaussian distributions. There are two points to note:
+
+1. The default random number generator in R is the Mersenne Twister, which is actually a *pseudorandom number generator* (PRNG), not a *true random number generator*;
+2. It is *very important* to set the seed of your PRNG before using it! This tells your computer where to start generating the random numbers; it follows that, if you run your code twice after setting the seed, you get the same random numbers both times and this is **essential for reproducible results**.
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+set.seed(42) # set the seed of your PRNG
+x <- rnorm(1000 , mean = 0 , sd = 1) #generate 1000 data points from a normal
+#distribution with mean = 1, sd = 1
+qplot( x ) #plot a histogram of the data
+```
+
+We can also produce a *relative frequency plot* as follows:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+df <- as.data.frame(x) #store Gaussian distributed data in a data frame
+m <- ggplot(df , aes(x)) #initiate plotting structure
+m + geom_histogram(aes(y = ..density..)) #plot relative frequency plot
+```
+
+**Exercise 2 (~10 minutes)**:
+
+1. Generate & plot data drawn from a (i) uniform distribution (for sample sizes of $n=100,500$) & (ii) an exponential distribution with rates $=1,3$.
+
+**Note**: I haven't told you the functions used to generate these data sets. You'll need to find them somehow! A huge part of coding is finding the right function. *Hint*: search engines are your friends.
+
+
+**Pros & Cons of Histograms**: Histograms are great visual tools because they allow you to see immediately how your variable is distributed; they should, however, be taken with a grain of salt, because what you see is also a function of your choice of bin size.
+
+##Second way to plot (univariate) data: empirical cumulative distribution function (ECDF)
+
+The ECDF 
+
+$$F(x) = \frac{\text{number of data points} \leq x}{n},$$
+
+where $n$ is the total number of data points.
+
+- The intuition is that this tells you the probability of being less than or equal to the value of interest;
+
+
+Let's first have a look at the ECDF for some of the microtubule lifetime data set:
+
+```{r , fig.width = 4 , fig.height = 3 , message = FALSE}
+ggplot(data, aes(x = X12_uM)) + stat_ecdf() + xlab("Microtubule lifetime") +
+  ylab("ECDF")#plot ECDF of the data
+```
+
+
+**Pros & Cons of CDFs**:
+
+- Pro: CDFs are a great way to visualize and compare distributions as there is no binning and thus no artifacts introduced by binning!
+- Con (a word of warning): there is correlation in the curve (as opposed to a histogram); All that I'm saying here is that, due to the cumulative property, if there is a large amount of data at a low value, then this may be seen throughout the rest of the curve. it is important to keep this in mind.
+
+**Exercise 3 (~5 minutes)**:
+
+1. Generate $n=1000$ samples from a Gaussian distribution with mean$=0$, SD$=2$ and plot the ecdf (*hint*: you'll need to know how to turn a vector into a data frame);
+
+##Third way to plot data: box plot
+
+*Box plots* are a great way to visualize where most of the data lies. In a box plot, the top and bottom boundaries of the box are the *3rd* and *1st quartiles* of the data, respectively, the line in the middle are the *median* and the circular data points are the *outliers* (all of these are to be defined precisely below). We now plot the microtubule lifetime data as a set of box plots with [Tb] on the x-axis.
+
+However, to do so, we want to have the microtubule lifetime data in a different form -- we would like a data frame in which each row is a single experiment with 2 columns: (i) the recorded lifetime & (ii) the tubulin concentration of the experiment. There is a great package 'tidyr' that helps you reshape data frames: two important function are 'gather()' and 'spread()', which make 'wide' data 'long' and 'long' data 'wide', respectively-- we'll see precisely what this means in a minute -- for more information see [here](http://blog.rstudio.org/2014/07/22/introducing-tidyr/).
+
+```{r,  message = FALSE ,  echo = TRUE}
+#this library contains the function that we'll need in order to 
+#reshape the data frame as desired
+library(tidyr) 
+mt_data <- gather( data ) #gather data as described above
+colnames(mt_data) <- c("tubulin_concentration" , "lifetime") #rename the columns
+mt_bp <- ggplot( mt_data , aes( x = factor(tubulin_concentration) , y = lifetime))
+mt_bp + geom_boxplot() + xlab("[Tb]") + ylab("Lifetime (s)")#plot the box plot
+```
+
+**Notes**: 
+
+1. Execution of the above code spat out a warning: this was due to NAs in the data frame -- R cleverly removed them this time and warned us but we will have to keep this in mind in the future;
+2. When I initiated the plotting structure 'mt_bp', I turned 'tubulin_concentration' into a 'factor', which is a categorical variable -- I could also have turned it into a numerical variable but I wanted to introduce you to factors asap as they are important structures in R and data analysis in general.
+
+**Pros & Cons of box plots**:
+
+- Box plots are a great way to see summary statistics in your data: for example, the median, the quartiles and outliers (all to be defined below) -- they are good at showing where *most* of your data lies;
+- Box plots are not a good way to show all of your data: if you have $<30$ data points, you should just plot it all in a scatter plot; if you have $<100$ data points, you cold use a beeswarm plot; we will look at these now.
+
+##Fourth way to plot data: column scatter plot (with jitter!)
+
+For small amounts of data, you should plot all the data, not just the box plot (which summarizes aspects of the data). A column scatter plot (with jitter) is one way to achieve this and you can even layer it on top of a box plot:
+
+```{r , fig.width = 6 , fig.height = 3 , message = FALSE , echo=TRUE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+file <- file.path("data" , "mm.csv")
+datamm <- read.csv( file )
+p <- ggplot( datamm , aes( factor(Expt) , Speed ))
+p + geom_boxplot() + geom_jitter(aes(colour = factor(Expt))) +          
+  guides(colour=guide_legend(title="Expt")) +
+  xlab("Experiment") +ylab("Speed of Light (km/s minus 299,000)")
+```
+
+*Note*: the data here is from the famed Michelson-Morley experiment -- in which the data is the speed of light from different experiments.
+
+**Question**: What is a problem with the way in which I have plotted both the box plot and the jitter plot above?
+
+**Pros & Cons of scatter plots**:
+
+- Scatter plots are great for small amounts of data;
+- If you have large amounts of data, scatter plots can be messy and confusing because points may overlap;
+- There is no hard and fast rule as to what *large amounts of data* means: you need to play around with it yourself and see what conveys the information that you are trying to convey.
+
+
+##Fifth way to plot data: beeswarm plot
+
+If you have more data, it may overlap in a jitter plot. One way to avoid this is to use a beeswarm plot, in which the data is cleverly spread out. We will not use ggplot2 for this, as to do so gets too technical, but if you're interested, see [here](https://denishaine.wordpress.com/2011/09/16/beeswarm-plot-with-ggplot2/).
+
+
+```{r,  message = FALSE ,  echo = TRUE}
+library(beeswarm) #load beeswarm library
+# load data of '[t]umor molecular measurements and outcome from breast cancer patients:
+data(breast)
+#create beeswarm plot below:
+beeswarm(time_survival ~ ER, data = breast,
+         pch = 16, pwcol = 1 + as.numeric(event_survival),
+         xlab = "", ylab = "Follow-up time (months)",
+         labels = c("ER neg", "ER pos"))
+legend("topright", legend = c("Yes", "No"),
+       title = "Censored", pch = 16, col = 1:2)
+```
+
+In order to see more about the data set used above, execute the following command:
+```{r,  message = FALSE ,  echo = TRUE}
+help(breast)
+```
+
+**Exercise 4 (~10 minutes)**: create a beeswarm plot of the microtubule lifetime data with (i) tubulin concentration on the x-axis & (ii) lifetime on the y-axis.
+
+**Question**: Is there too much, too little or the correct amount of data for a beeswarm plot here?
+
+**Pros & Cons of beeswarm plots**:
+
+- Pro: there is no need to bin your data;
+- Pro: beeswarm plots are a great way to visualize all of your data if there is too much of it for a scatter plot;
+- Con: you can have too much data for a beeswarm, in which case you'll want to use a box plot.
+
+#Summary statistics
+
+How can we numerically describe & summarize data? We use statistics: but what is a *statistic*? To liberally paraphrase Phil Gregory (in *Bayesian Logical Data Analysis for the Physical Sciences*), a <span style="color:red">*statistic*</span> is 'a function that maps any data set to a numerical measure' (what Gregory actually wrote is that a *statistic* is 'any function of the observed random variables in a sample such that the function does not contain any unknown quantities'!). We use *summary statistics* to easily identify attributes such as *central tendency* and *variability*, also called *dispersion*. We shall explore these now.
+
+##Measures of central tendency
+
+**Mean**
+  
+The **mean** of a data set $D=\{x_i\}$ is the average $\mu = \frac{1}{n}\sum\limits_i x_i$. This is a very intuitive statistic & also one of the few statistics that most lay-people recognize as a quantity-of-interest: but why the hell is it of such import? Is it arbitrary? The short answer is 'no' and the long answer is too long. The easiest way to quantitatively motivate it here is that  *the mean is the number that is, on average, closest to all of the data*, that is, it minimizes the squared error sum (you can prove this with a bit of calculus & algebra!):
+
+$$s(x) = \sum\limits_i(x - x_i)^2.$$
+
+
+To calculate the mean of data set, we use the function 'mean' in R:
+```{r,  message = FALSE ,  echo = TRUE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+file <- file.path("data" , "mm.csv")
+datamm <- read.csv( file ) #load data
+datamm_ep1 <- subset(datamm , Expt == 1) #what have I done here?
+mean_exp1 <- mean( datamm_ep1$Speed ) #compute the mean
+print( mean_exp1) #print the mean
+```
+
+You can also calculate the mean of each column of a data frame by using the 'apply' function:
+
+```{r,  message = FALSE ,  echo = TRUE}
+apply( data , 2 , mean) #compute the mean of the columns of 'data'
+```
+
+**Question**: Whoa!! This reported NA's. Why did this happen? How can we avoid it?
+
+**Answer & Code**:
+```{r,  message = FALSE ,  echo = TRUE}
+#for more on 'apply' and its variants, see here:
+#https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
+#compute the mean of the columns of 'data', ignoring NA's:
+apply( data , 2 , function(x) mean(x,na.rm = TRUE))
+```
+
+**Exercise 5 (~10 minutes)**:
+
+Compute the mean across all experiments in the Michelson-Morley data set. There are two methods that I would suggest trying:
+
+1. Use 'by' (it's similar to 'apply') and you can find information about it [here](https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/);
+2. Reshaping the data using 'dcast' from the "reshape2" library and then using 'apply'.
+
+**Warning! The mean can be a crappy statistic.**
+
+Note: the mean is not always a good statistic, particularly for skewed and bimodal distributions (more to come on this) or data sets with outliers.
+
+Here are 3 cases in which the *mean* is not a great summary statistic to report:
+
+1. a data set with outliers (for example, if a researcher accidentally adds a zero to a couple of data points when transcribing data; note: outliers will be defined below, when we have a few more tools under our statistical belt);
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE , echo=FALSE}
+x <- runif(10)
+y <- 12
+df <- as.data.frame( c( x , y) )
+colnames(df) <- 'value'
+df$type = "data"
+m <- signif( mean(df$value) , 2)
+llb <- paste("mean = " , m)
+op <- ggplot( df , aes( x = type , y = value))
+#op + geom_point(alpha = 0.3) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
+op + geom_jitter( size = 4 , alpha = 0.5) +
+  annotate("text",  label = llb ,  x = 1, y= 6) + scale_y_continuous(breaks=seq(0,13,2)) + xlab("")
+```
+
+**Question**: what have the outliers done to the mean in the above?
+
+
+2. data from a distribution with 2 peaks (e.g. heights of multiple genders or ethnicities; see [here](http://personality-project.org/r/html/heights.html) and [here](http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html) for information on the height data);
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo=FALSE}
+##Galton height data: http://personality-project.org/r/html/heights.html
+##Galton paper here: http://galton.org/essays/1880-1889/galton-1888-co-relations-royal-soc/galton_corr.html
+file <- file.path("scripts" ,"multiplot.R")
+source( file ) 
+library(psych)
+data(heights)
+m1 <- signif( mean(heights$height) , 3 )
+llb1 <- paste("mean = " , m1)
+p1 <- ggplot(data = heights , aes( x = height)) + geom_histogram(binwidth = 0.5) +
+  annotate("text", x = 65, y = 60, label = llb1)
+x <- rnorm( 1000 , mean = 0)
+y <- rnorm( 1000 , mean = 5 )
+d <- as.data.frame( c( x , y) )
+colnames(d) <- 'value'
+m2 <- signif( mean(d$value) , 3 )
+llb2 <- paste("mean = " , m2)
+p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 5, y = 160, label = llb2)
+multiplot(p1, p2, cols=2)
+```
+
+3. data from a skewed distribution (e.g. gamma distribution -- arises from multistep processes) -- in the example below, the mean is ~2 and the peak of the histogram occurs at ~1:
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- rgamma(10000 , 2 ,1) #generate data from a skewed gamma distribution
+qplot(x) #plot the data
+mean(x) #compute the mean of the data
+```
+
+**Dealing with these issues**: To deal with the problem of *outliers*, statisticians like to look at the **median** rather than the mean; if you're actually interested in the *most likely data point*, that is, where the highest peak is in the histogram, you look at the **mode**.
+
+**Median**
+
+To find the **median** of your data set, list all data from smallest to largest: the *median* is then defined to be the number that occurs in the middle of this list (or the average of the middle two, if there are an even number of data points). Intuitively, what the *median* essentially does is split the data into a top 50% and bottom 50%. 
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+mean(x) #compute the mean
+median(x) #compute the median
+```
+
+The median is very robust to outliers, in the sense that up to ~50% of the data can be contaminated to contain outliers and this will not alter the median. For example the data set $\{1,2,2,3,4,5,5,6,7\}$ & $\{1,2,2,3,4,5,5,60,70\}$ both have a median of $4$ and yet their means differ significantly due to the presence of outliers in the latter. 
+
+I include a demonstrative plot below. The bar in the middle of each box is the median of the data set: you can see that the medians are the same and yet the means are very different due to the presence of outliers:
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- c(1,2,2,3,4,5,5,6,7) #generate some data
+y <- c(1,2,2,3,4,5,5,60,70)#generate some data
+df <- data.frame(x,y) #combine data into a data frame
+print( c( mean(x) , mean(y)) ) #compute means
+print( c( median(x) , median(y)) ) #compute medians
+dfm <- gather(df) #reshape the data
+mp <- ggplot(dfm , aes( x = key , y = value)) #initiate plotting structure
+mp + geom_boxplot() + xlab("") #plot as a box plot
+```
+
+**Mode**
+
+The **mode** is defined to be the value that is most likely to occur (i.e., where the peak in the histogram occurs). When the histogram/probability distribution function has two or more modes, we call it *bimodal* and *multimodal*, respectively. We will see that the mode can be of great interest later when performing parameter estimation (for example, maximum likelihood estimation and Bayesian parameter estimation). See an example of trimodality here:
+
+```{r , fig.width = 8 , fig.height = 3 , message = FALSE , echo = FALSE}
+x <- rnorm( 1000 , mean = 0)
+y <- rnorm( 1000 , mean = 5 )
+z <- rnorm( 750 , mean = 9)
+d <- as.data.frame( c( x , y, z) )
+colnames(d) <- 'value'
+m2 <- signif( mean(d$value) , 3 )
+llb2 <- paste("mean = " , m2)
+p2 <- qplot(d$value) + xlab('value')+ annotate("text", x = 10, y = 190, label = llb2)
+p2
+```
+
+Also see [here](http://mathworld.wolfram.com/Mode.html) for some interesting notes on relation between mode, median, mean & something called the Pearson mode skewness.
+
+##Measures of variability/dispersion
+
+**Range**
+The **range** of a data set $\{x_i\}$ is $r:=x_{max} - x_{min}$, the difference between the maximum and the minimum. Although it tells us the size of the region in which all the data lies, it doesn't tell us anything else and it is also completely sensitive to outliers.
+
+**Variance & Standard Deviation**
+
+The **variance** is a measure of how far a data set is spread out. Recalling the mean $\mu = \frac{1}{n}\sum\limits_i x_i$, the variance is defined to be
+
+$$\sigma^2 = \frac{1}{n}\sum\limits_i(x_i-\mu)^2$$
+
+and $\sigma$, the square root of the variance, is called the **standard deviation** of the data.
+
+**Cool note**: having two summary statistics, such as a measure of central tendency (e.g., mean) and a measure of dispersion (e.g. variance), can be enough to fully describe many of the most important distributions. For example, an *exponential distribution* is characterizable by its mean alone, a *normal/Gaussian distribution* by its mean and variance, and a Pareto (power-law) distribution by its mean and variance.
+
+**Example: Normal (Gaussian) Distribution (see Appendix also)**
+
+**Motivation**:
+
+- Things in the phenomenal world are often normally distributed (this is why the term 'bell curve' is part of our general society's lexicon, rather than merely a technical term);
+- Measurement error (e.g., from using a ruler) is often normally distributed.
+- The Central limit theorem! See below.
+
+**Equation**: $P(x) = \frac{1}{\sigma\sqrt{2\pi}}\text{exp}(-\frac{(x - \mu)^2}{2\sigma^2}),$ where $\mu$ and $\sigma^2$ are the mean and variance, respectively, of the distribution.
+
+**Example: Exponential Distribution (see Appendix also)**
+
+**Motivation**:
+
+- Radioactive decay;
+- Any Poisson Process has exponentially distributed waiting times;
+
+**Equation**: $P(x) = \frac{\text{exp}(-x/\mu)}{\mu}$, where $\mu$ is the mean of the distribution. 
+
+**Variance & Outliers**
+
+**Key**: variance and standard deviation are sensitive to outliers (see [here](http://www.statcan.gc.ca/edu/power-pouvoir/ch12/5214891-eng.htm), for example). Also, standard deviation can give us insight into the existence of outliers:
+
+```{r , fig.width = 4 , fig.height = 3 ,message = FALSE}
+x <- c(1,2,2,3,4,5,5,6,7) #generate some data
+y <- c(1,2,2,3,4,5,5,60,70)#generate some data
+df <- data.frame(x,y) #combine data in data frame
+print( apply( df , 2 , mean) ) #compute means
+print( apply( df , 2 , sd) ) #compute SDs
+```
+**Question**: How can we see from the mean & the standard deviation of the above data sets that one of them may contain outliers?
+
+**Exercise 6 (~10 minutes)**: Compute the standard deviation of one of the microtubule lifetime data sets (for all concentrations) OR the the Michelson-Morley data (all experiments).
+
+**Interquartile Range**
+
+Recall that the *median* splits the data into a top 50% and a bottom 50%. We can similarly split these regions into their top and bottom halves: $Q_1$, the **1st quartile**, is defined to be the median of the bottom 50% (i.e. the median of the data consisting of all $x_i$ less than the median) & $Q_3$, the **3rd quartile**, is defined to be the median of the top 50% of the data. We then define the **interquatile range** to be $IQR = Q_3 - Q_1$, a measure of how spread out the data is (and it is a robust measure! particularly with respect to outliers).
+
+Having defined the *median* and *quartiles*, we can now define a **box plot** (also known as a box-and-whisker diagram), which provides a very useful way of visualizing data. In a box plot,
+
+- The top and bottom of the box are $Q_3$ and $Q_1$, respectively;
+- The band in the middle is the median;
+- The ends of the top and bottom whiskers are $Q_3 + 1.5\times IQR$ & $Q_1 - 1.5\times IQR$, respectively (note: there are other possible conventions for the whiskers, however this is the rule that we shall use, unless specified otherwise);
+- The outliers can be plotted as points; in fact, all of this quantile business allows us to give a precise definition of outliers as all data points that are above $Q_3 + 1.5\times IQR$ or that are below $Q_1 - 1.5\times IQR$ (there are other definitions, still an active area of research; see [here](https://www.siam.org/meetings/sdm10/tutorial3.pdf), for example).
+
+Here are box plots from the famed Michelson-Morley experiment, in which the data is the speed of light in different experiments:
+
+```{r , fig.width = 12 , fig.height = 3 , message = FALSE , echo=FALSE}
+#data from here: http://bl.ocks.org/mbostock/4061502#morley.csv
+# file <- file.path("data" , "mm.csv")
+# datamm <- read.csv( file )
+p <- ggplot( datamm , aes( factor(Expt) , Speed ))
+p1 <- p + geom_boxplot() + xlab("Experiment") + ylab("Speed of Light (km/s minus 299,000)")
+p2 <- p + geom_boxplot( notch=TRUE) + xlab("Experiment") + ylab("")
+p3 <- p + geom_boxplot( notch=TRUE) + geom_jitter() + xlab("Experiment") + ylab("")
+multiplot(p1, p2,p3, cols=3)
+```
+There are also bivariate analogs of box plots, called bag plots. Check them out [here](https://en.wikipedia.org/wiki/Bagplot).
+
+
+
+**Standard Error of the Mean**
+
+Let's say we have drawn $n$ random, independent samples $X_1, X_2, \ldots , X_n$ from a probability distribution $P$, where $P$ has mean $\mu$ and variance $\sigma^2$. Now the sample mean $\mu_X$ provides an estimate of the population mean $\mu$. The question is "how good is the estimate $\mu_X$ of $\mu$?" Another way to ask this is as follows: "if I performed the same experiment a number of times, that is, drew another $n$ samples and calculated the sample mean, what would be the standard deviation of all of these sample means?" The answer is that the **standard error of the sample mean** is
+
+$$SE_{\bar{x}} = \frac{s}{\sqrt{n}},$$
+
+where $n$ is the sample size and $s$ is the sample standard deviation. This follows, in fact, from the Central limit theorem, which we state below. First note, though, that there are diminishing returns of the number of data points with respect to the standard error, as it decreases as the inverse of $\sqrt(n)$, so to be 10 times as certain in your estimate of the mean, you actually require 100 times as many data points!
+
+**Example of computation**:
+```{r,  message = FALSE ,  echo = TRUE}
+file <- file.path("data" , "lifetimes_tubulin.csv")
+datamm <- read.csv( file )
+slt <- apply( data , 2 , function(x) sd(x , na.rm = TRUE)) 
+n <- apply( data , 2 , function(x) sum(!is.na(x))) 
+sem <- slt/sqrt(n) 
+print(sem)
+```
+
+**Exercise 7 (~5 minutes)**: Figure out what each line of the code above does.
+
+**One of the most common questions that I am asked by experimentalists:**
+
+**When do I report the standard deviation and when do I report the standard error?** A general rule is as follows: if you are interested in seeing and/or reporting how spread out your data is, state or visualize the *standard deviation*; if, on the other hand, you are interested in making inferences about the data, such as the value of the population mean or the statistical significance of an effect, report the *standard error of the mean*. See (Cumming et al., 2007) for further reading. Also see [this paper](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1255808/) and [this paper](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148365/).
+
+
+#Central limit theorem
+
+The Central limit theorem, in essence, tells about how the *sample mean*, as an *estimator*, is itself distributed, in the limit of large samples:
+
+Let $X_1, X_2, \ldots X_n$ be  a random sample drawn from a probability distribution $P$ (with mean $\mu$ and variance $\sigma^2$). The sample average is defined as
+
+$$S_n = \frac{X_1 + X_2 + \ldots + X_n}{n}$$
+
+and the Central Limit Theorem states that, as $n \to \infty$, $S_n \to N(\mu,\sigma^2/n)$. We will demonstrate part of its power when dealing with Student's t-test in Workshop II. For the time being, let's look at what Francis Galton (Victorian statistician, progressive, polymath, sociologist, psychologist, anthropologist, eugenicist, tropical explorer, geographer, inventor, meteorologist, proto-geneticist and psychometrician) had to say about the CLT:
+
+<blockquote><p style="font-size: 75%">I know of scarcely anything so apt to impress the imagination as the wonderful form of cosmic order expressed by the "Law of Frequency of Error". The law would have been personified by the Greeks and deified, if they had known of it. It reigns with serenity and in complete self-effacement, amidst the wildest confusion. The larger the mob, and the greater the apparent anarchy, the more perfect is its sway. It is the supreme law of Unreason. Whenever a large sample of chaotic elements are taken in hand and marshaled in the order of their magnitude, an unsuspected and most beautiful form of regularity proves to have been latent all along.</p></blockquote>
+
+**Examples of the CLT**
+
+1. Here we perform a simple demonstration of the Central Limit Theorem, in which our random variable is defined by $p(0)=p(1)=0.5$:
+
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+#Here we perform a simple demonstration of the Central Limit Theorem
+#Random Variable defined by p(0)=p(1)=0.5. Draw n samples (e.g. n = 1000)
+#& retrieve the mean. Do this m times (e.g. m = 10,000) and plot 
+#the distribution of means:
+n <- 1000 #number of samples for each trial
+m <- 10000 #number of trials
+x <- rbinom( m , n , 0.5 )/n # sample distribution and return vector of means
+qplot(x , binwidth = 0.005) #plot histogram of means
+```
+
+2. This example will take the form of an **Exercise 8 (~15 minutes)**: i) load the $12\mu M$ tubulin microtubule lifetime data set; ii) compute the mean of a random subset (sampling with replacement) of size $n=300$; iii) do this 10,000 times and plot the resulting histogram;
+
+3. This is an extra example, for those who wish to jump into some Monte Carlo simulations after class; herein, we  estimate $\pi$ using a Monte Carlo method:
+
+```{r, fig.width = 4 , fig.height = 3 ,  message = FALSE ,  echo = TRUE}
+#Here we perform a simple demonstration of the Central Limit Theorem
+#We estimate pi (ratio of circle circumference to diameter) using a Monte Carlo method:
+#the method is to drop n points inside a square of side length 2, then see how many points
+#fall inside the circle of radius 1 inside the square.
+#As area(square) = 4 & area(circle) = pi
+#an estimate for pi is = 4*(number of points in circle)/(number of points in square).
+#We then use this procedure to estimate pi m times and look at 
+#the statistics & distribution of these estimates.
+n <- 2000 #number of points to drop in the square
+m <- 1000 #number of trials
+#we write a small function here to approximate pi by the method described above
+approx_pi <- function(n){
+  points <- replicate(2, runif(n))  #generate points in the square
+  #compute distance of each point from centre
+  distances <- apply( points , 1 , function(x) sqrt(x[1]^2 + x[2]^2))
+  #see here for more on 'apply': 
+  #https://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
+  points_in_circle <- sum(distances < 1) #count points in circle
+  pi_approx <- 4*points_in_circle/n #approximate pi
+  return(pi_approx) #function output designated here
+}
+x <- replicate(m,approx_pi(n)) #approximate pi m times
+m <- mean(x) #compute mean of your estimates
+qplot( x , binwidth = 0.01) #plot distribution of estimates
+```
+
+
+#References
+
+- Cumming, G., F. Fidler, D.L. Vaux. 2007. *Error bars in experimental biology*. J. Cell Biol. 177:7–11.
+- Gardner MK, Zanic M, Gell C, Bormuth V, et al. 2011. *Depolymerizing kinesins Kip3 and MCAK shape cellular microtubule architecture by differential control of catastrophe.* Cell 147: 1092– 103.
+- Gregory, P. 2010. *Bayesian Logical Data Analysis for the Physical Sciences.* *Cambridge University Press*.
+-  Scott, David W. 1992. *Multivariate Density Estimation: Theory, Practice, and Visualization.* *New York: John Wiley*.
+- R cheat sheets: see [here](https://www.rstudio.com/resources/cheatsheets).
